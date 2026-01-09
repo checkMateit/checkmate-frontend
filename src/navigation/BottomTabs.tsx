@@ -42,7 +42,7 @@ function BottomTabs() {
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
-        tabBarStyle: { height: 90 },
+        tabBarStyle: styles.tabBar,
         tabBarItemStyle: { paddingVertical: 8 },
         tabBarLabelStyle: {
           marginTop: 6,   
@@ -104,6 +104,17 @@ function BottomTabs() {
 }
 
 const styles = StyleSheet.create({
+  tabBar: {
+    borderRadius:8.31,
+    height: 90,
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#000000',
+    shadowOpacity: 0.06,
+    shadowRadius: 9.6,
+    shadowOffset: { width: 0, height: -3 },
+    elevation: 8,
+    borderTopWidth: 0,
+  },
   icon: {
     tintColor: '#D9D9D9',
   },

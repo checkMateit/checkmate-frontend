@@ -2,26 +2,21 @@ import React from 'react';
 import { Image, ImageBackground, ImageSourcePropType, StyleSheet, Text, View } from 'react-native';
 import { colors } from '../styles/colors';
 import MascotImage from './CategoryImage';
-type StatusVariant = 'success' | 'warning' | 'danger' | 'neutral';
+export type StatusVariant = 'success' | 'danger' | 'neutral';
+export type StatusIconType = 'success' | 'danger';
 
-type StudyCardProps = {
+export type StudyCardProps = {
   tag: string;
   title: string;
   schedule: string;
   members: string;
   statusText: string;
   statusVariant?: StatusVariant;
+  statusIcons?: StatusIconType[];
   mascotLabel?: string;
   mascotSource?: ImageSourcePropType;
 };
 
-
-const STATUS_COLORS: Record<StatusVariant, string> = {
-  success: colors.primary,
-  warning: '#FFB547',
-  danger: '#FF6B6B',
-  neutral: colors.textSecondary,
-};
 
 const personIcon = require('../assets/icon/person_icon.png');
 const cancelIcon = require('../assets/icon/cancel_icon.png');
@@ -34,12 +29,18 @@ function StudyCard({
   members,
   statusText,
   statusVariant = 'neutral',
+  statusIcons,
   mascotLabel,
   mascotSource,
 }: StudyCardProps) {
-  const statusColor = STATUS_COLORS[statusVariant];
   const statusIcon =
     statusVariant === 'danger' ? cancelIcon : statusVariant === 'success' ? checkIcon : null;
+  const statusIconList =
+    statusIcons && statusIcons.length > 0
+      ? statusIcons.slice(0, 2)
+      : statusIcon
+        ? [statusVariant === 'danger' ? 'danger' : 'success']
+        : [];
 
   return (
     <View style={styles.card}>
@@ -74,11 +75,13 @@ function StudyCard({
         </View>
         <View style={styles.statusRow}>
           <Text style={styles.statusText}>{statusText}</Text>
-          {statusIcon ? (
-            <View style={[styles.statusBadge, { backgroundColor: statusColor }]}>
-              <Image source={statusIcon} style={styles.statusIcon} />
-            </View>
-          ) : null}
+          {statusIconList.map((iconType, index) => (
+            <Image
+              key={`${iconType}-${index}`}
+              source={iconType === 'danger' ? cancelIcon : checkIcon}
+              style={styles.statusIcon}
+            />
+          ))}
         </View>
       </View>
     </View>
@@ -89,7 +92,7 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
-    paddingHorizontal: 18,
+    paddingHorizontal: 30,
     paddingVertical: 14,
     height: 159,
     borderWidth: 1,
@@ -109,10 +112,10 @@ const styles = StyleSheet.create({
 
   leftInfo: {
     flex: 1,
-    paddingRight: 12, // ⭐ 오른쪽 마스코트랑 겹침 방지
+    paddingRight: 12, 
   },
   category: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 10,
     height: 20,
     marginTop: 8,
     marginBottom: 8,
@@ -121,19 +124,14 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
   },
   chipText: {
-    fontSize: 12,
+    fontSize: 11,
     color: colors.textPrimary,
     fontWeight: '700',
   },
   mascot: {
-    width: 82,
     height: 94,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  mascotImage: {
-    width: '100%',
-    height: '100%',
   },
   mascotText: {
     fontSize: 26,
@@ -143,13 +141,13 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: colors.textPrimary,
     marginBottom: 4,
-    paddingLeft: 10,
+    
   },
   schedule: {
     fontSize: 12,
     color: colors.textSecondary,
     marginBottom: 10,
-    paddingLeft: 10,
+   
   },
   footer: {
     flexDirection: 'row',
@@ -162,11 +160,11 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   membersIcon: {
-    width: 18,
-    height: 18,
+    width: 17,
+    height: 12,
   },
   membersText: {
-    fontSize: 15,
+    fontSize: 12,
     color: colors.primary,
     fontWeight: '700',
   },
@@ -176,21 +174,13 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   statusText: {
-    fontSize: 15,
+    fontSize: 14,
     color: colors.textSecondary,
-    fontWeight: '700',
-  },
-  statusBadge: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
+    fontWeight: '600',
   },
   statusIcon: {
-    width: 12,
-    height: 12,
-    tintColor: '#FFFFFF',
+    width: 20,
+    height: 20,
   },
 });
 
