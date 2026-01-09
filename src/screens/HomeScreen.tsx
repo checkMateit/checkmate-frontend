@@ -12,11 +12,12 @@ import {
   Pressable
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import StudyCard, { type StudyCardProps } from '../components/StudyCard';
+import StudyCard from '../components/StudyCard';
 import RecommendStudyCard from '../components/RecommendStudyCard';
 import { colors } from '../styles/colors';
 import NotificationScreen from './NotificationScreen';
 import MyStudyScreen from './MyStudyScreen';
+import StudyDetailScreen, { type StudyDetail } from './StudyDetailScreen';
 const rightIcon = require('../assets/icon/right_arrow.png');
 const backgroundSource = require('../assets/image/background.png');
 const shopIconSource = require('../assets/icon/shop_icon.png');
@@ -37,6 +38,8 @@ function HomeScreen() {
   const [showHelp, setShowHelp] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showMyStudies, setShowMyStudies] = useState(false);
+  const [showStudyDetail, setShowStudyDetail] = useState(false);
+  const [selectedStudy, setSelectedStudy] = useState<StudyDetail | null>(null);
   const [headerWidth, setHeaderWidth] = useState(0);
   const [helpIconLayout, setHelpIconLayout] = useState({ x: 0, width: 0 });
   const [helpBubbleWidth, setHelpBubbleWidth] = useState(0);
@@ -48,63 +51,93 @@ function HomeScreen() {
       ? Math.max(12, Math.min(helpBubbleWidth - 12, tailCenter + 15)) - 6
       : 0;
 
-  const studyCards = useMemo<StudyCardProps[]>(
+  const studies = useMemo<StudyDetail[]>(
     () => [
       {
+        id: 'study-1',
         tag: '코딩',
         title: '코테 스터디',
-        schedule: '월/화/수 · 10:00 - 13:00',
         members: '3/5',
+        description: '안녕하세요, 코테 스터디룸입니다',
+        schedule: '월/화/수 · 10:00 - 13:00',
+        count: '5회 인증',
+        methods: ['TODO', '사진'],
+        image: studyMascotOne,
         statusText: '인증 미완료',
         statusVariant: 'danger' as const,
         statusIcons: ['danger', 'danger'],
         mascotSource: studyMascotOne,
       },
       {
+        id: 'study-2',
         tag: '언어',
         title: '토익 스터디',
-        schedule: '매일 · 8:00 - 9:00',
         members: '6/6',
+        description: '안녕하세요, 토익 빡공 스터디룸입니다',
+        schedule: '매일 · 8:00 - 9:00',
+        count: '5회 인증',
+        methods: ['TODO', '사진'],
+        image: studyMascotTwo,
         statusText: 'TODO 인증 완료',
         statusVariant: 'success' as const,
         statusIcons: ['success'],
         mascotSource: studyMascotTwo,
       },
       {
+        id: 'study-3',
         tag: '코딩',
         title: '머시기 스터디',
-        schedule: '매일 · 오전 10:00',
         members: '4/10',
+        description: '안녕하세요, 머시기 스터디입니다',
+        schedule: '매일 · 오전 10:00',
+        count: '3회 인증',
+        methods: ['TODO', '사진'],
+        image: studyMascotThree,
         statusText: '인증 진행중',
         statusVariant: 'danger' as const,
         statusIcons: ['danger', 'success'],
         mascotSource: studyMascotThree,
       },
       {
+        id: 'study-4',
         tag: '책상',
         title: '앉아 스터디',
-        schedule: '매일 · 오전 10:00',
         members: '3/6',
+        description: '안녕하세요, 앉아 스터디입니다',
+        schedule: '매일 · 오전 10:00',
+        count: '2회 인증',
+        methods: ['TODO', '사진'],
+        image: studyMascotFour,
         statusText: 'TODO 인증 완료',
         statusVariant: 'success' as const,
         statusIcons: ['success', 'success'],
         mascotSource: studyMascotFour,
       },
       {
+        id: 'study-5',
         tag: '코딩',
         title: '깃허브 스터디',
-        schedule: '매일 · 오후 8:00',
         members: '2/5',
+        description: '안녕하세요, 깃허브 스터디입니다',
+        schedule: '매일 · 오후 8:00',
+        count: '4회 인증',
+        methods: ['TODO', '사진'],
+        image: studyMascotOne,
         statusText: '인증 미완료',
         statusVariant: 'danger' as const,
         statusIcons: ['danger'],
         mascotSource: studyMascotOne,
       },
       {
+        id: 'study-6',
         tag: '영어',
         title: '회화 스터디',
-        schedule: '월/수/금 · 오후 7:00',
         members: '5/8',
+        description: '안녕하세요, 회화 스터디입니다',
+        schedule: '월/수/금 · 오후 7:00',
+        count: '5회 인증',
+        methods: ['TODO', '사진'],
+        image: studyMascotTwo,
         statusText: '인증 진행중',
         statusVariant: 'success' as const,
         statusIcons: ['success', 'danger'],
@@ -116,11 +149,11 @@ function HomeScreen() {
 
   const studyPages = useMemo(() => {
     const pages = [];
-    for (let i = 0; i < studyCards.length; i += 2) {
-      pages.push(studyCards.slice(i, i + 2));
+    for (let i = 0; i < studies.length; i += 2) {
+      pages.push(studies.slice(i, i + 2));
     }
     return pages;
-  }, [studyCards]);
+  }, [studies]);
 
   return (
     <SafeAreaView style={styles.root}>
@@ -208,6 +241,10 @@ function HomeScreen() {
                     statusVariant={card.statusVariant}
                     statusIcons={card.statusIcons}
                     mascotSource={card.mascotSource}
+                    onPress={() => {
+                      setSelectedStudy(card);
+                      setShowStudyDetail(true);
+                    }}
                   />
                 ))}
               </View>
@@ -321,6 +358,15 @@ function HomeScreen() {
       >
         <MyStudyScreen onClose={() => setShowMyStudies(false)} />
       </Modal>
+
+      {showStudyDetail && selectedStudy ? (
+        <View style={styles.studyDetailOverlay}>
+          <StudyDetailScreen
+            study={selectedStudy}
+            onClose={() => setShowStudyDetail(false)}
+          />
+        </View>
+      ) : null}
     </SafeAreaView>
   );
 }
@@ -533,7 +579,16 @@ const styles = StyleSheet.create({
     borderLeftColor: 'transparent',
     borderRightColor: 'transparent',
     borderTopColor: colors.primary,
-},
+  },
+  studyDetailOverlay: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+    backgroundColor: colors.background,
+    zIndex: 20,
+  },
 });
 
 export default HomeScreen;

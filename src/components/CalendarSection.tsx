@@ -186,7 +186,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   daySelected: {
-    backgroundColor: colors.primary,
+    backgroundColor: '#ffffff',
+    borderColor: colors.primary,
   },
   dayText: {
     fontSize: 15,
@@ -194,7 +195,7 @@ const styles = StyleSheet.create({
     color: '#3C3C3C',
   },
   dayTextSelected: {
-    color: '#FFFFFF',
+    color: '#111111',
   },
 });
 

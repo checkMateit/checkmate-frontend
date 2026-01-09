@@ -1,5 +1,13 @@
 import React from 'react';
-import { Image, ImageBackground, ImageSourcePropType, StyleSheet, Text, View } from 'react-native';
+import {
+  Image,
+  ImageBackground,
+  ImageSourcePropType,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { colors } from '../styles/colors';
 import MascotImage from './CategoryImage';
 export type StatusVariant = 'success' | 'danger' | 'neutral';
@@ -15,6 +23,7 @@ export type StudyCardProps = {
   statusIcons?: StatusIconType[];
   mascotLabel?: string;
   mascotSource?: ImageSourcePropType;
+  onPress?: () => void;
 };
 
 
@@ -32,6 +41,7 @@ function StudyCard({
   statusIcons,
   mascotLabel,
   mascotSource,
+  onPress,
 }: StudyCardProps) {
   const statusIcon =
     statusVariant === 'danger' ? cancelIcon : statusVariant === 'success' ? checkIcon : null;
@@ -43,7 +53,7 @@ function StudyCard({
         : [];
 
   return (
-    <View style={styles.card}>
+    <Pressable style={styles.card} onPress={onPress}>
       <View style={styles.topRow}>
         {/* left */}
         <View style={styles.leftInfo}>
@@ -84,7 +94,7 @@ function StudyCard({
           ))}
         </View>
       </View>
-    </View>
+    </Pressable>
   );
 }
 

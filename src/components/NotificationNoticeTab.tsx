@@ -99,8 +99,8 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
   },
   noticeBadge: {
-    width: 44,
-    height: 44,
+    width: 42,
+    height: 54,
   },
   skeletonCard: {
     backgroundColor: '#F2F2F2',
