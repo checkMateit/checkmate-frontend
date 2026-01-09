@@ -1,32 +1,126 @@
-import React from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   Dimensions,
   Image,
   ImageBackground,
+  Modal,
   SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
   View,
+  Pressable
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import StudyCard from '../components/StudyCard';
+import StudyCard, { type StudyCardProps } from '../components/StudyCard';
+import RecommendStudyCard from '../components/RecommendStudyCard';
 import { colors } from '../styles/colors';
-
+import NotificationScreen from './NotificationScreen';
+import MyStudyScreen from './MyStudyScreen';
+const rightIcon = require('../assets/icon/right_arrow.png');
 const backgroundSource = require('../assets/image/background.png');
 const shopIconSource = require('../assets/icon/shop_icon.png');
 const alarmIconSource = require('../assets/icon/alarm_icon.png');
 const studyMascotOne = require('../assets/character/cha_1.png');
 const studyMascotTwo = require('../assets/character/ch_2.png');
+const studyMascotThree = require('../assets/character/ch_3.png');
+const studyMascotFour = require('../assets/character/ch_4.png');
 const { width: bgWidth, height: bgHeight } = Image.resolveAssetSource(backgroundSource);
 const HEADER_HEIGHT = 40;
 const HERO_TEXT_TOP = 12;
-
 
 function HomeScreen() {
   const insets = useSafeAreaInsets();
   const screenWidth = Dimensions.get('window').width;
   const heroHeight = Math.round((screenWidth * bgHeight) / bgWidth) + insets.top;
+  const [activePage, setActivePage] = useState(0);
+  const [showHelp, setShowHelp] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [showMyStudies, setShowMyStudies] = useState(false);
+  const [headerWidth, setHeaderWidth] = useState(0);
+  const [helpIconLayout, setHelpIconLayout] = useState({ x: 0, width: 0 });
+  const [helpBubbleWidth, setHelpBubbleWidth] = useState(0);
+
+  const bubbleLeft = headerWidth && helpBubbleWidth ? (headerWidth - helpBubbleWidth) / 2 : 0;
+  const tailCenter = helpIconLayout.x + helpIconLayout.width / 2 - bubbleLeft;
+  const tailLeft =
+    helpBubbleWidth > 0
+      ? Math.max(12, Math.min(helpBubbleWidth - 12, tailCenter + 15)) - 6
+      : 0;
+
+  const studyCards = useMemo<StudyCardProps[]>(
+    () => [
+      {
+        tag: '코딩',
+        title: '코테 스터디',
+        schedule: '월/화/수 · 10:00 - 13:00',
+        members: '3/5',
+        statusText: '인증 미완료',
+        statusVariant: 'danger' as const,
+        statusIcons: ['danger', 'danger'],
+        mascotSource: studyMascotOne,
+      },
+      {
+        tag: '언어',
+        title: '토익 스터디',
+        schedule: '매일 · 8:00 - 9:00',
+        members: '6/6',
+        statusText: 'TODO 인증 완료',
+        statusVariant: 'success' as const,
+        statusIcons: ['success'],
+        mascotSource: studyMascotTwo,
+      },
+      {
+        tag: '코딩',
+        title: '머시기 스터디',
+        schedule: '매일 · 오전 10:00',
+        members: '4/10',
+        statusText: '인증 진행중',
+        statusVariant: 'danger' as const,
+        statusIcons: ['danger', 'success'],
+        mascotSource: studyMascotThree,
+      },
+      {
+        tag: '책상',
+        title: '앉아 스터디',
+        schedule: '매일 · 오전 10:00',
+        members: '3/6',
+        statusText: 'TODO 인증 완료',
+        statusVariant: 'success' as const,
+        statusIcons: ['success', 'success'],
+        mascotSource: studyMascotFour,
+      },
+      {
+        tag: '코딩',
+        title: '깃허브 스터디',
+        schedule: '매일 · 오후 8:00',
+        members: '2/5',
+        statusText: '인증 미완료',
+        statusVariant: 'danger' as const,
+        statusIcons: ['danger'],
+        mascotSource: studyMascotOne,
+      },
+      {
+        tag: '영어',
+        title: '회화 스터디',
+        schedule: '월/수/금 · 오후 7:00',
+        members: '5/8',
+        statusText: '인증 진행중',
+        statusVariant: 'success' as const,
+        statusIcons: ['success', 'danger'],
+        mascotSource: studyMascotTwo,
+      },
+    ],
+    [],
+  );
+
+  const studyPages = useMemo(() => {
+    const pages = [];
+    for (let i = 0; i < studyCards.length; i += 2) {
+      pages.push(studyCards.slice(i, i + 2));
+    }
+    return pages;
+  }, [studyCards]);
 
   return (
     <SafeAreaView style={styles.root}>
@@ -37,24 +131,24 @@ function HomeScreen() {
         ]}
       >
         <Text style={styles.brand}>Checkmate</Text>
-        <View style={styles.iconRow}>
-          <View style={styles.iconWrapper}>
-            <Image
-              source={shopIconSource}
-              style={{ width: 30, height: 28 }}
-            />
-          </View>
-          <View style={styles.iconWrapper}>
-            <Image
-              source={alarmIconSource}
-              style={{ width: 22.28, height: 28 }}
-            />
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>1</Text>
+          <View style={styles.iconRow}>
+            <View style={styles.iconWrapper}>
+              <Image
+                source={shopIconSource}
+                style={{ width: 30, height: 28 }}
+              />
             </View>
+            <Pressable style={styles.iconWrapper} onPress={() => setShowNotifications(true)}>
+              <Image
+                source={alarmIconSource}
+                style={{ width: 22.28, height: 28 }}
+              />
+              <View style={styles.badge}>
+                <Text style={styles.badgeText}>1</Text>
+              </View>
+            </Pressable>
           </View>
         </View>
-      </View>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.heroWrap}>
           <ImageBackground
@@ -84,73 +178,149 @@ function HomeScreen() {
             </View>
             
 
-            <Text style={styles.heroCta}>스터디 전체 보기 ›</Text>
+            <Pressable style={styles.heroCtaRow} onPress={() => setShowMyStudies(true)}>
+              <Text style={styles.heroCta}>스터디 전체 보기</Text>
+              <Image source={rightIcon} style={styles.heroCtaIcon} />
+            </Pressable>
           </View>
         </View>
 
         <View style={styles.heroCardsWrap}>
-          <StudyCard
-            tag="코딩"
-            title="코테 스터디"
-            schedule="월/화/수 · 10:00 - 13:00"
-            members="3/5"
-            statusText="인증 미완료"
-            statusVariant="danger"
-            mascotSource={studyMascotOne}
-          />
-          <StudyCard
-            tag="언어"
-            title="토익 스터디"
-            schedule="매일 · 8:00 - 9:00"
-            members="6/6"
-            statusText="TODO 인증 완료"
-            statusVariant="success"
-            mascotSource={studyMascotTwo}
-          />
+          <ScrollView
+            horizontal
+            pagingEnabled
+            showsHorizontalScrollIndicator={false}
+            onMomentumScrollEnd={(event) => {
+              const nextPage = Math.round(event.nativeEvent.contentOffset.x / screenWidth);
+              setActivePage(nextPage);
+            }}
+          >
+            {studyPages.map((page, pageIndex) => (
+              <View key={`study-page-${pageIndex}`} style={[styles.page, { width: screenWidth }]}>
+                {page.map((card, cardIndex) => (
+                  <StudyCard
+                    key={`${card.title}-${cardIndex}`}
+                    tag={card.tag}
+                    title={card.title}
+                    schedule={card.schedule}
+                    members={card.members}
+                    statusText={card.statusText}
+                    statusVariant={card.statusVariant}
+                    statusIcons={card.statusIcons}
+                    mascotSource={card.mascotSource}
+                  />
+                ))}
+              </View>
+            ))}
+          </ScrollView>
         </View>
 
         <View style={styles.dots}>
-          <View style={[styles.dot, styles.dotActive]} />
-          <View style={styles.dot} />
-          <View style={styles.dot} />
+          {studyPages.map((_, index) => (
+            <View
+              key={`dot-${index}`}
+              style={[styles.dot, index === activePage ? styles.dotActive : null]}
+            />
+          ))}
         </View>
 
         <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>이런 스터디는 어때요?</Text>
-            <Text style={styles.sectionInfo}>ⓘ</Text>
+          <View
+            style={styles.sectionHeaderWrap}
+            onLayout={(event) => setHeaderWidth(event.nativeEvent.layout.width)}
+          >
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>이런 스터디는 어때요?</Text>
+              {/* <Image source={require('../assets/icon/help_icon.png')} style={{ width: 14, height: 14 }} /> */}
+              <View
+                style={styles.helpWrap}
+                onLayout={(event) => setHelpIconLayout(event.nativeEvent.layout)}
+              >
+                <Pressable onPress={() => setShowHelp(true)} hitSlop={10}>
+                  <Image
+                    source={require('../assets/icon/help_icon.png')}
+                    style={{ width: 14, height: 14 }}
+                  />
+                </Pressable>
+              </View>
+            </View>
+
+            {showHelp && (
+              <View style={styles.helpBubbleContainer}>
+                <View
+                  style={styles.helpBubble}
+                  onLayout={(event) => setHelpBubbleWidth(event.nativeEvent.layout.width)}
+                >
+                  <Text style={styles.helpBubbleText} numberOfLines={1}>
+                    승연님의 관심사를 토대로 스터디 리스트를 짜봤어요!
+                  </Text>
+
+                  <Pressable onPress={() => setShowHelp(false)} hitSlop={10}>
+                    <Text style={styles.helpBubbleClose}>×</Text>
+                  </Pressable>
+
+                  <View style={[styles.helpBubbleTail, { left: tailLeft }]} />
+                </View>
+              </View>
+            )}
           </View>
 
-          <View style={styles.cardRow}>
-            <View style={styles.studyCard}>
-              <View style={styles.cardTop}>
-                <View style={styles.chip}>
-                  <Text style={styles.chipText}>코딩</Text>
-                </View>
-                <Text style={styles.cardCountSmall}>👥 4/10</Text>
-              </View>
-              <Text style={styles.cardTitleSmall}>머시기 스터디</Text>
-              <Text style={styles.cardMetaSmall}>🕘 매일 · 오전 10:00</Text>
-              <Text style={styles.cardMetaSmall}>인증방식 Github (필수), 사진</Text>
-            </View>
-            <View style={styles.studyCard}>
-              <View style={styles.cardTop}>
-                <View style={styles.chip}>
-                  <Text style={styles.chipText}>책상</Text>
-                </View>
-                <Text style={styles.cardCountSmall}>👥 3/6</Text>
-              </View>
-              <Text style={styles.cardTitleSmall}>앉아 스터디</Text>
-              <Text style={styles.cardMetaSmall}>🕘 매일 · 오전 10:00</Text>
-              <Text style={styles.cardMetaSmall}>인증방식 Github (필수), 사진</Text>
-            </View>
-          </View>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.recommendRow}
+          >
+            <RecommendStudyCard
+              tag="코딩"
+              members="4/10"
+              title="머시기 스터디"
+              time="매일 · 오전 10:00"
+              method="Github (필수), 사진"
+            />
+            <RecommendStudyCard
+              tag="책상"
+              members="3/6"
+              title="앉아 스터디"
+              time="매일 · 오전 10:00"
+              method="Github (필수), 사진"
+            />
+            <RecommendStudyCard
+              tag="언어"
+              members="2/5"
+              title="회화 스터디"
+              time="월/수/금 · 오후 7:00"
+              method="Github (필수), 사진"
+            />
+            <RecommendStudyCard
+              tag="코딩"
+              members="5/8"
+              title="알고리즘 스터디"
+              time="매일 · 오후 9:00"
+              method="Github (필수), 사진"
+            />
+          </ScrollView>
         </View>
 
         <View style={styles.ad}>
           <Text style={styles.adText}>광고</Text>
         </View>
       </ScrollView>
+
+      <Modal
+        visible={showNotifications}
+        animationType="slide"
+        onRequestClose={() => setShowNotifications(false)}
+      >
+        <NotificationScreen onClose={() => setShowNotifications(false)} />
+      </Modal>
+
+      <Modal
+        visible={showMyStudies}
+        animationType="slide"
+        onRequestClose={() => setShowMyStudies(false)}
+      >
+        <MyStudyScreen onClose={() => setShowMyStudies(false)} />
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -231,29 +401,29 @@ const styles = StyleSheet.create({
   },
   
   heroCta: {
-    alignSelf: 'flex-end',
     color: '#FFFFFF',
     fontWeight: '700',
     fontSize: 16,
     
   },
+  heroCtaRow: {
+    alignSelf: 'flex-end',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  heroCtaIcon: {
+    width: 6,
+    height: 15,
+    tintColor: '#FFFFFF',
+  },
   heroCardsWrap: {
     marginTop: -400,
+    paddingHorizontal: 0,
+  },
+  page: {
     paddingHorizontal: 16,
     gap: 12,
-  },
-  chip: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: colors.primary,
-    backgroundColor: '#FFFFFF',
-  },
-  chipText: {
-    fontSize: 11,
-    color: colors.primary,
-    fontWeight: '600',
   },
   dots: {
     flexDirection: 'row',
@@ -262,12 +432,13 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   dot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: '#BFC7C2',
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#7D7D7D',
   },
   dotActive: {
+    width: 22,
     backgroundColor: colors.primary,
   },
   section: {
@@ -276,12 +447,15 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
     backgroundColor: colors.secondary,
   },
-  sectionHeader: {
+  sectionHeaderWrap: {
     paddingHorizontal: 16,
+    marginBottom: 12,
+    position: 'relative',
+  },
+  sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    marginBottom: 12,
   },
   sectionTitle: {
     fontSize: 16,
@@ -292,40 +466,10 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: colors.textSecondary,
   },
-  cardRow: {
-    flexDirection: 'row',
-    gap: 12,
+  recommendRow: {
     paddingHorizontal: 16,
-  },
-  studyCard: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 14,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  cardTop: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 8,
-  },
-  cardCountSmall: {
-    fontSize: 11,
-    color: colors.primary,
-    fontWeight: '600',
-  },
-  cardTitleSmall: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: colors.textPrimary,
-    marginBottom: 4,
-  },
-  cardMetaSmall: {
-    fontSize: 10,
-    color: colors.textSecondary,
-    marginBottom: 4,
+    gap: 12,
+    paddingBottom: 7,
   },
   ad: {
     marginTop: 16,
@@ -338,6 +482,58 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: colors.textPrimary,
   },
+  helpWrap: {
+    position: 'relative',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  helpBubbleContainer: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: -44,
+    alignItems: 'center',
+    zIndex: 50,
+  },
+  helpBubble: {
+    backgroundColor: '#2FE377',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    shadowColor: '#000',
+    shadowOpacity: 0.12,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
+    maxWidth: 320,
+  },
+  helpBubbleText: {
+    color: '#373737',
+    fontSize: 11,
+    fontWeight: '700',
+    flexShrink: 0,
+  },
+  helpBubbleClose: {
+    color: '#373737',
+    fontSize: 16,
+    fontWeight: '300',
+    lineHeight: 16,
+  },
+  helpBubbleTail: {
+    position: 'absolute',
+    bottom: -6,
+    width: 0,
+    height: 0,
+    borderLeftWidth: 6,
+    borderRightWidth: 6,
+    borderTopWidth: 6,
+    borderLeftColor: 'transparent',
+    borderRightColor: 'transparent',
+    borderTopColor: colors.primary,
+},
 });
 
 export default HomeScreen;
