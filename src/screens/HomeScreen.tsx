@@ -10,11 +10,18 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import StudyCard from '../components/StudyCard';
 import { colors } from '../styles/colors';
 
 const backgroundSource = require('../assets/image/background.png');
+const shopIconSource = require('../assets/icon/shop_icon.png');
+const alarmIconSource = require('../assets/icon/alarm_icon.png');
+const studyMascotOne = require('../assets/character/cha_1.png');
+const studyMascotTwo = require('../assets/character/ch_2.png');
 const { width: bgWidth, height: bgHeight } = Image.resolveAssetSource(backgroundSource);
-const HERO_PADDING_TOP = -50;
+const HEADER_HEIGHT = 40;
+const HERO_TEXT_TOP = 12;
+
 
 function HomeScreen() {
   const insets = useSafeAreaInsets();
@@ -23,6 +30,31 @@ function HomeScreen() {
 
   return (
     <SafeAreaView style={styles.root}>
+      <View
+        style={[
+          styles.headerOverlay,
+          { height: HEADER_HEIGHT + insets.top, paddingTop: insets.top },
+        ]}
+      >
+        <Text style={styles.brand}>Checkmate</Text>
+        <View style={styles.iconRow}>
+          <View style={styles.iconWrapper}>
+            <Image
+              source={shopIconSource}
+              style={{ width: 30, height: 28 }}
+            />
+          </View>
+          <View style={styles.iconWrapper}>
+            <Image
+              source={alarmIconSource}
+              style={{ width: 22.28, height: 28 }}
+            />
+            <View style={styles.badge}>
+              <Text style={styles.badgeText}>1</Text>
+            </View>
+          </View>
+        </View>
+      </View>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.heroWrap}>
           <ImageBackground
@@ -32,73 +64,49 @@ function HomeScreen() {
               styles.heroBackground,
               {
                 height: heroHeight,
-                marginTop: -insets.top,
+                marginTop: -insets.top -35,
               },
             ]}
           />
-          <View style={[styles.heroContent, { paddingTop: HERO_PADDING_TOP + insets.top }]}>
-            <View style={styles.heroTopRow}>
-              <Text style={styles.brand}>Checkmate</Text>
-              <View style={styles.iconRow}>
-                <View style={styles.iconCircle}>
-                  <Text style={styles.iconText}>🛒</Text>
-                </View>
-                <View style={styles.iconCircle}>
-                  <Text style={styles.iconText}>🔔</Text>
-                  <View style={styles.badge}>
-                    <Text style={styles.badgeText}>1</Text>
-                  </View>
-                </View>
-              </View>
-            </View>
-
+          <View
+            style={[
+              styles.heroContent,
+              { paddingTop: HEADER_HEIGHT + insets.top + HERO_TEXT_TOP },
+            ]}
+          >
             <View style={styles.heroTextBlock}>
               <Text style={styles.heroLine}>
-                <Text >승연 메이트님</Text>
+                <Text>승연 메이트님</Text>
               </Text>
               <Text style={styles.heroLine}>
                 <Text>오늘은 스터디 2개가 있어요!</Text>
               </Text>
             </View>
+            
 
             <Text style={styles.heroCta}>스터디 전체 보기 ›</Text>
           </View>
         </View>
 
         <View style={styles.heroCardsWrap}>
-          <View style={styles.heroCard}>
-            <View style={styles.cardHeader}>
-              <View style={styles.chip}>
-                <Text style={styles.chipText}>코딩</Text>
-              </View>
-              <View style={styles.cardMascot}>
-                <Text style={styles.cardMascotText}>⌨️</Text>
-              </View>
-            </View>
-            <Text style={styles.cardTitle}>코테 스터디</Text>
-            <Text style={styles.cardMeta}>월/화/수 · 10:00 - 13:00</Text>
-            <View style={styles.cardFooter}>
-              <Text style={styles.cardCount}>👥 3/5</Text>
-              <Text style={styles.cardStatus}>인증 진행중</Text>
-            </View>
-          </View>
-
-          <View style={styles.heroCard}>
-            <View style={styles.cardHeader}>
-              <View style={styles.chip}>
-                <Text style={styles.chipText}>언어</Text>
-              </View>
-              <View style={styles.cardMascot}>
-                <Text style={styles.cardMascotText}>🗣️</Text>
-              </View>
-            </View>
-            <Text style={styles.cardTitle}>토익 스터디</Text>
-            <Text style={styles.cardMeta}>매일 · 8:00 - 9:00</Text>
-            <View style={styles.cardFooter}>
-              <Text style={styles.cardCount}>👥 6/6</Text>
-              <Text style={styles.cardStatus}>TODO 인증 완료</Text>
-            </View>
-          </View>
+          <StudyCard
+            tag="코딩"
+            title="코테 스터디"
+            schedule="월/화/수 · 10:00 - 13:00"
+            members="3/5"
+            statusText="인증 미완료"
+            statusVariant="danger"
+            mascotSource={studyMascotOne}
+          />
+          <StudyCard
+            tag="언어"
+            title="토익 스터디"
+            schedule="매일 · 8:00 - 9:00"
+            members="6/6"
+            statusText="TODO 인증 완료"
+            statusVariant="success"
+            mascotSource={studyMascotTwo}
+          />
         </View>
 
         <View style={styles.dots}>
@@ -156,6 +164,17 @@ const styles = StyleSheet.create({
     paddingBottom: 32,
     backgroundColor: colors.background,
   },
+  headerOverlay: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    zIndex: 10,
+    paddingHorizontal: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: colors.primary,
+  },
   heroWrap: {
     position: 'relative',
   },
@@ -170,12 +189,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 40,
   },
-  heroTopRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 18,
-  },
   brand: {
     fontSize: 18,
     fontWeight: '700',
@@ -185,16 +198,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 8,
   },
-  iconCircle: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    backgroundColor: 'rgba(255, 255, 255, 0.45)',
+  iconWrapper: {
+    padding: 2,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  iconText: {
-    fontSize: 15,
   },
   badge: {
     position: 'absolute',
@@ -214,8 +221,8 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   heroTextBlock: {
-    marginBottom: 60,
-    marginTop: 20,
+    marginBottom: 50,
+    marginTop: -50,
   },
   heroLine: {
     fontSize: 26,
@@ -228,28 +235,12 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontWeight: '700',
     fontSize: 16,
+    
   },
   heroCardsWrap: {
     marginTop: -400,
     paddingHorizontal: 16,
     gap: 12,
-  },
-  heroCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: colors.border,
-    shadowColor: '#000000',
-    shadowOpacity: 0.05,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 2 },
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 10,
   },
   chip: {
     paddingHorizontal: 10,
@@ -263,42 +254,6 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: colors.primary,
     fontWeight: '600',
-  },
-  cardMascot: {
-    width: 54,
-    height: 54,
-    borderRadius: 12,
-    backgroundColor: colors.secondary,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  cardMascotText: {
-    fontSize: 20,
-  },
-  cardTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: colors.textPrimary,
-    marginBottom: 4,
-  },
-  cardMeta: {
-    fontSize: 12,
-    color: colors.textSecondary,
-    marginBottom: 10,
-  },
-  cardFooter: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  cardCount: {
-    fontSize: 12,
-    color: colors.primary,
-    fontWeight: '700',
-  },
-  cardStatus: {
-    fontSize: 12,
-    color: colors.textSecondary,
   },
   dots: {
     flexDirection: 'row',
