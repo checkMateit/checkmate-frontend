@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { SafeAreaView, ScrollView, StyleSheet, View } from 'react-native';
-import StudyBoardTab from '../components/StudyBoardTab';
-import StudyDetailHeader from '../components/StudyDetailHeader';
-import StudyDetailTabs from '../components/StudyDetailTabs';
-import StudyInfoTab from '../components/StudyInfoTab';
-import StudyOverviewCard from '../components/StudyOverviewCard';
-import StudyReportTab from '../components/StudyReportTab';
-import StudyStatusSection from '../components/StudyStatusSection';
+import StudyBoardTab from '../components/StudyBoard/StudyBoardTab';
+import StudyDetailHeader from '../components/StudyDetail/StudyDetailHeader';
+import StudyDetailTabs from '../components/StudyDetail/StudyDetailTabs';
+import StudyInfoTab from '../components/StudyDetail/StudyInfoTab';
+import StudyOverviewCard from '../components/StudyDetail/StudyOverviewCard';
+import StudyReportTab from '../components/StudyReport/StudyReportTab';
+import StudyStatusSection from '../components/StudyDetail/StudyStatusSection';
 import { colors } from '../styles/colors';
 
 export type StudyDetail = {

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { colors } from '../styles/colors';
+import { colors } from '../../styles/colors';
 import StudyStatusTabs from './StudyStatusTabs';
 import StudyStatusSummary from './StudyStatusSummary';
 import StudyStatusTodo from './StudyStatusTodo';

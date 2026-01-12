@@ -1,20 +1,22 @@
 import React from 'react';
 import { Image, StyleSheet, Text, View } from 'react-native';
-import { colors } from '../styles/colors';
+import { colors } from '../../styles/colors';
 
 type AuthMethodRowProps = {
   methods: string[];
+  label?: string;
+  showIcon?: boolean;
 };
 
-const settingIcon = require('../assets/icon/setting_2_icon.png');
+const settingIcon = require('../../assets/icon/setting_2_icon.png');
 const CHIP_HEIGHT = 14;
 
-function AuthMethodRow({ methods }: AuthMethodRowProps) {
+function AuthMethodRow({ methods, label = '인증방식', showIcon = true }: AuthMethodRowProps) {
   return (
     <View style={styles.row}>
       <View style={styles.labelRow}>
-        <Image source={settingIcon} style={styles.labelIcon} />
-        <Text style={styles.authText}>인증방식</Text>
+        {showIcon && <Image source={settingIcon} style={styles.labelIcon} />}
+        <Text style={styles.authText}>{label}</Text>
       </View>
       {methods.map((method) => (
         <MethodChip key={method} label={method} />
@@ -27,7 +29,7 @@ type MethodChipProps = {
   label: string;
 };
 
-const authIcon = require('../assets/icon/auth_icon.png');
+const authIcon = require('../../assets/icon/auth_icon.png');
 
 function MethodChip({ label }: MethodChipProps) {
   return (

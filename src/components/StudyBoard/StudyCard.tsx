@@ -8,8 +8,8 @@ import {
   Text,
   View,
 } from 'react-native';
-import { colors } from '../styles/colors';
-import MascotImage from './CategoryImage';
+import { colors } from '../../styles/colors';
+import MascotImage from '../Common/CategoryImage';
 export type StatusVariant = 'success' | 'danger' | 'neutral';
 export type StatusIconType = 'success' | 'danger';
 
@@ -27,9 +27,9 @@ export type StudyCardProps = {
 };
 
 
-const personIcon = require('../assets/icon/person_icon.png');
-const cancelIcon = require('../assets/icon/cancel_icon.png');
-const checkIcon = require('../assets/icon/check_icon.png');
+const personIcon = require('../../assets/icon/person_icon.png');
+const cancelIcon = require('../../assets/icon/cancel_icon.png');
+const checkIcon = require('../../assets/icon/check_icon.png');
 
 function StudyCard({
   tag,
@@ -58,7 +58,7 @@ function StudyCard({
         {/* left */}
         <View style={styles.leftInfo}>
           <ImageBackground
-            source={require('../assets/icon/category_icon.png')}
+            source={require('../../assets/icon/category_icon.png')}
             style={styles.category}
             resizeMode="contain">
             <Text style={styles.chipText}>{tag}</Text>

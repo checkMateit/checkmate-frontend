@@ -1,8 +1,8 @@
 import React from 'react';
 import { Image, StyleSheet, Text, View } from 'react-native';
-import { colors } from '../styles/colors';
+import { colors } from '../../styles/colors';
 
-const badgeOne = require('../assets/badge/badge_1.png');
+const badgeOne = require('../../assets/badge/badge_1.png');
 
 function NotificationNoticeTab() {
   return (

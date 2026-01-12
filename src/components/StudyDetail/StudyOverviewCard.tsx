@@ -1,6 +1,7 @@
 import React from 'react';
 import { Image, ImageBackground, ImageSourcePropType, StyleSheet, Text, View } from 'react-native';
-import { colors } from '../styles/colors';
+import { colors } from '../../styles/colors';
+import AuthMethodRow from '../Common/AuthMethodRow';
 
 type StudyOverviewCardProps = {
   tag: string;
@@ -13,9 +14,9 @@ type StudyOverviewCardProps = {
   image: ImageSourcePropType;
 };
 
-const categoryIcon = require('../assets/icon/category_icon.png');
-const personIcon = require('../assets/icon/person_icon.png');
-const timeIcon = require('../assets/icon/time_icon.png');
+const categoryIcon = require('../../assets/icon/category_icon.png');
+const personIcon = require('../../assets/icon/person_icon.png');
+const timeIcon = require('../../assets/icon/time_icon.png');
 
 function StudyOverviewCard({
   tag,
@@ -33,37 +34,31 @@ function StudyOverviewCard({
         <ImageBackground source={categoryIcon} style={styles.tagChip} resizeMode="contain">
           <Text style={styles.tagText}>{tag}</Text>
         </ImageBackground>
-        <View style={styles.memberRow}>
-          <Image source={personIcon} style={styles.memberIcon} />
-          <Text style={styles.memberText}>{members}</Text>
-        </View>
       </View>
       <View style={styles.infoRow}>
         <View style={styles.avatarWrap}>
           <Image source={image} style={styles.avatar} resizeMode="cover" />
         </View>
         <View style={styles.infoText}>
-          <Text style={styles.title}>{title}</Text>
+          <View style={styles.titleRow}>
+            <Text style={styles.title}>{title}</Text>
+            <View style={styles.memberRow}>
+              <Image source={personIcon} style={styles.memberIcon} />
+              <Text style={styles.memberText}>{members}</Text>
+            </View>
+          </View>
           <Text style={styles.subtitle}>{description}</Text>
         </View>
       </View>
       <View style={styles.detailBox}>
         <View style={styles.detailRow}>
           <Image source={timeIcon} style={styles.detailIcon} />
-          <Text style={styles.detailText}>{schedule}</Text>
-          <Text style={styles.detailDivider}>|</Text>
+          <Text style={styles.detailValue}>{schedule}</Text>
+          <View style={styles.detailDivider} />
           <Text style={styles.detailText}>횟수</Text>
           <Text style={styles.detailValue}>{count}</Text>
         </View>
-        <View style={styles.detailRow}>
-          <Text style={styles.detailLabel}>방식</Text>
-          {methods.map((method) => (
-            <View key={method} style={styles.methodChip}>
-              <View style={styles.methodBar} />
-              <Text style={styles.methodText}>{method}</Text>
-            </View>
-          ))}
-        </View>
+        <AuthMethodRow methods={methods} label="방식" showIcon={false} />
       </View>
     </View>
   );
@@ -71,14 +66,13 @@ function StudyOverviewCard({
 
 const styles = StyleSheet.create({
   card: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 40,
     paddingBottom: 16,
   },
   topRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 10,
-    gap: 10,
+    marginBottom: 12,
   },
   tagChip: {
     height: 22,
@@ -91,6 +85,12 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: colors.textPrimary,
   },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
   memberRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -98,24 +98,24 @@ const styles = StyleSheet.create({
   },
   memberIcon: {
     width: 14,
-    height: 14,
+    height: 10,
     tintColor: colors.primary,
   },
   memberText: {
-    fontSize: 12,
+    fontSize: 11,
     color: colors.primary,
     fontWeight: '700',
   },
   infoRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     gap: 12,
     marginBottom: 14,
   },
   avatarWrap: {
-    width: 64,
-    height: 64,
-    borderRadius: 12,
+    width: 71,
+    height: 71,
+    borderRadius: 7,
     backgroundColor: colors.secondary,
     overflow: 'hidden',
   },
@@ -127,21 +127,22 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   title: {
-    fontSize: 20,
+    fontSize: 26,
     fontWeight: '800',
     color: colors.textPrimary,
     marginBottom: 6,
   },
   subtitle: {
-    fontSize: 13,
+    fontSize: 15,
+    fontWeight: '700',
     color: colors.textSecondary,
   },
   detailBox: {
     borderWidth: 1,
     borderColor: '#E6E6E6',
     borderRadius: 10,
-    padding: 12,
-    gap: 8,
+    padding: 18,
+    gap: 15,
   },
   detailRow: {
     flexDirection: 'row',
@@ -155,40 +156,20 @@ const styles = StyleSheet.create({
     tintColor: colors.textSecondary,
   },
   detailText: {
-    fontSize: 12,
-    color: colors.textSecondary,
+    fontSize: 13,
+    fontWeight:'700',
+    color: '#515151',
   },
   detailDivider: {
-    color: '#C8C8C8',
+    width: 1,
+    height: 12,
+    backgroundColor: '#C8C8C8',
+    marginHorizontal: 6,
   },
   detailValue: {
-    fontSize: 12,
+    fontSize: 13,
     color: colors.textSecondary,
-    fontWeight: '700',
-  },
-  detailLabel: {
-    fontSize: 12,
-    color: colors.textSecondary,
-    fontWeight: '700',
-  },
-  methodChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-    borderRadius: 6,
-    overflow: 'hidden',
-  },
-  methodBar: {
-    width: 4,
-    height: '100%',
-    backgroundColor: colors.primary,
-  },
-  methodText: {
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    fontSize: 11,
-    color: colors.textSecondary,
+    fontWeight: '500',
   },
 });
 

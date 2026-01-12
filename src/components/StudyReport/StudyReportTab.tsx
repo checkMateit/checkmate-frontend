@@ -3,11 +3,11 @@ import { StyleSheet, View } from 'react-native';
 import RankingChartStrip from './RankingChartStrip';
 import RankingSummaryCard from './RankingSummaryCard';
 
-const profileOne = require('../assets/icon/profile_1.png');
-const profileTwo = require('../assets/icon/profile_2.png');
-const badgeOne = require('../assets/badge/badge_1.png');
-const badgeTwo = require('../assets/badge/badge_2.png');
-const badgeThree = require('../assets/badge/badge_3.png');
+const profileOne = require('../../assets/icon/profile_1.png');
+const profileTwo = require('../../assets/icon/profile_2.png');
+const badgeOne = require('../../assets/badge/badge_1.png');
+const badgeTwo = require('../../assets/badge/badge_2.png');
+const badgeThree = require('../../assets/badge/badge_3.png');
 
 function StudyReportTab() {
   const rankings = [
@@ -25,6 +25,7 @@ function StudyReportTab() {
         title="랭킹"
         description="연속 3일 인증을 완료해서, 70% 달성했어요"
         percent={70}
+        points={70}
       />
       <RankingChartStrip items={rankings} />
     </View>

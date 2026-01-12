@@ -1,6 +1,6 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { colors } from '../styles/colors';
+import { colors } from '../../styles/colors';
 
 type TabKey = 'notice' | 'study';
 

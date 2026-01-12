@@ -1,6 +1,6 @@
 import React from 'react';
 import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { colors } from '../styles/colors';
+import { colors } from '../../styles/colors';
 
 type RankingItem = {
   name: string;
@@ -41,53 +41,55 @@ function RankingChartStrip({ items }: RankingChartStripProps) {
 
 const styles = StyleSheet.create({
   chartRow: {
-    gap: 16,
+    gap: 35,
     alignItems: 'flex-end',
-    paddingRight: 20,
+    paddingRight: 30,
   },
   chartItem: {
     alignItems: 'center',
   },
   chartBarWrap: {
-    width: 24,
-    height: 140,
-    borderRadius: 12,
+    width: 30,
+    height: 275,
+    borderRadius: 2,
     backgroundColor: '#E6E6E6',
     overflow: 'hidden',
     justifyContent: 'flex-end',
-    marginBottom: 10,
+    marginBottom: -21,
   },
   chartBarFill: {
     width: '100%',
-    borderRadius: 12,
+    borderRadius: 37,
     backgroundColor: colors.primary,
   },
   profile: {
-    width: 42,
-    height: 42,
+    width: 41,
+    height: 41,
     borderRadius: 21,
     marginBottom: 6,
   },
   chartName: {
-    fontSize: 12,
+    fontSize: 14,
+    fontWeight: '600',
     color: colors.textSecondary,
+    marginBottom: 4,
   },
   chartScore: {
-    fontSize: 12,
+    fontSize: 14,
     color: colors.primary,
     fontWeight: '700',
     marginBottom: 6,
   },
   badge: {
-    width: 28,
-    height: 28,
+    width: 31,
+    height: 39,
     marginBottom: 6,
   },
   badgeTag: {
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 8,
-    backgroundColor: '#F1F1F1',
+    borderRadius: 3,
+    backgroundColor: '#F3F4F6',
   },
   badgeTagText: {
     fontSize: 10,

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Image, ImageBackground, StyleSheet, Text, View } from 'react-native';
-import { colors } from '../styles/colors';
+import { colors } from '../../styles/colors';
 
 type RecommendStudyCardProps = {
   tag: string;
@@ -10,9 +10,9 @@ type RecommendStudyCardProps = {
   method: string;
 };
 
-const timeIcon = require('../assets/icon/time_icon.png');
-const personIcon = require('../assets/icon/person_icon.png');
-const rightIcon = require('../assets/icon/right_arrow.png');
+const timeIcon = require('../../assets/icon/time_icon.png');
+const personIcon = require('../../assets/icon/person_icon.png');
+const rightIcon = require('../../assets/icon/right_arrow.png');
 
 function RecommendStudyCard({ tag, members, title, time, method }: RecommendStudyCardProps) {
   return (
@@ -20,7 +20,7 @@ function RecommendStudyCard({ tag, members, title, time, method }: RecommendStud
       <View style={styles.cardContent}>
         <View style={styles.cardTop}>
           <ImageBackground
-            source={require('../assets/icon/category_icon.png')}
+            source={require('../../assets/icon/category_icon.png')}
             style={styles.category}
             resizeMode="contain"
           >

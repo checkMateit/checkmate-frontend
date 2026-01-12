@@ -1,8 +1,8 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import BadgeSection from './BadgeSection';
+import BadgeSection from '../StudyDetail/BadgeSection';
 import CalendarSection from './CalendarSection';
-import { colors } from '../styles/colors';
+import { colors } from '../../styles/colors';
 
 type HistoryStatsTabProps = {
   currentMonth: Date;
@@ -11,9 +11,9 @@ type HistoryStatsTabProps = {
   onChangeMonth: (date: Date) => void;
 };
 
-const badgeOne = require('../assets/badge/badge_1.png');
-const badgeTwo = require('../assets/badge/badge_2.png');
-const badgeThree = require('../assets/badge/badge_3.png');
+const badgeOne = require('../../assets/badge/badge_1.png');
+const badgeTwo = require('../../assets/badge/badge_2.png');
+const badgeThree = require('../../assets/badge/badge_3.png');
 
 function HistoryStatsTab({
   currentMonth,

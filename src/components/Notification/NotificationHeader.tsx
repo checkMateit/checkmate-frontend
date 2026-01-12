@@ -1,13 +1,13 @@
 import React from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
-import { colors } from '../styles/colors';
+import { colors } from '../../styles/colors';
 
 type NotificationHeaderProps = {
   onClose: () => void;
 };
 
-const settingIcon = require('../assets/icon/setting_icon.png');
-const closeIcon = require('../assets/icon/x_icon.png');
+const settingIcon = require('../../assets/icon/setting_icon.png');
+const closeIcon = require('../../assets/icon/x_icon.png');
 
 function NotificationHeader({ onClose }: NotificationHeaderProps) {
   return (

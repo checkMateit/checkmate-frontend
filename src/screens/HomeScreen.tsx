@@ -12,8 +12,8 @@ import {
   Pressable
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import StudyCard from '../components/StudyCard';
-import RecommendStudyCard from '../components/RecommendStudyCard';
+import StudyCard from '../components/StudyBoard/StudyCard';
+import RecommendStudyCard from '../components/StudyBoard/RecommendStudyCard';
 import { colors } from '../styles/colors';
 import NotificationScreen from './NotificationScreen';
 import MyStudyScreen from './MyStudyScreen';

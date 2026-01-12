@@ -1,20 +1,21 @@
 import React from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
-import { colors } from '../styles/colors';
+import { colors } from '../../styles/colors';
 
-type MyStudyHeaderProps = {
+type StudyDetailHeaderProps = {
+  title: string;
   onClose: () => void;
 };
 
-const backIcon = require('../assets/icon/right_arrow.png');
+const backIcon = require('../../assets/icon/right_arrow.png');
 
-function MyStudyHeader({ onClose }: MyStudyHeaderProps) {
+function StudyDetailHeader({ title, onClose }: StudyDetailHeaderProps) {
   return (
     <View style={styles.header}>
       <Pressable onPress={onClose} hitSlop={10} style={styles.backButton}>
         <Image source={backIcon} style={styles.backIcon} />
       </Pressable>
-      <Text style={styles.title}>내 스터디</Text>
+      <Text style={styles.title}>{title}</Text>
     </View>
   );
 }
@@ -24,25 +25,23 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 20,
-   
-    paddingVertical: 30,
-    
+    paddingTop: 16,
+    paddingBottom: 18,
   },
   backButton: {
     marginRight: 8,
   },
   backIcon: {
-    width: 8,
-    height: 16,
-    tintColor: '#B8B8B8',
+    width: 14,
+    height: 14,
+    tintColor: '#9A9A9A',
     transform: [{ rotate: '180deg' }],
   },
   title: {
     fontSize: 22,
     fontWeight: '800',
-    marginLeft: 8,
     color: colors.textPrimary,
   },
 });
 
-export default MyStudyHeader;
+export default StudyDetailHeader;

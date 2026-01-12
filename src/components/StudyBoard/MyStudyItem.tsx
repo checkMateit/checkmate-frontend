@@ -8,8 +8,8 @@ import {
   Text,
   View,
 } from 'react-native';
-import { colors } from '../styles/colors';
-import AuthMethodRow from './AuthMethodRow';
+import { colors } from '../../styles/colors';
+import AuthMethodRow from '../Common/AuthMethodRow';
 
 type MyStudyItemProps = {
   image: ImageSourcePropType;
@@ -21,9 +21,9 @@ type MyStudyItemProps = {
   onDrag?: () => void;
 };
 
-const personIcon = require('../assets/icon/person_icon.png');
-const timeIcon = require('../assets/icon/time_icon.png');
-const categoryIcon = require('../assets/icon/category_icon.png');
+const personIcon = require('../../assets/icon/person_icon.png');
+const timeIcon = require('../../assets/icon/time_icon.png');
+const categoryIcon = require('../../assets/icon/category_icon.png');
 
 function MyStudyItem({ image, tag, title, members, time, methods, onDrag }: MyStudyItemProps) {
   return (
@@ -55,7 +55,7 @@ function MyStudyItem({ image, tag, title, members, time, methods, onDrag }: MySt
         <AuthMethodRow methods={methods} />
       </View>
       <Pressable style={styles.handle} onLongPress={onDrag} hitSlop={8}>
-        <Image source={require('../assets/icon/edit_icon.png')} style={styles.handleLine} />
+        <Image source={require('../../assets/icon/edit_icon.png')} style={styles.handleLine} />
       </Pressable>
     </View>
   );
