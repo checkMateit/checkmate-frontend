@@ -5,6 +5,7 @@ import NotificationNoticeTab from '../components/Notification/NotificationNotice
 import NotificationStudyTab from '../components/Notification/NotificationStudyTab';
 import NotificationTabs from '../components/Notification/NotificationTabs';
 import { colors } from '../styles/colors';
+import { useNotificationCenter } from '../state/NotificationCenterContext';
 
 type NotificationScreenProps = {
   onClose: () => void;
@@ -12,12 +13,17 @@ type NotificationScreenProps = {
 
 function NotificationScreen({ onClose }: NotificationScreenProps) {
   const [activeTab, setActiveTab] = useState<'notice' | 'study'>('notice');
+  const { notifications } = useNotificationCenter();
 
   return (
     <SafeAreaView style={styles.root}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <NotificationHeader onClose={onClose} />
-        <NotificationTabs activeTab={activeTab} onChange={setActiveTab} />
+        <NotificationTabs
+          activeTab={activeTab}
+          onChange={setActiveTab}
+          studyBadgeCount={notifications.length}
+        />
         <View>
           {activeTab === 'notice' ? <NotificationNoticeTab /> : <NotificationStudyTab />}
         </View>

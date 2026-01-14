@@ -1,66 +1,146 @@
-import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { Animated, Dimensions, PanResponder, Pressable, StyleSheet, Text, View } from 'react-native';
 import { colors } from '../../styles/colors';
+import StudyBoardPostCard from '../StudyBoard/StudyBoardPostCard';
+import StudyBoardPostModal from '../StudyBoard/StudyBoardPostModal';
+import { useNotificationCenter } from '../../state/NotificationCenterContext';
+
+const screenHeight = Dimensions.get('window').height;
 
 function NotificationStudyTab() {
+  const { notifications, addNotification, removeNotification, toggleNotificationLike } =
+    useNotificationCenter();
+  const [activeStudy, setActiveStudy] = useState<string>('전체');
+  const [selectedPostId, setSelectedPostId] = useState<number | null>(null);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [draftComment, setDraftComment] = useState('');
+  const translateY = useRef(new Animated.Value(screenHeight)).current;
+
+  const selectedPost = selectedPostId
+    ? notifications.find((post) => post.id === selectedPostId) ?? null
+    : null;
+
+  const studyFilters = useMemo(() => {
+    const unique = Array.from(new Set(notifications.map((post) => post.studyName)));
+    return ['전체', ...unique];
+  }, [notifications]);
+
+  const filteredNotifications =
+    activeStudy === '전체'
+      ? notifications
+      : notifications.filter((post) => post.studyName === activeStudy);
+
+  useEffect(() => {
+    if (!studyFilters.includes(activeStudy)) {
+      setActiveStudy('전체');
+    }
+  }, [studyFilters, activeStudy]);
+
+  const openPost = (postId: number) => {
+    setSelectedPostId(postId);
+    setModalVisible(true);
+    translateY.setValue(screenHeight);
+    Animated.timing(translateY, {
+      toValue: 0,
+      duration: 250,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const closePost = () => {
+    Animated.timing(translateY, {
+      toValue: screenHeight,
+      duration: 200,
+      useNativeDriver: true,
+    }).start(() => {
+      setModalVisible(false);
+      setSelectedPostId(null);
+      setDraftComment('');
+    });
+  };
+
+  const handleToggleAlarm = (postId: number) => {
+    const post = notifications.find((item) => item.id === postId);
+    if (!post) return;
+    if (post.alarmEnabled) {
+      removeNotification(postId);
+      closePost();
+      return;
+    }
+    addNotification({ ...post, alarmEnabled: true });
+  };
+
+  const panResponder = useMemo(
+    () =>
+      PanResponder.create({
+        onMoveShouldSetPanResponder: (_, gesture) => gesture.dy > 6,
+        onPanResponderMove: (_, gesture) => {
+          if (gesture.dy > 0) {
+            translateY.setValue(gesture.dy);
+          }
+        },
+        onPanResponderRelease: (_, gesture) => {
+          if (gesture.dy > 120 || gesture.vy > 1) {
+            closePost();
+          } else {
+            Animated.timing(translateY, {
+              toValue: 0,
+              duration: 200,
+              useNativeDriver: true,
+            }).start();
+          }
+        },
+      }),
+    [translateY],
+  );
+
   return (
     <View style={styles.container}>
       <View style={styles.filterRow}>
-        <View style={[styles.filterChip, styles.filterChipActive]}>
-          <Text style={[styles.filterText, styles.filterTextActive]}>전체</Text>
-        </View>
-        <View style={styles.filterChip}>
-          <Text style={styles.filterText}>○○ 스터디</Text>
-        </View>
-        <View style={styles.filterChip}>
-          <Text style={styles.filterText}>토익 스터디</Text>
-        </View>
+        {studyFilters.map((study) => {
+          const isActive = activeStudy === study;
+          return (
+            <Pressable
+              key={study}
+              style={[styles.filterChip, isActive && styles.filterChipActive]}
+              onPress={() => setActiveStudy(study)}
+            >
+              <Text style={[styles.filterText, isActive && styles.filterTextActive]}>{study}</Text>
+            </Pressable>
+          );
+        })}
       </View>
 
-      <View style={styles.postCard}>
-        <View style={styles.postHeader}>
-          <Text style={styles.postTag}>토익 스터디</Text>
+      {filteredNotifications.length === 0 ? (
+        <View style={styles.emptyState}>
+          <Text style={styles.emptyText}>알림 설정한 스터디가 없어요.</Text>
         </View>
-        <Text style={styles.postTitle}>혹시 이 문제 답이 왜 이런지 아시는 분?</Text>
-        <Text style={styles.postDesc}>
-          한시간 째 문제를 보고 있는데도 이유를 모르겠어요. 혹시 아시는 분 알려주세요!!
-        </Text>
-        <View style={styles.postFooter}>
-          <Text style={styles.postMeta}>👍 2</Text>
-          <Text style={styles.postMeta}>💬 3</Text>
-          <View style={styles.postImage} />
-        </View>
-      </View>
+      ) : (
+        filteredNotifications.map((post) => (
+          <View key={post.id} style={styles.postGroup}>
+            <StudyBoardPostCard
+              post={post}
+              onPress={(selected) => openPost(selected.id)}
+              onToggleLike={toggleNotificationLike}
+              variant="card"
+              showNamePill={false}
+              showStudyPill
+            />
+          </View>
+        ))
+      )}
 
-      <View style={styles.postCard}>
-        <View style={styles.postHeader}>
-          <Text style={styles.postTag}>○○ 스터디</Text>
-        </View>
-        <Text style={styles.postTitle}>오류나요 자꾸..</Text>
-        <Text style={styles.postDesc}>
-          왜 자꾸 여기서 오류가 날까요ㅠㅠ 전문가님 도와주세요
-        </Text>
-        <View style={styles.postFooter}>
-          <Text style={styles.postMeta}>👍 1</Text>
-          <Text style={styles.postMeta}>💬 1</Text>
-          <View style={styles.postImage} />
-        </View>
-      </View>
-
-      <View style={styles.postCard}>
-        <View style={styles.postHeader}>
-          <Text style={styles.postTag}>○○ 스터디</Text>
-        </View>
-        <Text style={styles.postTitle}>오류나요 자꾸..</Text>
-        <Text style={styles.postDesc}>
-          왜 자꾸 여기서 오류가 날까요ㅠㅠ 전문가님 도와주세요
-        </Text>
-        <View style={styles.postFooter}>
-          <Text style={styles.postMeta}>👍 1</Text>
-          <Text style={styles.postMeta}>💬 1</Text>
-          <View style={styles.postImage} />
-        </View>
-      </View>
+      <StudyBoardPostModal
+        visible={modalVisible}
+        post={selectedPost}
+        translateY={translateY}
+        panHandlers={panResponder.panHandlers}
+        draftComment={draftComment}
+        onChangeDraft={setDraftComment}
+        onClose={closePost}
+        onToggleLike={toggleNotificationLike}
+        onToggleAlarm={handleToggleAlarm}
+      />
     </View>
   );
 }
@@ -77,66 +157,37 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   filterChip: {
-    borderWidth: 1,
+    borderWidth: 0.5,
     borderColor: colors.primary,
     borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingHorizontal: 18,
+    height: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   filterChipActive: {
     backgroundColor: colors.primary,
+    
   },
   filterText: {
-    fontSize: 12,
-    color: colors.primary,
+    fontSize: 13,
+    color: '#373737',
     fontWeight: '700',
+    lineHeight: 16,
   },
   filterTextActive: {
-    color: '#FFFFFF',
+    color: '#373737',
   },
-  postCard: {
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#EFEFEF',
-    padding: 14,
-    marginBottom: 14,
-    backgroundColor: '#FFFFFF',
+  postGroup: {
+    marginBottom: 16,
   },
-  postHeader: {
-    marginBottom: 8,
+  emptyState: {
+    paddingVertical: 40,
+    alignItems: 'center',
   },
-  postTag: {
-    fontSize: 11,
+  emptyText: {
+    fontSize: 13,
     color: '#9A9A9A',
-  },
-  postTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: colors.textPrimary,
-    marginBottom: 6,
-  },
-  postDesc: {
-    fontSize: 12,
-    color: colors.textSecondary,
-    marginBottom: 10,
-  },
-  postFooter: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  postMeta: {
-    fontSize: 12,
-    color: '#8A8A8A',
-  },
-  postImage: {
-    marginLeft: 'auto',
-    width: 48,
-    height: 48,
-    borderRadius: 12,
-    backgroundColor: '#F2F2F2',
-    alignItems: 'center',
-    justifyContent: 'center',
   },
 });
 

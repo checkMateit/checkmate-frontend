@@ -7,9 +7,10 @@ type TabKey = 'notice' | 'study';
 type NotificationTabsProps = {
   activeTab: TabKey;
   onChange: (tab: TabKey) => void;
+  studyBadgeCount?: number;
 };
 
-function NotificationTabs({ activeTab, onChange }: NotificationTabsProps) {
+function NotificationTabs({ activeTab, onChange, studyBadgeCount = 0 }: NotificationTabsProps) {
   return (
     <View>
       <View style={styles.tabRow}>
@@ -21,9 +22,11 @@ function NotificationTabs({ activeTab, onChange }: NotificationTabsProps) {
             <Text style={[styles.tabText, activeTab === 'study' && styles.tabActive]}>
               스터디룸
             </Text>
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>1</Text>
-            </View>
+            {studyBadgeCount > 0 && (
+              <View style={styles.badge}>
+                <Text style={styles.badgeText}>{studyBadgeCount}</Text>
+              </View>
+            )}
           </View>
         </Pressable>
       </View>
