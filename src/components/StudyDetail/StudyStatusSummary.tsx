@@ -3,6 +3,8 @@ import { Image, StyleSheet, Text, View } from 'react-native';
 import { colors } from '../../styles/colors';
 
 const profileImage = require('../../assets/icon/profile_1.png');
+const checkIcon = require('../../assets/icon/check_icon.png');
+const cancelIcon = require('../../assets/icon/cancel_icon.png');
 
 function StudyStatusSummary() {
   const days = ['월', '화', '수', '목', '금', '토'];
@@ -102,14 +104,10 @@ function StudyStatusSummary() {
             <Text style={[styles.status, row.status.tone === 'fail' && styles.statusFail]}>
               {row.status.label}
             </Text>
-            <View
-              style={[
-                styles.statusIcon,
-                row.status.tone === 'fail' ? styles.statusIconFail : styles.statusIconSuccess,
-              ]}
-            >
-              <Text style={styles.statusIconText}>{row.status.tone === 'fail' ? '✕' : '✓'}</Text>
-            </View>
+            <Image
+              source={row.status.tone === 'fail' ? cancelIcon : checkIcon}
+              style={styles.statusIcon}
+            />
           </View>
         </View>
       ))}
@@ -119,7 +117,7 @@ function StudyStatusSummary() {
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 25,
     paddingBottom: 16,
   },
   legendRow: {
@@ -159,7 +157,7 @@ const styles = StyleSheet.create({
   },
   avatarCol: {
     width: 78,
-    alignItems: 'center',
+    alignItems: 'flex-start',
     gap: 4,
     marginTop: -4,
   },
@@ -242,20 +240,6 @@ const styles = StyleSheet.create({
   statusIcon: {
     width: 11,
     height: 11,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  statusIconSuccess: {
-    backgroundColor: colors.primary,
-  },
-  statusIconFail: {
-    backgroundColor: '#FF6B6B',
-  },
-  statusIconText: {
-    fontSize: 9,
-    color: '#FFFFFF',
-    fontWeight: '700',
   },
 });
 

@@ -1,23 +1,31 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { colors } from '../../styles/colors';
 import StudyStatusTabs from './StudyStatusTabs';
 import StudyStatusSummary from './StudyStatusSummary';
 import StudyStatusTodo from './StudyStatusTodo';
-import StudyStatusPhoto from './StudyStatusPhoto';
+import StudyStatusGithub from './StudyStatusGithub';
 
-function StudyStatusSection() {
-  const [activeTab, setActiveTab] = useState<'summary' | 'todo' | 'photo'>('summary');
+type StudyStatusSectionProps = {
+  resetKey: number;
+};
+
+function StudyStatusSection({ resetKey }: StudyStatusSectionProps) {
+  const [activeTab, setActiveTab] = useState<'summary' | 'todo' | 'github'>('summary');
+
+  useEffect(() => {
+    setActiveTab('summary');
+  }, [resetKey]);
 
   return (
     <View>
       <View style={styles.header}>
-        <Text style={styles.title}>이번주</Text>
+        <Text style={styles.title}>{activeTab === 'summary' ? '이번주' : '오늘'}</Text>
         <StudyStatusTabs activeTab={activeTab} onChange={setActiveTab} />
       </View>
       {activeTab === 'summary' && <StudyStatusSummary />}
       {activeTab === 'todo' && <StudyStatusTodo />}
-      {activeTab === 'photo' && <StudyStatusPhoto />}
+      {activeTab === 'github' && <StudyStatusGithub />}
     </View>
   );
 }

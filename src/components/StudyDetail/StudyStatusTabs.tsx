@@ -2,7 +2,7 @@ import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { colors } from '../../styles/colors';
 
-type StatusTab = 'summary' | 'todo' | 'photo';
+type StatusTab = 'summary' | 'todo' | 'github';
 
 type StudyStatusTabsProps = {
   activeTab: StatusTab;
@@ -15,7 +15,7 @@ function StudyStatusTabs({ activeTab, onChange }: StudyStatusTabsProps) {
       {[
         { key: 'summary', label: '요약' },
         { key: 'todo', label: 'TODO' },
-        { key: 'photo', label: '사진' },
+        { key: 'github', label: 'GITHUB' },
       ].map((tab) => (
         <Pressable
           key={tab.key}
@@ -49,12 +49,12 @@ const styles = StyleSheet.create({
     borderColor: colors.primary,
   },
   chipText: {
-    fontSize: 12,
+    fontSize: 11,
     color: colors.textSecondary,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   chipTextActive: {
-    color: '#FFFFFF',
+    color: '#373737',
   },
 });
 

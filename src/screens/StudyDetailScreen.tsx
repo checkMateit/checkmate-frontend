@@ -32,6 +32,14 @@ type StudyDetailScreenProps = {
 
 function StudyDetailScreen({ study, onClose }: StudyDetailScreenProps) {
   const [activeTab, setActiveTab] = useState<'status' | 'report' | 'board' | 'info'>('status');
+  const [statusResetKey, setStatusResetKey] = useState(0);
+
+  const handleTabChange = (tab: 'status' | 'report' | 'board' | 'info') => {
+    setActiveTab(tab);
+    if (tab === 'status') {
+      setStatusResetKey((prev) => prev + 1);
+    }
+  };
 
   return (
     <SafeAreaView style={styles.root}>
@@ -47,9 +55,9 @@ function StudyDetailScreen({ study, onClose }: StudyDetailScreenProps) {
           methods={study.methods}
           image={study.image}
         />
-        <StudyDetailTabs activeTab={activeTab} onChange={setActiveTab} />
+        <StudyDetailTabs activeTab={activeTab} onChange={handleTabChange} />
         <View style={styles.section}>
-          {activeTab === 'status' && <StudyStatusSection />}
+          {activeTab === 'status' && <StudyStatusSection resetKey={statusResetKey} />}
           {activeTab === 'report' && <StudyReportTab />}
           {activeTab === 'board' && <StudyBoardTab />}
           {activeTab === 'info' && <StudyInfoTab />}
