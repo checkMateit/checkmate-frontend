@@ -29,13 +29,13 @@ const styles = StyleSheet.create({
     paddingBottom: 18,
   },
   backButton: {
-    marginRight: 8,
+    marginRight: 10,
   },
   backIcon: {
-    width: 14,
+    width: 10,
     height: 14,
     tintColor: '#9A9A9A',
-    transform: [{ rotate: '180deg' }],
+    transform: [{ scaleX: -1 }],
   },
   title: {
     fontSize: 22,

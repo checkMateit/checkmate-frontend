@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Dimensions,
   Image,
@@ -12,6 +12,10 @@ import {
   Pressable
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
+import { type BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
+import { type BottomTabParamList } from '../navigation/BottomTabs';
+import { useNotificationCenter } from '../state/NotificationCenterContext';
 import StudyCard from '../components/StudyBoard/StudyCard';
 import RecommendStudyCard from '../components/StudyBoard/RecommendStudyCard';
 import { colors } from '../styles/colors';
@@ -32,6 +36,7 @@ const HERO_TEXT_TOP = 12;
 
 function HomeScreen() {
   const insets = useSafeAreaInsets();
+  const navigation = useNavigation<BottomTabNavigationProp<BottomTabParamList>>();
   const screenWidth = Dimensions.get('window').width;
   const heroHeight = Math.round((screenWidth * bgHeight) / bgWidth) + insets.top;
   const [activePage, setActivePage] = useState(0);
@@ -43,6 +48,7 @@ function HomeScreen() {
   const [headerWidth, setHeaderWidth] = useState(0);
   const [helpIconLayout, setHelpIconLayout] = useState({ x: 0, width: 0 });
   const [helpBubbleWidth, setHelpBubbleWidth] = useState(0);
+  const { notifications } = useNotificationCenter();
 
   const bubbleLeft = headerWidth && helpBubbleWidth ? (headerWidth - helpBubbleWidth) / 2 : 0;
   const tailCenter = helpIconLayout.x + helpIconLayout.width / 2 - bubbleLeft;
@@ -50,6 +56,18 @@ function HomeScreen() {
     helpBubbleWidth > 0
       ? Math.max(12, Math.min(helpBubbleWidth - 12, tailCenter + 15)) - 6
       : 0;
+
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('tabPress', () => {
+      setShowHelp(false);
+      setShowNotifications(false);
+      setShowMyStudies(false);
+      setShowStudyDetail(false);
+      setSelectedStudy(null);
+    });
+
+    return unsubscribe;
+  }, [navigation]);
 
   const studies = useMemo<StudyDetail[]>(
     () => [
@@ -176,9 +194,11 @@ function HomeScreen() {
                 source={alarmIconSource}
                 style={{ width: 22.28, height: 28 }}
               />
-              <View style={styles.badge}>
-                <Text style={styles.badgeText}>1</Text>
-              </View>
+              {notifications.length > 0 && (
+                <View style={styles.badge}>
+                  <Text style={styles.badgeText}>{notifications.length}</Text>
+                </View>
+              )}
             </Pressable>
           </View>
         </View>

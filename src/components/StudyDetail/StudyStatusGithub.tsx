@@ -1,5 +1,5 @@
-import React from 'react';
-import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import React, { useState } from 'react';
+import { Image, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { colors } from '../../styles/colors';
 
 const profileImage = require('../../assets/icon/profile_2.png');
@@ -8,7 +8,7 @@ const modifyIcon = require('../../assets/icon/modify_icon.png');
 const checkIcon = require('../../assets/icon/check_icon.png');
 const cancelIcon = require('../../assets/icon/cancel_icon.png');
 
-const rows = [
+const initialRows = [
   {
     name: '라즈베리',
     title: '백준 20001번',
@@ -40,6 +40,27 @@ const rows = [
 ];
 
 function StudyStatusGithub() {
+  const [rows, setRows] = useState(initialRows);
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [draftTitle, setDraftTitle] = useState('');
+
+  const startEditing = (index: number) => {
+    setEditingIndex(index);
+    setDraftTitle(rows[index].title);
+  };
+
+  const submitEditing = () => {
+    if (editingIndex === null) return;
+    const trimmed = draftTitle.trim();
+    setRows((prev) =>
+      prev.map((row, index) =>
+        index === editingIndex ? { ...row, title: trimmed || row.title } : row,
+      ),
+    );
+    setEditingIndex(null);
+    setDraftTitle('');
+  };
+
   return (
     <View style={styles.container}>
       {rows.map((row, index) => (
@@ -48,10 +69,26 @@ function StudyStatusGithub() {
           <View style={styles.content}>
             <View style={styles.nameRow}>
               <Text style={styles.name}>{row.name} 님</Text>
-              {row.editable && <Image source={modifyIcon} style={styles.modifyIcon} />}
+              {row.editable && (
+                <Pressable onPress={() => startEditing(index)} hitSlop={6}>
+                  <Image source={modifyIcon} style={styles.modifyIcon} />
+                </Pressable>
+              )}
             </View>
             <View style={styles.statusRow}>
-              <Text style={styles.title}>{row.title}</Text>
+              {editingIndex === index ? (
+                <TextInput
+                  value={draftTitle}
+                  onChangeText={setDraftTitle}
+                  onSubmitEditing={submitEditing}
+                  onBlur={submitEditing}
+                  style={styles.titleInput}
+                  returnKeyType="done"
+                  autoFocus
+                />
+              ) : (
+                <Text style={styles.title}>{row.title}</Text>
+              )}
               <View style={styles.statusWrap}>
                 <Text style={[styles.statusText, row.status.tone === 'fail' && styles.statusFail]}>
                   {row.status.label}
@@ -120,6 +157,13 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
     color: colors.textPrimary,
+  },
+  titleInput: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: colors.textPrimary,
+    paddingVertical: 0,
+    minWidth: 120,
   },
   statusWrap: {
     flexDirection: 'row',

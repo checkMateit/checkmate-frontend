@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Image, StyleSheet } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import HomeScreen from '../screens/HomeScreen';
@@ -29,6 +29,17 @@ const HISTORY_ICON = {
 };
 
 function BottomTabs() {
+  const [resetKeys, setResetKeys] = useState({
+    Home: 0,
+    Search: 0,
+    History: 0,
+    MyPage: 0,
+  });
+
+  const handleTabPress = (tab: keyof BottomTabParamList) => {
+    setResetKeys((prev) => ({ ...prev, [tab]: prev[tab] + 1 }));
+  };
+
   const getIconStyle = (source: number, focused: boolean, useTint = true) => {
     const { width, height } = Image.resolveAssetSource(source);
     const scaledWidth = Math.round((ICON_HEIGHT * width) / height);
@@ -43,6 +54,7 @@ function BottomTabs() {
       screenOptions={{
         headerShown: false,
         tabBarStyle: styles.tabBar,
+        unmountOnBlur: true,
         tabBarItemStyle: { paddingVertical: 8 },
         tabBarLabelStyle: {
           marginTop: 6,   
@@ -54,6 +66,7 @@ function BottomTabs() {
     >
       <Tab.Screen
         name="Home"
+        key={`Home-${resetKeys.Home}`}
         component={HomeScreen}
         options={{
           title: '홈',
@@ -61,9 +74,13 @@ function BottomTabs() {
             <Image source={tabIcons.Home} style={getIconStyle(tabIcons.Home, focused)} />
           ),
         }}
+        listeners={{
+          tabPress: () => handleTabPress('Home'),
+        }}
       />
       <Tab.Screen
         name="Search"
+        key={`Search-${resetKeys.Search}`}
         component={SearchScreen}
         options={{
           title: '검색',
@@ -71,9 +88,13 @@ function BottomTabs() {
             <Image source={tabIcons.Search} style={getIconStyle(tabIcons.Search, focused)} />
           ),
         }}
+        listeners={{
+          tabPress: () => handleTabPress('Search'),
+        }}
       />
       <Tab.Screen
         name="History"
+        key={`History-${resetKeys.History}`}
         component={HistoryScreen}
         options={{
           title: '기록',
@@ -88,15 +109,22 @@ function BottomTabs() {
             />
           ),
         }}
+        listeners={{
+          tabPress: () => handleTabPress('History'),
+        }}
       />
       <Tab.Screen
         name="MyPage"
+        key={`MyPage-${resetKeys.MyPage}`}
         component={MyPageScreen}
         options={{
           title: '마이페이지',
           tabBarIcon: ({ focused }) => (
             <Image source={tabIcons.MyPage} style={getIconStyle(tabIcons.MyPage, focused)} />
           ),
+        }}
+        listeners={{
+          tabPress: () => handleTabPress('MyPage'),
         }}
       />
     </Tab.Navigator>

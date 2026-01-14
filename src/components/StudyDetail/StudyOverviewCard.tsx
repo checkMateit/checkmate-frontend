@@ -66,7 +66,7 @@ function StudyOverviewCard({
 
 const styles = StyleSheet.create({
   card: {
-    paddingHorizontal: 40,
+    paddingHorizontal: 35,
     paddingBottom: 16,
   },
   topRow: {
