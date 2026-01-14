@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { SafeAreaView, ScrollView, StyleSheet, View } from 'react-native';
-import NotificationHeader from '../components/Notification/NotificationHeader';
-import NotificationNoticeTab from '../components/Notification/NotificationNoticeTab';
-import NotificationStudyTab from '../components/Notification/NotificationStudyTab';
-import NotificationTabs from '../components/Notification/NotificationTabs';
+import NotificationHeader from '../features/notification/components/NotificationHeader';
+import NotificationNoticeTab from '../features/notification/components/NotificationNoticeTab';
+import NotificationStudyTab from '../features/notification/components/NotificationStudyTab';
+import NotificationTabs from '../features/notification/components/NotificationTabs';
 import { colors } from '../styles/colors';
 import { useNotificationCenter } from '../state/NotificationCenterContext';
 

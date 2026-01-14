@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { SafeAreaView, ScrollView, StyleSheet, View } from 'react-native';
-import StudyBoardTab from '../components/StudyBoard/StudyBoardTab';
-import StudyDetailHeader from '../components/StudyDetail/StudyDetailHeader';
-import StudyDetailTabs from '../components/StudyDetail/StudyDetailTabs';
-import StudyInfoTab from '../components/StudyDetail/StudyInfoTab';
-import StudyOverviewCard from '../components/StudyDetail/StudyOverviewCard';
-import StudyReportTab from '../components/StudyReport/StudyReportTab';
-import StudyStatusSection from '../components/StudyDetail/StudyStatusSection';
+import StudyBoardTab from '../features/study-board/components/StudyBoardTab';
+import StudyDetailHeader from '../features/study-detail/components/StudyDetailHeader';
+import StudyDetailTabs from '../features/study-detail/components/StudyDetailTabs';
+import StudyInfoTab from '../features/study-detail/components/StudyInfoTab';
+import StudyOverviewCard from '../features/study-detail/components/StudyOverviewCard';
+import StudyReportTab from '../features/study-report/components/StudyReportTab';
+import StudyStatusSection from '../features/study-detail/components/StudyStatusSection';
 import { colors } from '../styles/colors';
 
 export type StudyDetail = {
@@ -59,7 +59,7 @@ function StudyDetailScreen({ study, onClose }: StudyDetailScreenProps) {
         <View style={styles.section}>
           {activeTab === 'status' && <StudyStatusSection resetKey={statusResetKey} />}
           {activeTab === 'report' && <StudyReportTab />}
-          {activeTab === 'board' && <StudyBoardTab />}
+          {activeTab === 'board' && <StudyBoardTab studyName={study.title} />}
           {activeTab === 'info' && <StudyInfoTab />}
         </View>
       </ScrollView>

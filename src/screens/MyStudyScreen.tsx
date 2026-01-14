@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { SafeAreaView, StyleSheet, View } from 'react-native';
 import DraggableFlatList, { RenderItemParams } from 'react-native-draggable-flatlist';
-import MyStudyHeader from '../components/StudyBoard/MyStudyHeader';
-import MyStudyItem from '../components/StudyBoard/MyStudyItem';
+import MyStudyHeader from '../features/study-board/components/MyStudyHeader';
+import MyStudyItem from '../features/study-board/components/MyStudyItem';
 import { colors } from '../styles/colors';
 
 type MyStudyScreenProps = {

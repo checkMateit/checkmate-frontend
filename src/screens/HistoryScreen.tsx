@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Image, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
-import HistoryFolderTab from '../components/History/HistoryFolderTab';
-import HistoryStatsTab from '../components/History/HistoryStatsTab';
+import HistoryFolderTab from '../features/history/components/HistoryFolderTab';
+import HistoryStatsTab from '../features/history/components/HistoryStatsTab';
 import { colors } from '../styles/colors';
 
 const settingIcon = require('../assets/icon/setting_icon.png');

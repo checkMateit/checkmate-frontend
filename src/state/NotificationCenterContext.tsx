@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useMemo, useState } from 'react';
-import { Post } from '../components/StudyBoard/StudyBoardPostTypes';
+import { Post } from '../features/study-board/components/StudyBoardPostTypes';
 
 type NotificationCenterContextValue = {
   notifications: Post[];
