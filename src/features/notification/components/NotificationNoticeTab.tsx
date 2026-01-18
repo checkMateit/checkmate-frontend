@@ -134,11 +134,11 @@ const styles = StyleSheet.create({
   },
   filterText: {
     fontSize: 12,
-    color: colors.primary,
+    color: "#373737",
     fontWeight: '700',
   },
   filterTextActive: {
-    color: '#FFFFFF',
+    color: '#373737',
   },
   skeletonCardLarge: {
     height: 80,

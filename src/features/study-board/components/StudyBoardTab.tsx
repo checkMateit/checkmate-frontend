@@ -30,8 +30,8 @@ const makeInitialPosts = (studyName: string): Post[] => {
     comments: 3,
     image: sampleImage,
     commentList: [
-      { id: 1, name: '단쌀말', text: '어디서 막히는지 캡처 있나요?' },
-      { id: 2, name: 'LDK', text: '힌트는 문제 조건 3번이에요.' },
+      { id: 1, name: '단쌀말', text: '어디서 막히는지 캡처 있나요?', date: '01/11 19:41' },
+      { id: 2, name: 'LDK', text: '힌트는 문제 조건 3번이에요.', date: '01/11 19:45' },
     ],
   },
   {
@@ -46,7 +46,9 @@ const makeInitialPosts = (studyName: string): Post[] => {
     liked: false,
     alarmEnabled: false,
     comments: 1,
-    commentList: [{ id: 1, name: '라즈베리', text: '로그 한번 더 확인해봐요!' }],
+    commentList: [
+      { id: 1, name: '라즈베리', text: '로그 한번 더 확인해봐요!', date: '01/10 21:30' },
+    ],
   },
   {
     id: baseId + 3,
@@ -60,7 +62,9 @@ const makeInitialPosts = (studyName: string): Post[] => {
     liked: false,
     alarmEnabled: false,
     comments: 1,
-    commentList: [{ id: 1, name: '단쌀말', text: '코드 일부 공유해줄 수 있나요?' }],
+    commentList: [
+      { id: 1, name: '단쌀말', text: '코드 일부 공유해줄 수 있나요?', date: '01/09 13:40' },
+    ],
   },
   ];
 };
@@ -122,17 +126,12 @@ function StudyBoardTab({ studyName }: StudyBoardTabProps) {
   };
 
   const toggleAlarm = (postId: number) => {
-    let updatedPost: Post | null = null;
-    setPosts((prev) =>
-      prev.map((post) => {
-        if (post.id !== postId) return post;
-        updatedPost = { ...post, alarmEnabled: !post.alarmEnabled };
-        return updatedPost;
-      }),
-    );
-    if (!updatedPost) return;
-    if (updatedPost.alarmEnabled) {
-      addNotification(updatedPost);
+    const currentPost = posts.find((post) => post.id === postId);
+    if (!currentPost) return;
+    const nextPost = { ...currentPost, alarmEnabled: !currentPost.alarmEnabled };
+    setPosts((prev) => prev.map((post) => (post.id === postId ? nextPost : post)));
+    if (nextPost.alarmEnabled) {
+      addNotification(nextPost);
     } else {
       removeNotification(postId);
     }
