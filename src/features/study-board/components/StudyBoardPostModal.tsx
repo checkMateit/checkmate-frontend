@@ -45,6 +45,13 @@ function StudyBoardPostModal({
   onToggleLike,
   onToggleAlarm,
 }: StudyBoardPostModalProps) {
+  const imageAspectRatio = React.useMemo(() => {
+    if (!post?.image) return null;
+    const source = Image.resolveAssetSource(post.image);
+    if (!source?.width || !source?.height) return null;
+    return source.width / source.height;
+  }, [post?.image]);
+
   return (
     <Modal transparent visible={visible} animationType="none" onRequestClose={onClose}>
       <View style={styles.modalOverlay}>
@@ -71,7 +78,14 @@ function StudyBoardPostModal({
               <Text style={styles.sheetTitle}>{post.title}</Text>
               <Text style={styles.sheetText}>{post.detail}</Text>
               {post.image && (
-                <Image source={post.image} style={styles.sheetImage} resizeMode="cover" />
+                <Image
+                  source={post.image}
+                  style={[
+                    styles.sheetImage,
+                    imageAspectRatio ? { aspectRatio: imageAspectRatio } : undefined,
+                  ]}
+                  resizeMode="contain"
+                />
               )}
               <View style={styles.sheetMetaRow}>
                 <Pressable onPress={() => onToggleLike(post.id)}>
@@ -89,7 +103,11 @@ function StudyBoardPostModal({
                   iconSize={{ width: 16, height: 16 }}
                 />
               </View>
+              
               <View style={styles.commentDivider} />
+              <View style={styles.adBanner}>
+                <Text style={styles.adText}>광고</Text>
+              </View>
               <View style={styles.commentList}>
                 {post.commentList.map((comment) => (
                   <StudyBoardCommentItem key={comment.id} comment={comment} />
@@ -196,7 +214,8 @@ const styles = StyleSheet.create({
   },
   sheetImage: {
     width: '100%',
-    height: 220,
+    maxHeight: 311,
+    alignSelf: 'center',
     borderRadius: 16,
     marginBottom: 16,
   },
@@ -205,6 +224,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 20,
     marginBottom: 16,
+    paddingHorizontal: 10,
   },
   likedIcon: {
     tintColor: colors.primary,
@@ -215,13 +235,26 @@ const styles = StyleSheet.create({
   commentDivider: {
     height: 1,
     backgroundColor: '#E6E6E6',
+    marginBottom: 10,
+  },
+  adBanner: {
+    height: 52,
+    borderRadius: 0,
+    backgroundColor: '#D9D9D9',
+    alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: 16,
+  },
+  adText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#5F5F5F',
   },
   commentList: {
     gap: 12,
   },
   commentInputRow: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
     paddingVertical: 12,
     paddingBottom: 30,
     borderTopWidth: 1,

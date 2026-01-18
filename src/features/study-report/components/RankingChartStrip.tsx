@@ -63,15 +63,15 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
   },
   profile: {
-    width: 41,
-    height: 41,
+    width: 40,
+    height: 40,
     borderRadius: 21,
     marginBottom: 6,
   },
   chartName: {
     fontSize: 14,
     fontWeight: '600',
-    color: colors.textSecondary,
+    color: "#515151",
     marginBottom: 4,
   },
   chartScore: {
@@ -93,7 +93,7 @@ const styles = StyleSheet.create({
   },
   badgeTagText: {
     fontSize: 10,
-    color: colors.textSecondary,
+    color: "#565656",
   },
 });
 

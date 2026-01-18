@@ -6,8 +6,8 @@ import RankingSummaryCard from './RankingSummaryCard';
 const profileOne = require('../../../assets/icon/profile_1.png');
 const profileTwo = require('../../../assets/icon/profile_2.png');
 const badgeOne = require('../../../assets/badge/badge_1.png');
-const badgeTwo = require('../../../assets/badge/badge_2.png');
-const badgeThree = require('../../../assets/badge/badge_3.png');
+const badgeTwo = require('../../../assets/badge/badge_4.png');
+const badgeThree = require('../../../assets/badge/badge_5.png');
 
 function StudyReportTab() {
   const rankings = [
@@ -34,7 +34,7 @@ function StudyReportTab() {
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 30,
     paddingBottom: 32,
   },
 });

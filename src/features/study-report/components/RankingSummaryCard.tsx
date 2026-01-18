@@ -47,7 +47,7 @@ function RankingSummaryCard({ title, description, percent, points }: RankingSumm
           <View style={styles.cumulativeRow}>
             <Text style={styles.cumulativeText}>누적</Text>
             <View style={styles.cumulativeBadge}>
-              <Text style={styles.cumulativeBadgePercent}>{pointsLabel}</Text>
+              <Text style={styles.cumulativeBadgePercent}>+{pointsLabel}</Text>
             </View>
             <Text style={styles.cumulativeText}>달성</Text>
           </View>
@@ -71,7 +71,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: '800',
-    color: colors.textPrimary,
+    color: "#2C2C2C",
   },
   titleIcon: {
     width: RANKING_BG_WIDTH,

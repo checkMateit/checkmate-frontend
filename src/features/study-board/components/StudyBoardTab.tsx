@@ -5,7 +5,7 @@ import StudyBoardPostModal from './StudyBoardPostModal';
 import { Post } from './StudyBoardPostTypes';
 import { useNotificationCenter } from '../../../state/NotificationCenterContext';
 
-const sampleImage = require('../../../assets/image/background.png');
+const sampleImage = require('../../../assets/image/ex_img.png');
 
 const hashStudyName = (value: string) =>
   Math.abs(
