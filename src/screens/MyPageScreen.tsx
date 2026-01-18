@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { SafeAreaView, ScrollView, StyleSheet, View } from 'react-native';
 import { colors } from '../styles/colors';
 import MyPageHeader from '../features/mypage/components/MyPageHeader';
@@ -7,12 +7,19 @@ import MyPagePointsCard from '../features/mypage/components/MyPagePointsCard';
 import MyPageQuickActions from '../features/mypage/components/MyPageQuickActions';
 import MyPageSection from '../features/mypage/components/MyPageSection';
 import { Text } from 'react-native-gesture-handler';
+import AccountSettingsScreen from './AccountSettingsScreen';
 
 function MyPageScreen() {
+  const [showSettings, setShowSettings] = useState(false);
+
+  if (showSettings) {
+    return <AccountSettingsScreen onClose={() => setShowSettings(false)} />;
+  }
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        <MyPageHeader />
+        <MyPageHeader onPressSetting={() => setShowSettings(true)} />
         <MyPageProfileRow name="박신영 메이트님" />
         <MyPagePointsCard current={700} total={1000} />
         <MyPageQuickActions />
