@@ -24,7 +24,7 @@ function NotificationScreen({ onClose }: NotificationScreenProps) {
           onChange={setActiveTab}
           studyBadgeCount={notifications.length}
         />
-        <View>
+        <View style={styles.tabBody}>
           {activeTab === 'notice' ? <NotificationNoticeTab /> : <NotificationStudyTab />}
         </View>
       </ScrollView>
@@ -39,6 +39,10 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingBottom: 32,
+    flexGrow: 1,
+  },
+  tabBody: {
+    flex: 1,
   },
 });
 

@@ -4,6 +4,7 @@ import { colors } from '../../../styles/colors';
 import StudyBoardPostCard from '../../study-board/components/StudyBoardPostCard';
 import StudyBoardPostModal from '../../study-board/components/StudyBoardPostModal';
 import { useNotificationCenter } from '../../../state/NotificationCenterContext';
+import NotificationEmptyState from './NotificationEmptyState';
 
 const screenHeight = Dimensions.get('window').height;
 
@@ -94,6 +95,17 @@ function NotificationStudyTab() {
     [translateY],
   );
 
+  if (filteredNotifications.length === 0) {
+    return (
+      <View style={styles.container}>
+        <NotificationEmptyState
+          title="알림 설정한 스터디가 없어요"
+          description={`원하는 스터디 게시물에서\n알림을 켜보세요.`}
+        />
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       <View style={styles.filterRow}>
@@ -111,24 +123,18 @@ function NotificationStudyTab() {
         })}
       </View>
 
-      {filteredNotifications.length === 0 ? (
-        <View style={styles.emptyState}>
-          <Text style={styles.emptyText}>알림 설정한 스터디가 없어요.</Text>
+      {filteredNotifications.map((post) => (
+        <View key={post.id} style={styles.postGroup}>
+          <StudyBoardPostCard
+            post={post}
+            onPress={(selected) => openPost(selected.id)}
+            onToggleLike={toggleNotificationLike}
+            variant="card"
+            showNamePill={false}
+            showStudyPill
+          />
         </View>
-      ) : (
-        filteredNotifications.map((post) => (
-          <View key={post.id} style={styles.postGroup}>
-            <StudyBoardPostCard
-              post={post}
-              onPress={(selected) => openPost(selected.id)}
-              onToggleLike={toggleNotificationLike}
-              variant="card"
-              showNamePill={false}
-              showStudyPill
-            />
-          </View>
-        ))
-      )}
+      ))}
 
       <StudyBoardPostModal
         visible={modalVisible}
@@ -147,6 +153,7 @@ function NotificationStudyTab() {
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
     paddingHorizontal: 20,
     paddingTop: 16,
     paddingBottom: 32,
@@ -180,14 +187,6 @@ const styles = StyleSheet.create({
   },
   postGroup: {
     marginBottom: 0,
-  },
-  emptyState: {
-    paddingVertical: 40,
-    alignItems: 'center',
-  },
-  emptyText: {
-    fontSize: 13,
-    color: '#9A9A9A',
   },
 });
 
