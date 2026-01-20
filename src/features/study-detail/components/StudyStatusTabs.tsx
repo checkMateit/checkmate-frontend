@@ -2,7 +2,7 @@ import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { colors } from '../../../styles/colors';
 
-type StatusTab = 'summary' | 'todo' | 'github';
+type StatusTab = 'summary' | 'todo' | 'photo';
 
 type StudyStatusTabsProps = {
   activeTab: StatusTab;
@@ -15,7 +15,7 @@ function StudyStatusTabs({ activeTab, onChange }: StudyStatusTabsProps) {
       {[
         { key: 'summary', label: '요약' },
         { key: 'todo', label: 'TODO' },
-        { key: 'github', label: 'GITHUB' },
+        { key: 'photo', label: '사진' },
       ].map((tab) => (
         <Pressable
           key={tab.key}

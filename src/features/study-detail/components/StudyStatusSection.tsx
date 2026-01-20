@@ -4,14 +4,14 @@ import { colors } from '../../../styles/colors';
 import StudyStatusTabs from './StudyStatusTabs';
 import StudyStatusSummary from './StudyStatusSummary';
 import StudyStatusTodo from './StudyStatusTodo';
-import StudyStatusGithub from './StudyStatusGithub';
+import StudyStatusPhoto from './StudyStatusPhoto';
 
 type StudyStatusSectionProps = {
   resetKey: number;
 };
 
 function StudyStatusSection({ resetKey }: StudyStatusSectionProps) {
-  const [activeTab, setActiveTab] = useState<'summary' | 'todo' | 'github'>('summary');
+  const [activeTab, setActiveTab] = useState<'summary' | 'todo' | 'photo'>('summary');
 
   useEffect(() => {
     setActiveTab('summary');
@@ -20,12 +20,14 @@ function StudyStatusSection({ resetKey }: StudyStatusSectionProps) {
   return (
     <View>
       <View style={styles.header}>
-        <Text style={styles.title}>{activeTab === 'summary' ? '이번주' : '오늘'}</Text>
+        <Text style={styles.title}>
+          {activeTab === 'todo' ? '오늘' : '이번주'}
+        </Text>
         <StudyStatusTabs activeTab={activeTab} onChange={setActiveTab} />
       </View>
       {activeTab === 'summary' && <StudyStatusSummary />}
       {activeTab === 'todo' && <StudyStatusTodo />}
-      {activeTab === 'github' && <StudyStatusGithub />}
+      {activeTab === 'photo' && <StudyStatusPhoto />}
     </View>
   );
 }
