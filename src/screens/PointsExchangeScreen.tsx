@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { SafeAreaView, ScrollView, StyleSheet, View } from 'react-native';
 import { colors } from '../styles/colors';
 import PointsExchangeAccountCard from '../features/points-exchange/components/PointsExchangeAccountCard';
 import PointsExchangeAddCard from '../features/points-exchange/components/PointsExchangeAddCard';
+import PointsExchangeFlowModal from '../features/points-exchange/components/PointsExchangeFlowModal';
 import PointsExchangeHeader from '../features/points-exchange/components/PointsExchangeHeader';
 import PointsExchangeSummaryCard from '../features/points-exchange/components/PointsExchangeSummaryCard';
 
@@ -11,6 +12,8 @@ type PointsExchangeScreenProps = {
 };
 
 function PointsExchangeScreen({ onClose }: PointsExchangeScreenProps) {
+  const [flowVisible, setFlowVisible] = useState(false);
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -29,9 +32,16 @@ function PointsExchangeScreen({ onClose }: PointsExchangeScreenProps) {
             accountNumber="1234-1231-1231-4234"
           />
           <PointsExchangeAddCard />
-          <PointsExchangeSummaryCard pointsLabel="10,000P" />
+          <PointsExchangeSummaryCard
+            pointsLabel="10,000P"
+            onPressExchange={() => setFlowVisible(true)}
+          />
         </View>
       </ScrollView>
+      <PointsExchangeFlowModal
+        visible={flowVisible}
+        onClose={() => setFlowVisible(false)}
+      />
     </SafeAreaView>
   );
 }
