@@ -8,12 +8,22 @@ import MyPageQuickActions from '../features/mypage/components/MyPageQuickActions
 import MyPageSection from '../features/mypage/components/MyPageSection';
 import { Text } from 'react-native-gesture-handler';
 import AccountSettingsScreen from './AccountSettingsScreen';
+import PointsHistoryScreen from './PointsHistoryScreen';
+import PointsShopScreen from './PointsShopScreen';
 
 function MyPageScreen() {
   const [showSettings, setShowSettings] = useState(false);
+  const [showPointsHistory, setShowPointsHistory] = useState(false);
+  const [showPointsShop, setShowPointsShop] = useState(false);
 
   if (showSettings) {
     return <AccountSettingsScreen onClose={() => setShowSettings(false)} />;
+  }
+  if (showPointsHistory) {
+    return <PointsHistoryScreen onClose={() => setShowPointsHistory(false)} />;
+  }
+  if (showPointsShop) {
+    return <PointsShopScreen onClose={() => setShowPointsShop(false)} />;
   }
 
   return (
@@ -22,7 +32,10 @@ function MyPageScreen() {
         <MyPageHeader onPressSetting={() => setShowSettings(true)} />
         <MyPageProfileRow name="박신영 메이트님" />
         <MyPagePointsCard current={700} total={1000} />
-        <MyPageQuickActions />
+        <MyPageQuickActions
+          onPressHistory={() => setShowPointsHistory(true)}
+          onPressShop={() => setShowPointsShop(true)}
+        />
         <View style={styles.sectionDivider} >
           <Text>광고</Text>
         </View>
