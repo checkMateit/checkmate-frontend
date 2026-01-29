@@ -10,11 +10,13 @@ import { Text } from 'react-native-gesture-handler';
 import AccountSettingsScreen from './AccountSettingsScreen';
 import PointsHistoryScreen from './PointsHistoryScreen';
 import PointsShopScreen from './PointsShopScreen';
+import PointsExchangeScreen from './PointsExchangeScreen';
 
 function MyPageScreen() {
   const [showSettings, setShowSettings] = useState(false);
   const [showPointsHistory, setShowPointsHistory] = useState(false);
   const [showPointsShop, setShowPointsShop] = useState(false);
+  const [showPointsExchange, setShowPointsExchange] = useState(false);
 
   if (showSettings) {
     return <AccountSettingsScreen onClose={() => setShowSettings(false)} />;
@@ -24,6 +26,9 @@ function MyPageScreen() {
   }
   if (showPointsShop) {
     return <PointsShopScreen onClose={() => setShowPointsShop(false)} />;
+  }
+  if (showPointsExchange) {
+    return <PointsExchangeScreen onClose={() => setShowPointsExchange(false)} />;
   }
 
   return (
@@ -35,6 +40,7 @@ function MyPageScreen() {
         <MyPageQuickActions
           onPressHistory={() => setShowPointsHistory(true)}
           onPressShop={() => setShowPointsShop(true)}
+          onPressExchange={() => setShowPointsExchange(true)}
         />
         <View style={styles.sectionDivider} >
           <Text>광고</Text>
