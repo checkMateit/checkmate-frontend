@@ -44,36 +44,36 @@ function PointsExchangeAccountCard({
 const styles = StyleSheet.create({
   card: {
     borderRadius: 6,
-    
+  
     backgroundColor: '#D8FFE7',
     paddingVertical: 25,
-    paddingHorizontal: 18,
+    paddingHorizontal: 30,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 12,
   },
   cardActive: {
-    backgroundColor: '#DFFFEA',
-    borderColor: '#C8F4DA',
+    backgroundColor: '#D8FFE7',
+    borderColor: '#D8FFE7',
   },
   textBlock: {
     flex: 1,
   },
   title: {
-    fontSize: 16,
+    fontSize: 19,
     fontWeight: '800',
     color: '#2A2A2A',
     marginBottom: 8,
   },
   bank: {
-    fontSize: 14,
-    color: '#6D6D6D',
+    fontSize: 15,
+    color: '#6A6A6A',
     marginBottom: 6,
   },
   account: {
-    fontSize: 14,
-    color: '#6D6D6D',
+    fontSize: 15,
+    color: '#6A6A6A',
   },
   actions: {
     flexDirection: 'row',

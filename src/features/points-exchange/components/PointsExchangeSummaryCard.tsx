@@ -24,23 +24,23 @@ function PointsExchangeSummaryCard({
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#E6E6E6',
-    backgroundColor: '#FFFFFF',
-    paddingVertical: 20,
-    paddingHorizontal: 18,
+    borderRadius: 6,
+    borderWidth: 0.5,
+    borderColor: '#D9D9D9',
+    backgroundColor: '#FBFBFB',
+    paddingVertical: 30,
+    paddingHorizontal: 30,
     marginTop: 12,
   },
   title: {
     fontSize: 19,
     fontWeight: '700',
-    color: '#2A2A2A',
+    color: '#323232',
   },
   points: {
     fontSize: 32,
     fontWeight: '800',
-    color: '#2A2A2A',
+    color: '#323232',
     marginTop: 16,
     marginBottom: 20,
   },

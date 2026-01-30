@@ -177,13 +177,13 @@ const styles = StyleSheet.create({
     marginTop: 40,
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: 19,
     fontWeight: '700',
     color: '#2A2A2A',
     marginBottom: 12,
   },
   sectionSub: {
-    fontSize: 14,
+    fontSize: 15,
     color: '#9B9B9B',
   },
   amountSection: {
@@ -191,14 +191,14 @@ const styles = StyleSheet.create({
     minHeight: 80,
   },
   placeholderText: {
-    fontSize: 20,
+    fontSize: 32,
     fontWeight: '700',
-    color: '#D0D0D0',
-    marginBottom: 8,
+    color: '#D9D9D9',
+    marginBottom:15,
   },
   balanceText: {
     fontSize: 14,
-    color: '#D0D0D0',
+    color: '#D9D9D9',
   },
   amountText: {
     fontSize: 32,
@@ -206,7 +206,7 @@ const styles = StyleSheet.create({
     color: '#2A2A2A',
   },
   keypad: {
-    marginTop: 24,
+    marginTop: 100,
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
@@ -219,12 +219,12 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   keypadText: {
-    fontSize: 22,
+    fontSize: 28,
     color: '#2A2A2A',
-    fontWeight: '600',
+    fontWeight: '400',
   },
   primaryButton: {
-    marginTop: 16,
+    marginTop: 60,
     backgroundColor: colors.primary,
     borderRadius: 8,
     paddingVertical: 14,
@@ -232,27 +232,27 @@ const styles = StyleSheet.create({
   },
   primaryButtonText: {
     color: '#FFFFFF',
-    fontSize: 16,
+    fontSize: 20,
     fontWeight: '700',
   },
   confirmSection: {
-    marginTop: 120,
+    marginTop: 200,
     alignItems: 'center',
   },
   confirmBank: {
-    fontSize: 16,
+    fontSize: 20,
     fontWeight: '700',
     color: '#2A2A2A',
     marginBottom: 10,
   },
   confirmAccount: {
-    fontSize: 16,
+    fontSize: 20,
     fontWeight: '700',
     color: '#2A2A2A',
     marginBottom: 30,
   },
   confirmAmount: {
-    fontSize: 30,
+    fontSize: 32,
     fontWeight: '800',
     color: '#2A2A2A',
     marginBottom: 18,
@@ -272,12 +272,12 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   receiverLabel: {
-    fontSize: 12,
-    color: '#A0A0A0',
+    fontSize: 15,
+    color: '#898989',
   },
   receiverValue: {
-    fontSize: 12,
-    color: '#A0A0A0',
+    fontSize: 15,
+    color: '#898989',
   },
   confirmButtons: {
     flexDirection: 'row',
@@ -292,7 +292,7 @@ const styles = StyleSheet.create({
   },
   cancelButtonText: {
     color: '#4B4B4B',
-    fontSize: 15,
+    fontSize: 20,
     fontWeight: '700',
   },
   primaryButtonInline: {

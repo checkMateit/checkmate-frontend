@@ -16,10 +16,10 @@ function PointsExchangeAddCard({ onPress }: PointsExchangeAddCardProps) {
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#E6E6E6',
-    backgroundColor: '#FFFFFF',
+    borderRadius: 6,
+    borderWidth: 0.5,
+    borderColor: '#D9D9D9',
+    backgroundColor: '#FBFBFB',
     paddingVertical: 16,
     alignItems: 'center',
     justifyContent: 'center',
