@@ -62,47 +62,51 @@ function PointsExchangeFlowModal({ visible, onClose }: PointsExchangeFlowModalPr
               <Text style={styles.headerTitle}>포인트 환전</Text>
             </View>
 
-            <View style={styles.accountSection}>
-              <Text style={styles.sectionTitle}>LDK 포인트 지갑에서</Text>
-              <Text style={styles.sectionTitle}>내 계좌로</Text>
-              <Text style={styles.sectionSub}>신한은행 1234-1231-1231-4234</Text>
+            <View style={styles.contentArea}>
+              <View style={styles.accountSection}>
+                <Text style={styles.sectionTitle}>LDK 포인트 지갑에서</Text>
+                <Text style={styles.sectionTitle}>내 계좌로</Text>
+                <Text style={styles.sectionSub}>신한은행 1234-1231-1231-4234</Text>
+              </View>
+
+              <View style={styles.amountSection}>
+                {amountValue ? (
+                  <Text style={styles.amountText}>{amountLabel}</Text>
+                ) : (
+                  <>
+                    <Text style={styles.placeholderText}>얼마를 환전할까요?</Text>
+                    <Text style={styles.balanceText}>잔액 10,000P</Text>
+                  </>
+                )}
+              </View>
+
+              <View style={styles.keypad}>
+                {keypad.map((key) => (
+                  <Pressable
+                    key={key}
+                    style={styles.keypadButton}
+                    onPress={() => {
+                      if (key === 'back') {
+                        handleBackspace();
+                      } else {
+                        handleAppend(key);
+                      }
+                    }}
+                  >
+                    <Text style={styles.keypadText}>{key === 'back' ? '←' : key}</Text>
+                  </Pressable>
+                ))}
+              </View>
             </View>
 
-            <View style={styles.amountSection}>
-              {amountValue ? (
-                <Text style={styles.amountText}>{amountLabel}</Text>
-              ) : (
-                <>
-                  <Text style={styles.placeholderText}>얼마를 환전할까요?</Text>
-                  <Text style={styles.balanceText}>잔액 10,000P</Text>
-                </>
-              )}
+            <View style={styles.bottomArea}>
+              <Pressable
+                style={styles.primaryButton}
+                onPress={() => setStep('confirm')}
+              >
+                <Text style={styles.primaryButtonText}>다음</Text>
+              </Pressable>
             </View>
-
-            <View style={styles.keypad}>
-              {keypad.map((key) => (
-                <Pressable
-                  key={key}
-                  style={styles.keypadButton}
-                  onPress={() => {
-                    if (key === 'back') {
-                      handleBackspace();
-                    } else {
-                      handleAppend(key);
-                    }
-                  }}
-                >
-                  <Text style={styles.keypadText}>{key === 'back' ? '←' : key}</Text>
-                </Pressable>
-              ))}
-            </View>
-
-            <Pressable
-              style={styles.primaryButton}
-              onPress={() => setStep('confirm')}
-            >
-              <Text style={styles.primaryButtonText}>다음</Text>
-            </Pressable>
           </View>
         ) : (
           <View style={styles.screen}>
@@ -173,6 +177,9 @@ const styles = StyleSheet.create({
     height: 16,
     tintColor: '#B8B8B8',
   },
+  contentArea: {
+    flex: 1,
+  },
   accountSection: {
     marginTop: 40,
   },
@@ -207,13 +214,14 @@ const styles = StyleSheet.create({
   },
   keypad: {
     marginTop: 100,
+    marginBottom: 40,
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
   },
   keypadButton: {
     width: '30%',
-    height: 54,
+    height: 60,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 10,
@@ -223,8 +231,10 @@ const styles = StyleSheet.create({
     color: '#2A2A2A',
     fontWeight: '400',
   },
+  bottomArea: {
+    paddingBottom: 24,
+  },
   primaryButton: {
-    marginTop: 60,
     backgroundColor: colors.primary,
     borderRadius: 8,
     paddingVertical: 14,
@@ -236,8 +246,9 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   confirmSection: {
-    marginTop: 200,
+    flex: 1,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   confirmBank: {
     fontSize: 20,
@@ -263,7 +274,6 @@ const styles = StyleSheet.create({
     color: '#3B3B3B',
   },
   confirmFooter: {
-    marginTop: 'auto',
     paddingBottom: 24,
   },
   receiverRow: {
