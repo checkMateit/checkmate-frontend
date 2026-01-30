@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { Image, StyleSheet } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import HomeScreen from '../screens/HomeScreen';
-import SearchScreen from '../screens/SearchScreen';
-import HistoryScreen from '../screens/HistoryScreen';
-import MyPageScreen from '../screens/MyPageScreen';
+import HomeScreen from '../features/home/screens/HomeScreen';
+import SearchScreen from '../features/search/screens/SearchScreen';
+import HistoryScreen from '../features/history/screens/HistoryScreen';
+import MyPageScreen from '../features/mypage/screens/MyPageScreen';
 
 export type BottomTabParamList = {
   Home: undefined;

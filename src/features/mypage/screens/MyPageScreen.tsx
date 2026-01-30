@@ -1,16 +1,16 @@
 import React, { useState } from 'react';
 import { SafeAreaView, ScrollView, StyleSheet, View } from 'react-native';
-import { colors } from '../styles/colors';
-import MyPageHeader from '../features/mypage/components/MyPageHeader';
-import MyPageProfileRow from '../features/mypage/components/MyPageProfileRow';
-import MyPagePointsCard from '../features/mypage/components/MyPagePointsCard';
-import MyPageQuickActions from '../features/mypage/components/MyPageQuickActions';
-import MyPageSection from '../features/mypage/components/MyPageSection';
+import { colors } from '../../../styles/colors';
+import MyPageHeader from '../components/MyPageHeader';
+import MyPageProfileRow from '../components/MyPageProfileRow';
+import MyPagePointsCard from '../components/MyPagePointsCard';
+import MyPageQuickActions from '../components/MyPageQuickActions';
+import MyPageSection from '../components/MyPageSection';
 import { Text } from 'react-native-gesture-handler';
 import AccountSettingsScreen from './AccountSettingsScreen';
-import PointsHistoryScreen from './PointsHistoryScreen';
-import PointsShopScreen from './PointsShopScreen';
-import PointsExchangeScreen from './PointsExchangeScreen';
+import PointsHistoryScreen from '../../points/screens/PointsHistoryScreen';
+import PointsShopScreen from '../../points/screens/PointsShopScreen';
+import PointsExchangeScreen from '../../points/screens/PointsExchangeScreen';
 
 function MyPageScreen() {
   const [showSettings, setShowSettings] = useState(false);

@@ -14,22 +14,22 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { type BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
-import { type BottomTabParamList } from '../navigation/BottomTabs';
-import { useNotificationCenter } from '../state/NotificationCenterContext';
-import StudyCard from '../features/study-board/components/StudyCard';
-import RecommendStudyCard from '../features/study-board/components/RecommendStudyCard';
-import { colors } from '../styles/colors';
-import NotificationScreen from './NotificationScreen';
-import MyStudyScreen from './MyStudyScreen';
-import StudyDetailScreen, { type StudyDetail } from './StudyDetailScreen';
-const rightIcon = require('../assets/icon/right_arrow.png');
-const backgroundSource = require('../assets/image/background.png');
-const shopIconSource = require('../assets/icon/shop_icon.png');
-const alarmIconSource = require('../assets/icon/alarm_icon.png');
-const studyMascotOne = require('../assets/character/cha_1.png');
-const studyMascotTwo = require('../assets/character/ch_2.png');
-const studyMascotThree = require('../assets/character/ch_3.png');
-const studyMascotFour = require('../assets/character/ch_4.png');
+import { type BottomTabParamList } from '../../../navigation/BottomTabs';
+import { useNotificationCenter } from '../../../state/NotificationCenterContext';
+import StudyCard from '../../study-board/components/StudyCard';
+import RecommendStudyCard from '../../study-board/components/RecommendStudyCard';
+import { colors } from '../../../styles/colors';
+import NotificationScreen from '../../notification/screens/NotificationScreen';
+import MyStudyScreen from '../../my-study/screens/MyStudyScreen';
+import StudyDetailScreen, { type StudyDetail } from '../../study-detail/screens/StudyDetailScreen';
+const rightIcon = require('../../../assets/icon/right_arrow.png');
+const backgroundSource = require('../../../assets/image/background.png');
+const shopIconSource = require('../../../assets/icon/shop_icon.png');
+const alarmIconSource = require('../../../assets/icon/alarm_icon.png');
+const studyMascotOne = require('../../../assets/character/cha_1.png');
+const studyMascotTwo = require('../../../assets/character/ch_2.png');
+const studyMascotThree = require('../../../assets/character/ch_3.png');
+const studyMascotFour = require('../../../assets/character/ch_4.png');
 const { width: bgWidth, height: bgHeight } = Image.resolveAssetSource(backgroundSource);
 const HEADER_HEIGHT = 40;
 const HERO_TEXT_TOP = 12;
@@ -288,14 +288,14 @@ function HomeScreen() {
           >
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>이런 스터디는 어때요?</Text>
-              {/* <Image source={require('../assets/icon/help_icon.png')} style={{ width: 14, height: 14 }} /> */}
+              {/* <Image source={require('../../../assets/icon/help_icon.png')} style={{ width: 14, height: 14 }} /> */}
               <View
                 style={styles.helpWrap}
                 onLayout={(event) => setHelpIconLayout(event.nativeEvent.layout)}
               >
                 <Pressable onPress={() => setShowHelp(true)} hitSlop={10}>
                   <Image
-                    source={require('../assets/icon/help_icon.png')}
+                    source={require('../../../assets/icon/help_icon.png')}
                     style={{ width: 14, height: 14 }}
                   />
                 </Pressable>

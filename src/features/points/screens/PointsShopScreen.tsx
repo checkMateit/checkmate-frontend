@@ -1,9 +1,9 @@
 import React from 'react';
 import { SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { colors } from '../styles/colors';
-import PointsShopBalanceBar from '../features/points-shop/components/PointsShopBalanceBar';
-import PointsShopHeader from '../features/points-shop/components/PointsShopHeader';
-import PointsShopSection from '../features/points-shop/components/PointsShopSection';
+import { colors } from '../../../styles/colors';
+import PointsShopBalanceBar from '../shop/PointsShopBalanceBar';
+import PointsShopHeader from '../shop/PointsShopHeader';
+import PointsShopSection from '../shop/PointsShopSection';
 
 type PointsShopScreenProps = {
   onClose?: () => void;
@@ -14,21 +14,21 @@ const allStudyItems = [
     id: 'all-1',
     label: '면제권 x 1',
     priceLabel: '1,000P',
-    iconSource: require('../assets/ticket/ticket_all.png'),
+    iconSource: require('../../../assets/ticket/ticket_all.png'),
     iconSize: { width: 56, height: 30 },
   },
   {
     id: 'all-2',
     label: '면제권 x 2',
     priceLabel: '2,000P',
-    iconSource: require('../assets/ticket/ticket_all_2.png'),
+    iconSource: require('../../../assets/ticket/ticket_all_2.png'),
     iconSize: { width: 60, height: 46 },
   },
   {
     id: 'all-3',
     label: '면제권 x 3',
     priceLabel: '3,000P',
-    iconSource: require('../assets/ticket/ticket_all_3.png'),
+    iconSource: require('../../../assets/ticket/ticket_all_3.png'),
     iconSize: { width: 50, height: 58 },
   },
 ];
@@ -38,21 +38,21 @@ const coreStudyItems = [
     id: 'core-1',
     label: '면제권 x 1',
     priceLabel: '1,000P',
-    iconSource: require('../assets/ticket/ticket.png'),
+    iconSource: require('../../../assets/ticket/ticket.png'),
     iconSize: { width: 56, height: 30 },
   },
   {
     id: 'core-2',
     label: '면제권 x 2',
     priceLabel: '2,000P',
-    iconSource: require('../assets/ticket/ticket_2.png'),
+    iconSource: require('../../../assets/ticket/ticket_2.png'),
     iconSize: { width: 60, height: 46 },
   },
   {
     id: 'core-3',
     label: '면제권 x 3',
     priceLabel: '3,000P',
-    iconSource: require('../assets/ticket/ticket_3.png'),
+    iconSource: require('../../../assets/ticket/ticket_3.png'),
     iconSize: { width: 50, height: 58 },
   },
 ];
@@ -62,21 +62,21 @@ const todoItems = [
     id: 'todo-1',
     label: '면제권 x 1',
     priceLabel: '1,000P',
-    iconSource: require('../assets/ticket/ticket.png'),
+    iconSource: require('../../../assets/ticket/ticket.png'),
     iconSize: { width: 56, height: 30 },
   },
   {
     id: 'todo-2',
     label: '면제권 x 2',
     priceLabel: '2,000P',
-    iconSource: require('../assets/ticket/ticket_2.png'),
+    iconSource: require('../../../assets/ticket/ticket_2.png'),
     iconSize: { width: 60, height: 46 },
   },
   {
     id: 'todo-3',
     label: '면제권 x 3',
     priceLabel: '3,000P',
-    iconSource: require('../assets/ticket/ticket_3.png'),
+    iconSource: require('../../../assets/ticket/ticket_3.png'),
     iconSize: { width: 50, height: 58 },
   },
 ];

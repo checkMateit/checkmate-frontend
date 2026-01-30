@@ -8,10 +8,10 @@ import {
   Text,
   View,
 } from 'react-native';
-import { colors } from '../styles/colors';
+import { colors } from '../../../styles/colors';
 
-const backIcon = require('../assets/icon/left_arrow.png');
-const profileImage = require('../assets/icon/profile_1.png');
+const backIcon = require('../../../assets/icon/left_arrow.png');
+const profileImage = require('../../../assets/icon/profile_1.png');
 
 type AccountSettingsScreenProps = {
   onClose?: () => void;

@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { SafeAreaView, ScrollView, StyleSheet, View } from 'react-native';
-import NotificationHeader from '../features/notification/components/NotificationHeader';
-import NotificationNoticeTab from '../features/notification/components/NotificationNoticeTab';
-import NotificationStudyTab from '../features/notification/components/NotificationStudyTab';
-import NotificationTabs from '../features/notification/components/NotificationTabs';
-import { colors } from '../styles/colors';
-import { useNotificationCenter } from '../state/NotificationCenterContext';
+import NotificationHeader from '../components/NotificationHeader';
+import NotificationNoticeTab from '../components/NotificationNoticeTab';
+import NotificationStudyTab from '../components/NotificationStudyTab';
+import NotificationTabs from '../components/NotificationTabs';
+import { colors } from '../../../styles/colors';
+import { useNotificationCenter } from '../../../state/NotificationCenterContext';
 
 type NotificationScreenProps = {
   onClose: () => void;

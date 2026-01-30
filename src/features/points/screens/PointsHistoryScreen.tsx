@@ -8,12 +8,12 @@ import {
   Text,
   View,
 } from 'react-native';
-import { colors } from '../styles/colors';
-import PointsHistoryList from '../features/points-history/components/PointsHistoryList';
-import PointsHistoryMonthNav from '../features/points-history/components/PointsHistoryMonthNav';
-import PointsHistoryTabs from '../features/points-history/components/PointsHistoryTabs';
+import { colors } from '../../../styles/colors';
+import PointsHistoryList from '../history/PointsHistoryList';
+import PointsHistoryMonthNav from '../history/PointsHistoryMonthNav';
+import PointsHistoryTabs from '../history/PointsHistoryTabs';
 
-const backIcon = require('../assets/icon/left_arrow.png');
+const backIcon = require('../../../assets/icon/left_arrow.png');
 
 type PointsHistoryScreenProps = {
   onClose?: () => void;

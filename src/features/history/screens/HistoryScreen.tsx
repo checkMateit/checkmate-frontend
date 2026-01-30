@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { Image, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
-import HistoryFolderTab from '../features/history/components/HistoryFolderTab';
-import HistoryStatsTab from '../features/history/components/HistoryStatsTab';
-import { colors } from '../styles/colors';
+import HistoryFolderTab from '../components/HistoryFolderTab';
+import HistoryStatsTab from '../components/HistoryStatsTab';
+import { colors } from '../../../styles/colors';
 
-const settingIcon = require('../assets/icon/setting_icon.png');
+const settingIcon = require('../../../assets/icon/setting_icon.png');
 
 const getMonthStart = (date: Date) => new Date(date.getFullYear(), date.getMonth(), 1);
 

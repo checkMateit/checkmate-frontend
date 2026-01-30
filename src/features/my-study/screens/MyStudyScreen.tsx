@@ -1,16 +1,16 @@
 import React, { useState } from 'react';
 import { SafeAreaView, StyleSheet, View } from 'react-native';
 import DraggableFlatList, { RenderItemParams } from 'react-native-draggable-flatlist';
-import MyStudyHeader from '../features/study-board/components/MyStudyHeader';
-import MyStudyItem from '../features/study-board/components/MyStudyItem';
-import { colors } from '../styles/colors';
+import MyStudyHeader from '../../study-board/components/MyStudyHeader';
+import MyStudyItem from '../../study-board/components/MyStudyItem';
+import { colors } from '../../../styles/colors';
 
 type MyStudyScreenProps = {
   onClose: () => void;
 };
 
-const mascotOne = require('../assets/character/cha_1.png');
-const mascotTwo = require('../assets/character/ch_2.png');
+const mascotOne = require('../../../assets/character/cha_1.png');
+const mascotTwo = require('../../../assets/character/ch_2.png');
 
 type StudyItem = {
   id: string;

@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { SafeAreaView, ScrollView, StyleSheet, View } from 'react-native';
-import { colors } from '../styles/colors';
-import PointsExchangeAccountCard from '../features/points-exchange/components/PointsExchangeAccountCard';
-import PointsExchangeAddCard from '../features/points-exchange/components/PointsExchangeAddCard';
-import PointsExchangeFlowModal from '../features/points-exchange/components/PointsExchangeFlowModal';
-import PointsExchangeHeader from '../features/points-exchange/components/PointsExchangeHeader';
-import PointsExchangeSummaryCard from '../features/points-exchange/components/PointsExchangeSummaryCard';
+import { colors } from '../../../styles/colors';
+import PointsExchangeAccountCard from '../exchange/PointsExchangeAccountCard';
+import PointsExchangeAddCard from '../exchange/PointsExchangeAddCard';
+import PointsExchangeFlowModal from '../exchange/PointsExchangeFlowModal';
+import PointsExchangeHeader from '../exchange/PointsExchangeHeader';
+import PointsExchangeSummaryCard from '../exchange/PointsExchangeSummaryCard';
 
 type PointsExchangeScreenProps = {
   onClose?: () => void;
