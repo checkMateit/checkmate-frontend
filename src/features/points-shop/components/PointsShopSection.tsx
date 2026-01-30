@@ -7,6 +7,10 @@ export type PointsShopItem = {
   label: string;
   priceLabel: string;
   iconSource: ReturnType<typeof require>;
+  iconSize?: {
+    width: number;
+    height: number;
+  };
 };
 
 type PointsShopSectionProps = {
@@ -25,6 +29,7 @@ function PointsShopSection({ title, items }: PointsShopSectionProps) {
             label={item.label}
             priceLabel={item.priceLabel}
             iconSource={item.iconSource}
+            iconSize={item.iconSize}
           />
         ))}
       </View>
@@ -46,6 +51,7 @@ const styles = StyleSheet.create({
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
+    
     justifyContent: 'space-between',
   },
 });

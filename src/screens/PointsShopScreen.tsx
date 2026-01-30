@@ -15,18 +15,21 @@ const allStudyItems = [
     label: '면제권 x 1',
     priceLabel: '1,000P',
     iconSource: require('../assets/ticket/ticket_all.png'),
+    iconSize: { width: 56, height: 30 },
   },
   {
     id: 'all-2',
     label: '면제권 x 2',
     priceLabel: '2,000P',
     iconSource: require('../assets/ticket/ticket_all_2.png'),
+    iconSize: { width: 60, height: 46 },
   },
   {
     id: 'all-3',
     label: '면제권 x 3',
     priceLabel: '3,000P',
     iconSource: require('../assets/ticket/ticket_all_3.png'),
+    iconSize: { width: 50, height: 58 },
   },
 ];
 
@@ -36,18 +39,21 @@ const coreStudyItems = [
     label: '면제권 x 1',
     priceLabel: '1,000P',
     iconSource: require('../assets/ticket/ticket.png'),
+    iconSize: { width: 56, height: 30 },
   },
   {
     id: 'core-2',
     label: '면제권 x 2',
     priceLabel: '2,000P',
     iconSource: require('../assets/ticket/ticket_2.png'),
+    iconSize: { width: 60, height: 46 },
   },
   {
     id: 'core-3',
     label: '면제권 x 3',
     priceLabel: '3,000P',
     iconSource: require('../assets/ticket/ticket_3.png'),
+    iconSize: { width: 50, height: 58 },
   },
 ];
 
@@ -57,18 +63,21 @@ const todoItems = [
     label: '면제권 x 1',
     priceLabel: '1,000P',
     iconSource: require('../assets/ticket/ticket.png'),
+    iconSize: { width: 56, height: 30 },
   },
   {
     id: 'todo-2',
     label: '면제권 x 2',
     priceLabel: '2,000P',
     iconSource: require('../assets/ticket/ticket_2.png'),
+    iconSize: { width: 60, height: 46 },
   },
   {
     id: 'todo-3',
     label: '면제권 x 3',
     priceLabel: '3,000P',
     iconSource: require('../assets/ticket/ticket_3.png'),
+    iconSize: { width: 50, height: 58 },
   },
 ];
 

@@ -5,12 +5,23 @@ type PointsShopItemCardProps = {
   label: string;
   priceLabel: string;
   iconSource: ImageSourcePropType;
+  iconSize?: {
+    width: number;
+    height: number;
+  };
 };
 
-function PointsShopItemCard({ label, priceLabel, iconSource }: PointsShopItemCardProps) {
+function PointsShopItemCard({
+  label,
+  priceLabel,
+  iconSource,
+  iconSize,
+}: PointsShopItemCardProps) {
   return (
     <View style={styles.card}>
-      <Image source={iconSource} style={styles.ticketIcon} />
+      <View style={styles.ticketIconFrame}>
+        <Image source={iconSource} style={[styles.ticketIcon, iconSize]} />
+      </View>
       <Text style={styles.label}>{label}</Text>
       <View style={styles.pricePill}>
         <Text style={styles.priceText}>{priceLabel}</Text>
@@ -22,17 +33,21 @@ function PointsShopItemCard({ label, priceLabel, iconSource }: PointsShopItemCar
 const styles = StyleSheet.create({
   card: {
     width: '31%',
-    backgroundColor: '#EFEFEF',
-    borderRadius: 12,
+    backgroundColor: '#EDEDED',
+    borderRadius: 13,
     paddingVertical: 16,
     alignItems: 'center',
     marginBottom: 12,
   },
-  ticketIcon: {
+  ticketIconFrame: {
     width: 70,
-    height: 50,
-    resizeMode: 'contain',
+    height: 60,
+    alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: 10,
+  },
+  ticketIcon: {
+    resizeMode: 'contain',
   },
   label: {
     fontSize: 13,
