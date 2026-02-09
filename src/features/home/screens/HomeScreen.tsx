@@ -24,12 +24,14 @@ import MyStudyScreen from '../../my-study/screens/MyStudyScreen';
 import StudyDetailScreen, { type StudyDetail } from '../../study-detail/screens/StudyDetailScreen';
 const rightIcon = require('../../../assets/icon/right_arrow.png');
 const backgroundSource = require('../../../assets/image/background.png');
+const emptyCardBg = require('../../../assets/image/linear_bg.png');
 const shopIconSource = require('../../../assets/icon/shop_icon.png');
 const alarmIconSource = require('../../../assets/icon/alarm_icon.png');
 const studyMascotOne = require('../../../assets/character/cha_1.png');
 const studyMascotTwo = require('../../../assets/character/ch_2.png');
 const studyMascotThree = require('../../../assets/character/ch_3.png');
 const studyMascotFour = require('../../../assets/character/ch_4.png');
+const emptyHeroMascot = require('../../../assets/character/ch_3.png');
 const { width: bgWidth, height: bgHeight } = Image.resolveAssetSource(backgroundSource);
 const HEADER_HEIGHT = 40;
 const HERO_TEXT_TOP = 12;
@@ -39,6 +41,7 @@ function HomeScreen() {
   const navigation = useNavigation<BottomTabNavigationProp<BottomTabParamList>>();
   const screenWidth = Dimensions.get('window').width;
   const heroHeight = Math.round((screenWidth * bgHeight) / bgWidth) + insets.top;
+  const heroContentTop = HEADER_HEIGHT + insets.top + HERO_TEXT_TOP;
   const [activePage, setActivePage] = useState(0);
   const [showHelp, setShowHelp] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -68,102 +71,106 @@ function HomeScreen() {
 
     return unsubscribe;
   }, [navigation]);
-
   const studies = useMemo<StudyDetail[]>(
-    () => [
-      {
-        id: 'study-1',
-        tag: '코딩',
-        title: '코테 스터디',
-        members: '3/5',
-        description: '안녕하세요, 코테 스터디룸입니다',
-        schedule: '월/화/수 · 10:00 - 13:00',
-        count: '5회 인증',
-        methods: ['TODO', '사진'],
-        image: studyMascotOne,
-        statusText: '인증 미완료',
-        statusVariant: 'danger' as const,
-        statusIcons: ['danger', 'danger'],
-        mascotSource: studyMascotOne,
-      },
-      {
-        id: 'study-2',
-        tag: '언어',
-        title: '토익 스터디',
-        members: '6/6',
-        description: '안녕하세요, 토익 빡공 스터디룸입니다',
-        schedule: '매일 · 8:00 - 9:00',
-        count: '5회 인증',
-        methods: ['TODO', '사진'],
-        image: studyMascotTwo,
-        statusText: 'TODO 인증 완료',
-        statusVariant: 'success' as const,
-        statusIcons: ['success'],
-        mascotSource: studyMascotTwo,
-      },
-      {
-        id: 'study-3',
-        tag: '코딩',
-        title: '머시기 스터디',
-        members: '4/10',
-        description: '안녕하세요, 머시기 스터디입니다',
-        schedule: '매일 · 오전 10:00',
-        count: '3회 인증',
-        methods: ['TODO', '사진'],
-        image: studyMascotThree,
-        statusText: '인증 진행중',
-        statusVariant: 'danger' as const,
-        statusIcons: ['danger', 'success'],
-        mascotSource: studyMascotThree,
-      },
-      {
-        id: 'study-4',
-        tag: '책상',
-        title: '앉아 스터디',
-        members: '3/6',
-        description: '안녕하세요, 앉아 스터디입니다',
-        schedule: '매일 · 오전 10:00',
-        count: '2회 인증',
-        methods: ['TODO', '사진'],
-        image: studyMascotFour,
-        statusText: 'TODO 인증 완료',
-        statusVariant: 'success' as const,
-        statusIcons: ['success', 'success'],
-        mascotSource: studyMascotFour,
-      },
-      {
-        id: 'study-5',
-        tag: '코딩',
-        title: '깃허브 스터디',
-        members: '2/5',
-        description: '안녕하세요, 깃허브 스터디입니다',
-        schedule: '매일 · 오후 8:00',
-        count: '4회 인증',
-        methods: ['TODO', '사진'],
-        image: studyMascotOne,
-        statusText: '인증 미완료',
-        statusVariant: 'danger' as const,
-        statusIcons: ['danger'],
-        mascotSource: studyMascotOne,
-      },
-      {
-        id: 'study-6',
-        tag: '영어',
-        title: '회화 스터디',
-        members: '5/8',
-        description: '안녕하세요, 회화 스터디입니다',
-        schedule: '월/수/금 · 오후 7:00',
-        count: '5회 인증',
-        methods: ['TODO', '사진'],
-        image: studyMascotTwo,
-        statusText: '인증 진행중',
-        statusVariant: 'success' as const,
-        statusIcons: ['success', 'danger'],
-        mascotSource: studyMascotTwo,
-      },
-    ],
+    () => [],
     [],
   );
+
+  // const studies = useMemo<StudyDetail[]>(
+  //   () => [
+  //     {
+  //       id: 'study-1',
+  //       tag: '코딩',
+  //       title: '코테 스터디',
+  //       members: '3/5',
+  //       description: '안녕하세요, 코테 스터디룸입니다',
+  //       schedule: '월/화/수 · 10:00 - 13:00',
+  //       count: '5회 인증',
+  //       methods: ['TODO', '사진'],
+  //       image: studyMascotOne,
+  //       statusText: '인증 미완료',
+  //       statusVariant: 'danger' as const,
+  //       statusIcons: ['danger', 'danger'],
+  //       mascotSource: studyMascotOne,
+  //     },
+  //     {
+  //       id: 'study-2',
+  //       tag: '언어',
+  //       title: '토익 스터디',
+  //       members: '6/6',
+  //       description: '안녕하세요, 토익 빡공 스터디룸입니다',
+  //       schedule: '매일 · 8:00 - 9:00',
+  //       count: '5회 인증',
+  //       methods: ['TODO', '사진'],
+  //       image: studyMascotTwo,
+  //       statusText: 'TODO 인증 완료',
+  //       statusVariant: 'success' as const,
+  //       statusIcons: ['success'],
+  //       mascotSource: studyMascotTwo,
+  //     },
+  //     {
+  //       id: 'study-3',
+  //       tag: '코딩',
+  //       title: '머시기 스터디',
+  //       members: '4/10',
+  //       description: '안녕하세요, 머시기 스터디입니다',
+  //       schedule: '매일 · 오전 10:00',
+  //       count: '3회 인증',
+  //       methods: ['TODO', '사진'],
+  //       image: studyMascotThree,
+  //       statusText: '인증 진행중',
+  //       statusVariant: 'danger' as const,
+  //       statusIcons: ['danger', 'success'],
+  //       mascotSource: studyMascotThree,
+  //     },
+  //     {
+  //       id: 'study-4',
+  //       tag: '책상',
+  //       title: '앉아 스터디',
+  //       members: '3/6',
+  //       description: '안녕하세요, 앉아 스터디입니다',
+  //       schedule: '매일 · 오전 10:00',
+  //       count: '2회 인증',
+  //       methods: ['TODO', '사진'],
+  //       image: studyMascotFour,
+  //       statusText: 'TODO 인증 완료',
+  //       statusVariant: 'success' as const,
+  //       statusIcons: ['success', 'success'],
+  //       mascotSource: studyMascotFour,
+  //     },
+  //     {
+  //       id: 'study-5',
+  //       tag: '코딩',
+  //       title: '깃허브 스터디',
+  //       members: '2/5',
+  //       description: '안녕하세요, 깃허브 스터디입니다',
+  //       schedule: '매일 · 오후 8:00',
+  //       count: '4회 인증',
+  //       methods: ['TODO', '사진'],
+  //       image: studyMascotOne,
+  //       statusText: '인증 미완료',
+  //       statusVariant: 'danger' as const,
+  //       statusIcons: ['danger'],
+  //       mascotSource: studyMascotOne,
+  //     },
+  //     {
+  //       id: 'study-6',
+  //       tag: '영어',
+  //       title: '회화 스터디',
+  //       members: '5/8',
+  //       description: '안녕하세요, 회화 스터디입니다',
+  //       schedule: '월/수/금 · 오후 7:00',
+  //       count: '5회 인증',
+  //       methods: ['TODO', '사진'],
+  //       image: studyMascotTwo,
+  //       statusText: '인증 진행중',
+  //       statusVariant: 'success' as const,
+  //       statusIcons: ['success', 'danger'],
+  //       mascotSource: studyMascotTwo,
+  //     },
+  //   ],
+  //   [],
+  // );
 
   const studyPages = useMemo(() => {
     const pages = [];
@@ -172,6 +179,9 @@ function HomeScreen() {
     }
     return pages;
   }, [studies]);
+  const hasStudies = studies.length > 0;
+  const heroHeightEmpty = heroHeight;
+  const activeHeroHeight = hasStudies ? heroHeight : heroHeightEmpty;
 
   return (
     <SafeAreaView style={styles.root}>
@@ -210,7 +220,7 @@ function HomeScreen() {
             style={[
               styles.heroBackground,
               {
-                height: heroHeight,
+                height: activeHeroHeight,
                 marginTop: -insets.top -35,
               },
             ]}
@@ -218,68 +228,106 @@ function HomeScreen() {
           <View
             style={[
               styles.heroContent,
-              { paddingTop: HEADER_HEIGHT + insets.top + HERO_TEXT_TOP },
+              { paddingTop: heroContentTop },
             ]}
           >
             <View style={styles.heroTextBlock}>
-              <Text style={styles.heroLine}>
-                <Text>승연 메이트님</Text>
-              </Text>
-              <Text style={styles.heroLine}>
-                <Text>오늘은 스터디 2개가 있어요!</Text>
-              </Text>
+              {hasStudies ? (
+                <>
+                  <Text style={styles.heroLine}>승연 메이트님</Text>
+                  <Text style={styles.heroLine}>오늘은 스터디 2개가 있어요!</Text>
+                </>
+              ) : (
+                <>
+                  <Text style={styles.heroLine}>승연 메이트님 반가워요!</Text>
+                  <Text style={styles.heroLine}>참여중인 스터디가 없네요.</Text>
+                </>
+              )}
             </View>
-            
 
-            <Pressable style={styles.heroCtaRow} onPress={() => setShowMyStudies(true)}>
-              <Text style={styles.heroCta}>스터디 전체 보기</Text>
-              <Image source={rightIcon} style={styles.heroCtaIcon} />
-            </Pressable>
+            {hasStudies ? (
+              <Pressable style={styles.heroCtaRow} onPress={() => setShowMyStudies(true)}>
+                <Text style={styles.heroCta}>스터디 전체 보기</Text>
+                <Image source={rightIcon} style={styles.heroCtaIcon} />
+              </Pressable>
+            ) : null}
+
+            {!hasStudies ? (
+              <>
+                <View style={styles.emptyDots}>
+                  {[0, 1, 2].map((dotIndex) => (
+                    <View key={`empty-dot-${dotIndex}`} style={styles.emptyDot} />
+                  ))}
+                </View>
+                <Image source={emptyHeroMascot} style={styles.heroMascot} resizeMode="contain" />
+              </>
+            ) : null}
           </View>
         </View>
 
-        <View style={styles.heroCardsWrap}>
-          <ScrollView
-            horizontal
-            pagingEnabled
-            showsHorizontalScrollIndicator={false}
-            onMomentumScrollEnd={(event) => {
-              const nextPage = Math.round(event.nativeEvent.contentOffset.x / screenWidth);
-              setActivePage(nextPage);
-            }}
-          >
-            {studyPages.map((page, pageIndex) => (
-              <View key={`study-page-${pageIndex}`} style={[styles.page, { width: screenWidth }]}>
-                {page.map((card, cardIndex) => (
-                  <StudyCard
-                    key={`${card.title}-${cardIndex}`}
-                    tag={card.tag}
-                    title={card.title}
-                    schedule={card.schedule}
-                    members={card.members}
-                    statusText={card.statusText}
-                    statusVariant={card.statusVariant}
-                    statusIcons={card.statusIcons}
-                    mascotSource={card.mascotSource}
-                    onPress={() => {
-                      setSelectedStudy(card);
-                      setShowStudyDetail(true);
-                    }}
-                  />
+        {hasStudies ? (
+          <>
+            <View style={styles.heroCardsWrap}>
+              <ScrollView
+                horizontal
+                pagingEnabled
+                showsHorizontalScrollIndicator={false}
+                onMomentumScrollEnd={(event) => {
+                  const nextPage = Math.round(event.nativeEvent.contentOffset.x / screenWidth);
+                  setActivePage(nextPage);
+                }}
+              >
+                {studyPages.map((page, pageIndex) => (
+                  <View key={`study-page-${pageIndex}`} style={[styles.page, { width: screenWidth }]}>
+                    {page.map((card, cardIndex) => (
+                      <StudyCard
+                        key={`${card.title}-${cardIndex}`}
+                        tag={card.tag}
+                        title={card.title}
+                        schedule={card.schedule}
+                        members={card.members}
+                        statusText={card.statusText}
+                        statusVariant={card.statusVariant}
+                        statusIcons={card.statusIcons}
+                        mascotSource={card.mascotSource}
+                        onPress={() => {
+                          setSelectedStudy(card);
+                          setShowStudyDetail(true);
+                        }}
+                      />
+                    ))}
+                  </View>
                 ))}
-              </View>
-            ))}
-          </ScrollView>
-        </View>
+              </ScrollView>
+            </View>
 
-        <View style={styles.dots}>
-          {studyPages.map((_, index) => (
-            <View
-              key={`dot-${index}`}
-              style={[styles.dot, index === activePage ? styles.dotActive : null]}
-            />
-          ))}
-        </View>
+            <View style={styles.dots}>
+              {studyPages.map((_, index) => (
+                <View
+                  key={`dot-${index}`}
+                  style={[styles.dot, index === activePage ? styles.dotActive : null]}
+                />
+              ))}
+            </View>
+          </>
+        ) : (
+          <View style={styles.emptyStudyWrap}>
+            <Pressable onPress={() => setShowMyStudies(true)}>
+              <ImageBackground
+                source={emptyCardBg}
+                style={styles.emptyStudyCard}
+                imageStyle={styles.emptyStudyCardImage}
+              >
+                <View style={styles.emptyPlusButton}>
+                  <Text style={styles.emptyPlusText}>+</Text>
+                </View>
+                <Text style={styles.emptyStudyText}>
+                  나만의 스터디를 만들거나 참여해보세요!
+                </Text>
+              </ImageBackground>
+            </Pressable>
+          </View>
+        )}
 
         <View style={styles.section}>
           <View
@@ -457,13 +505,23 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   heroTextBlock: {
+    paddingHorizontal:10,
     marginBottom: 50,
     marginTop: -50,
   },
+  heroMascot: {
+    position: 'absolute',
+    right: 12,
+    bottom: -90,
+    width: 145,
+    height: 165,
+    zIndex: 1,
+  },
   heroLine: {
-    fontSize: 26,
-    fontWeight: '700',
+    fontSize: 28,
+    fontWeight: '800',
     color: colors.textPrimary,
+    lineHeight: 40,
   },
   
   heroCta: {
@@ -484,8 +542,66 @@ const styles = StyleSheet.create({
     tintColor: '#FFFFFF',
   },
   heroCardsWrap: {
-    marginTop: -400,
+    
     paddingHorizontal: 0,
+  },
+  emptyStudyWrap: {
+    marginTop: -310,
+    marginBottom: 20,
+    paddingHorizontal: 20,
+  },
+  emptyStudyCard: {
+    borderRadius: 12,
+    paddingVertical: 60,
+    paddingHorizontal: 20,
+    alignItems: 'center',
+    gap: 14,
+    overflow: 'hidden',
+    shadowColor: '#000000',
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 6,
+  },
+  emptyStudyCardImage: {
+    
+    borderRadius: 12,
+  },
+  emptyPlusButton: {
+    width: 58,
+    height: 58,
+    borderRadius: 16,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emptyPlusText: {
+    color: colors.primary,
+    fontSize: 28,
+    fontWeight: '700',
+    lineHeight: 28,
+  },
+  emptyStudyText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  emptyDots: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    position: 'absolute',
+    left: 40,
+    right: 0,
+    bottom: 15,
+    justifyContent: 'center',
+  },
+  emptyDot: {
+    width: 4,
+    height: 4,
+    borderRadius: 3,
+    backgroundColor: '#2F2F2F',
   },
   page: {
     paddingHorizontal: 16,

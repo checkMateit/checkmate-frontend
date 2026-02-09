@@ -33,30 +33,20 @@ function MyStudyItem({ image, tag, title, members, time, methods, onDrag }: MySt
       </View>
       <View style={styles.content}>
         <View style={styles.topRow}>
-          <View style={styles.tagRow}>
-            <ImageBackground
-              source={categoryIcon}
-              style={styles.tagChip}
-              resizeMode="contain"
-            >
-              <Text style={styles.tagText}>{tag}</Text>
-            </ImageBackground>
-            <View style={styles.memberRow}>
-              <Image source={personIcon} style={styles.memberIcon} />
-              <Text style={styles.memberText}>{members}</Text>
-            </View>
+          <ImageBackground source={categoryIcon} style={styles.tagChip} resizeMode="contain">
+            <Text style={styles.tagText}>{tag}</Text>
+          </ImageBackground>
+          <View style={styles.memberRow}>
+            <Image source={personIcon} style={styles.memberIcon} />
+            <Text style={styles.memberText}>{members}</Text>
           </View>
         </View>
         <Text style={styles.title}>{title}</Text>
         <View style={styles.metaRow}>
-          <Image source={timeIcon} style={styles.timeIcon} />
           <Text style={styles.metaText}>{time}</Text>
         </View>
-        <AuthMethodRow methods={methods} />
+        <AuthMethodRow methods={methods} label="" showIcon={false} />
       </View>
-      <Pressable style={styles.handle} onLongPress={onDrag} hitSlop={8}>
-        <Image source={require('../../../assets/icon/edit_icon.png')} style={styles.handleLine} />
-      </Pressable>
     </View>
   );
 }
@@ -65,34 +55,34 @@ const styles = StyleSheet.create({
   card: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    paddingVertical: 16,
-    paddingHorizontal: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#EFEFEF',
+    backgroundColor: '#F3F3F3',
+    paddingVertical: 18,
+    paddingHorizontal: 18,
+    borderRadius: 18,
+    marginHorizontal: 20,
+    marginBottom: 16,
   },
   avatarWrap: {
-    width: 108,
-    height: 108,
-    borderRadius: 16,
-    backgroundColor: colors.secondary,
+    width: 104,
+    height: 104,
+    borderRadius: 18,
+    backgroundColor: 'transparent',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 16,
   },
   avatar: {
-    width: 75,
-    height: 75,
+    width: 84,
+    height: 84,
   },
   content: {
     flex: 1,
   },
   topRow: {
-    marginBottom: 8,
-  },
-  tagRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 6,
   },
   tagChip: {
     height: 20,
@@ -109,7 +99,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    marginLeft: 10,
   },
   memberIcon: {
     width: 13,
@@ -122,38 +111,18 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   title: {
-    fontSize: 21,
+    fontSize: 18,
     fontWeight: '800',
     color: colors.textPrimary,
     marginBottom: 6,
   },
   metaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
     marginBottom: 4,
-    flexWrap: 'wrap',
-  },
-  timeIcon: {
-    marginLeft: 1,
-    width: 10,
-    height: 10,
-    tintColor: colors.textSecondary,
   },
   metaText: {
     fontSize: 12,
     fontWeight: '700',
     color: '#515151',
-  },
-  handle: {
-    marginLeft: 12,
-    marginRight: 6,
-    gap: 4,
-  },
-  handleLine: {
-    width: 17,
-    height: 7,
-    
   },
 });
 

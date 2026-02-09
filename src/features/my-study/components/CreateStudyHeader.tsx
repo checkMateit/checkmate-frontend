@@ -2,19 +2,20 @@ import React from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { colors } from '../../../styles/colors';
 
-type MyStudyHeaderProps = {
+type CreateStudyHeaderProps = {
+  title: string;
   onClose: () => void;
 };
 
 const backIcon = require('../../../assets/icon/right_arrow.png');
 
-function MyStudyHeader({ onClose }: MyStudyHeaderProps) {
+function CreateStudyHeader({ title, onClose }: CreateStudyHeaderProps) {
   return (
     <View style={styles.header}>
       <Pressable onPress={onClose} hitSlop={10} style={styles.backButton}>
         <Image source={backIcon} style={styles.backIcon} />
       </Pressable>
-      <Text style={styles.title}>스터디 그룹</Text>
+      <Text style={styles.title}>{title}</Text>
     </View>
   );
 }
@@ -23,10 +24,9 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 20,
-   
-    paddingVertical: 30,
-    
+    paddingHorizontal: 24,
+    paddingTop: 22,
+    paddingBottom: 10,
   },
   backButton: {
     marginRight: 8,
@@ -40,9 +40,8 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 22,
     fontWeight: '800',
-    marginLeft: 8,
     color: colors.textPrimary,
   },
 });
 
-export default MyStudyHeader;
+export default CreateStudyHeader;

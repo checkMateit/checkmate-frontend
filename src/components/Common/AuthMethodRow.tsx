@@ -12,12 +12,15 @@ const settingIcon = require('../../assets/icon/setting_2_icon.png');
 const CHIP_HEIGHT = 14;
 
 function AuthMethodRow({ methods, label = '인증방식', showIcon = true }: AuthMethodRowProps) {
+  const showLabel = Boolean(label) || showIcon;
   return (
     <View style={styles.row}>
-      <View style={styles.labelRow}>
-        {showIcon && <Image source={settingIcon} style={styles.labelIcon} />}
-        <Text style={styles.authText}>{label}</Text>
-      </View>
+      {showLabel ? (
+        <View style={styles.labelRow}>
+          {showIcon && <Image source={settingIcon} style={styles.labelIcon} />}
+          {label ? <Text style={styles.authText}>{label}</Text> : null}
+        </View>
+      ) : null}
       {methods.map((method) => (
         <MethodChip key={method} label={method} />
       ))}
