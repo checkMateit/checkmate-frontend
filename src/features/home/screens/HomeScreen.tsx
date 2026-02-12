@@ -14,14 +14,15 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { type BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
-import { type BottomTabParamList } from '../../../navigation/BottomTabs';
+import { type NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { type BottomTabParamList, type HomeStackParamList } from '../../../navigation/types';
 import { useNotificationCenter } from '../../../state/NotificationCenterContext';
 import StudyCard from '../../study-board/components/StudyCard';
 import RecommendStudyCard from '../../study-board/components/RecommendStudyCard';
 import { colors } from '../../../styles/colors';
 import NotificationScreen from '../../notification/screens/NotificationScreen';
 import MyStudyScreen from '../../my-study/screens/MyStudyScreen';
-import StudyDetailScreen, { type StudyDetail } from '../../study-detail/screens/StudyDetailScreen';
+import { type StudyDetail } from '../../study-detail/screens/StudyDetailScreen';
 const rightIcon = require('../../../assets/icon/right_arrow.png');
 const backgroundSource = require('../../../assets/image/background.png');
 const emptyCardBg = require('../../../assets/image/linear_bg.png');
@@ -38,7 +39,7 @@ const HERO_TEXT_TOP = 12;
 
 function HomeScreen() {
   const insets = useSafeAreaInsets();
-  const navigation = useNavigation<BottomTabNavigationProp<BottomTabParamList>>();
+  const navigation = useNavigation<NativeStackNavigationProp<HomeStackParamList>>();
   const screenWidth = Dimensions.get('window').width;
   const heroHeight = Math.round((screenWidth * bgHeight) / bgWidth) + insets.top;
   const heroContentTop = HEADER_HEIGHT + insets.top + HERO_TEXT_TOP;
@@ -46,8 +47,6 @@ function HomeScreen() {
   const [showHelp, setShowHelp] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showMyStudies, setShowMyStudies] = useState(false);
-  const [showStudyDetail, setShowStudyDetail] = useState(false);
-  const [selectedStudy, setSelectedStudy] = useState<StudyDetail | null>(null);
   const [headerWidth, setHeaderWidth] = useState(0);
   const [helpIconLayout, setHelpIconLayout] = useState({ x: 0, width: 0 });
   const [helpBubbleWidth, setHelpBubbleWidth] = useState(0);
@@ -61,12 +60,14 @@ function HomeScreen() {
       : 0;
 
   useEffect(() => {
-    const unsubscribe = navigation.addListener('tabPress', () => {
+    const parent = navigation.getParent<BottomTabNavigationProp<BottomTabParamList>>();
+    if (!parent) {
+      return;
+    }
+    const unsubscribe = parent.addListener('tabPress', () => {
       setShowHelp(false);
       setShowNotifications(false);
       setShowMyStudies(false);
-      setShowStudyDetail(false);
-      setSelectedStudy(null);
     });
 
     return unsubscribe;
@@ -291,8 +292,7 @@ function HomeScreen() {
                         statusIcons={card.statusIcons}
                         mascotSource={card.mascotSource}
                         onPress={() => {
-                          setSelectedStudy(card);
-                          setShowStudyDetail(true);
+                          navigation.navigate('StudyDetail', { study: card });
                         }}
                       />
                     ))}
@@ -312,7 +312,7 @@ function HomeScreen() {
           </>
         ) : (
           <View style={styles.emptyStudyWrap}>
-            <Pressable onPress={() => setShowMyStudies(true)}>
+            <Pressable onPress={() => navigation.navigate('Search')}>
               <ImageBackground
                 source={emptyCardBg}
                 style={styles.emptyStudyCard}
@@ -427,14 +427,6 @@ function HomeScreen() {
         <MyStudyScreen onClose={() => setShowMyStudies(false)} />
       </Modal>
 
-      {showStudyDetail && selectedStudy ? (
-        <View style={styles.studyDetailOverlay}>
-          <StudyDetailScreen
-            study={selectedStudy}
-            onClose={() => setShowStudyDetail(false)}
-          />
-        </View>
-      ) : null}
     </SafeAreaView>
   );
 }

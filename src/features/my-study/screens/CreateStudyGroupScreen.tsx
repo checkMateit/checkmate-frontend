@@ -7,6 +7,7 @@ import {
   View,
   Pressable,
   Platform,
+  Modal,
 } from 'react-native';
 import { type DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { colors } from '../../../styles/colors';
@@ -21,9 +22,18 @@ import CreateStudyHeader from '../components/CreateStudyHeader';
 import GroupNameSection from '../components/GroupNameSection';
 import AuthTimeControls from '../components/AuthTimeControls';
 import TimePickerModal from '../components/TimePickerModal';
+import StudyThumbnailPicker from '../components/StudyThumbnailPicker';
+import StudyTextField from '../components/StudyTextField';
+import MemberCounter from '../components/MemberCounter';
+import WeekdayPicker from '../components/WeekdayPicker';
+import PeriodPicker from '../components/PeriodPicker';
+import PrimaryActionButton from '../components/PrimaryActionButton';
+import DatePickerModal from '../components/DatePickerModal';
+import CreateStudyGroupResultScreen from './CreateStudyGroupResultScreen';
 
 type CreateStudyGroupScreenProps = {
   onClose: () => void;
+  onComplete?: () => void;
 };
 
 const categories = ['코딩 테스트', '자격증', '언어', '기상', '착석', '기타'];
@@ -37,12 +47,9 @@ const createTime = (hours: number, minutes = 0) => {
 };
 
 const formatTime = (value: Date) => {
-  const hours = value.getHours();
-  const minutes = value.getMinutes();
-  const isAm = hours < 12;
-  const displayHour = hours % 12 === 0 ? 12 : hours % 12;
-  const displayMinutes = minutes.toString().padStart(2, '0');
-  return `${isAm ? '오전' : '오후'} ${displayHour}:${displayMinutes}`;
+  const hours = value.getHours().toString().padStart(2, '0');
+  const minutes = value.getMinutes().toString().padStart(2, '0');
+  return `${hours}:${minutes}`;
 };
 
 const createDefaultConfig = (method: AuthMethod): MethodConfig => ({
@@ -55,15 +62,25 @@ const createDefaultConfig = (method: AuthMethod): MethodConfig => ({
   locationName: '',
 });
 
-function CreateStudyGroupScreen({ onClose }: CreateStudyGroupScreenProps) {
+function CreateStudyGroupScreen({ onClose, onComplete }: CreateStudyGroupScreenProps) {
   const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
   const [activeCategory, setActiveCategory] = useState<string>('착석');
   const [primaryConfig, setPrimaryConfig] = useState<MethodConfig | null>(
     createDefaultConfig('TODO'),
   );
   const [secondaryConfig, setSecondaryConfig] = useState<MethodConfig | null>(null);
+  const [thumbnailUri, setThumbnailUri] = useState<string | null>(null);
+  const [members, setMembers] = useState(2);
+  const [days, setDays] = useState(['화', '목']);
+  const [startDate, setStartDate] = useState(new Date(2026, 1, 4));
+  const [endDate, setEndDate] = useState(new Date(2026, 2, 4));
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [activeDateField, setActiveDateField] = useState<'start' | 'end'>('start');
+  const [tempDate, setTempDate] = useState(new Date(2026, 1, 4));
   const [tempTime, setTempTime] = useState(createTime(10, 0));
   const [showTimePicker, setShowTimePicker] = useState(false);
+  const [showResult, setShowResult] = useState(false);
   const [activeTimeField, setActiveTimeField] = useState<
     'todoDeadline' | 'todoComplete' | 'rangeStart' | 'rangeEnd'
   >('todoDeadline');
@@ -83,6 +100,53 @@ function CreateStudyGroupScreen({ onClose }: CreateStudyGroupScreenProps) {
   const selectedTime =
     selectedConfig?.[activeTimeField] ??
     createTime(10, 0);
+
+  const formatDate = (value: Date) =>
+    `${value.getFullYear()}. ${value.getMonth() + 1}. ${value.getDate()}.`;
+
+  const selectedDate = activeDateField === 'start' ? startDate : endDate;
+
+  const openDatePicker = (field: 'start' | 'end') => {
+    setActiveDateField(field);
+    setTempDate(field === 'start' ? startDate : endDate);
+    setShowDatePicker(true);
+  };
+
+  const handleDateChange = (_event: DateTimePickerEvent, date?: Date) => {
+    if (!date) {
+      return;
+    }
+    if (Platform.OS === 'android') {
+      if (activeDateField === 'start') {
+        setStartDate(date);
+      } else {
+        setEndDate(date);
+      }
+      setShowDatePicker(false);
+      return;
+    }
+    setTempDate(date);
+  };
+
+  const applyDate = () => {
+    if (activeDateField === 'start') {
+      setStartDate(tempDate);
+    } else {
+      setEndDate(tempDate);
+    }
+    setShowDatePicker(false);
+  };
+
+  const handleConfirm = () => {
+    setShowResult(false);
+    setTimeout(() => {
+      if (onComplete) {
+        onComplete();
+        return;
+      }
+      onClose();
+    }, 300);
+  };
 
   const openTimePicker = (
     field: 'todoDeadline' | 'todoComplete' | 'rangeStart' | 'rangeEnd',
@@ -170,7 +234,22 @@ function CreateStudyGroupScreen({ onClose }: CreateStudyGroupScreenProps) {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <CreateStudyHeader title="스터디 그룹 생성" onClose={onClose} />
 
+        <View style={styles.profileRow}>
+          <StudyThumbnailPicker compact imageUri={thumbnailUri} onChangeImage={setThumbnailUri} />
+        </View>
+
         <GroupNameSection value={name} count={nameCount} maxLength={20} onChange={setName} />
+
+        <StudyTextField
+          value={description}
+          onChange={setDescription}
+          placeholder="소개글을 입력해주세요."
+          containerStyle={styles.descriptionField}
+          inputStyle={styles.profileDescInput}
+          multiline
+          numberOfLines={5}
+          boxed
+        />
 
         <CategorySection
           categories={categories}
@@ -178,12 +257,15 @@ function CreateStudyGroupScreen({ onClose }: CreateStudyGroupScreenProps) {
           onSelect={setActiveCategory}
         />
 
+        <MemberCounter value={members} onChange={setMembers} />
+
         <AuthMethodSection
           methods={authMethods}
           primaryConfig={primaryConfig}
           secondaryConfig={secondaryConfig}
           onSelectPrimary={(method) => setConfigMethod('primary', method)}
           onAddSecondary={addSecondary}
+          onRemoveSecondary={() => setSecondaryConfig(null)}
         />
 
         {primaryConfig ? (
@@ -211,12 +293,18 @@ function CreateStudyGroupScreen({ onClose }: CreateStudyGroupScreenProps) {
             />
           </>
         ) : null}
+
+        <WeekdayPicker value={days} onChange={setDays} />
+        <PeriodPicker
+          startDate={formatDate(startDate)}
+          endDate={formatDate(endDate)}
+          onPressStart={() => openDatePicker('start')}
+          onPressEnd={() => openDatePicker('end')}
+        />
       </ScrollView>
 
       <View style={styles.bottom}>
-        <Pressable style={styles.primaryButton} onPress={() => {}}>
-          <Text style={styles.primaryButtonText}>다음</Text>
-        </Pressable>
+        <PrimaryActionButton label="완료" onPress={() => setShowResult(true)} />
       </View>
 
       <TimePickerModal
@@ -228,6 +316,36 @@ function CreateStudyGroupScreen({ onClose }: CreateStudyGroupScreenProps) {
         onApply={applyTime}
         onClose={() => setShowTimePicker(false)}
       />
+
+      <DatePickerModal
+        visible={showDatePicker}
+        title={activeDateField === 'start' ? '시작일' : '종료일'}
+        selectedDate={selectedDate}
+        tempDate={tempDate}
+        onChange={handleDateChange}
+        onApply={applyDate}
+        onClose={() => setShowDatePicker(false)}
+      />
+
+      <Modal
+        visible={showResult}
+        animationType="slide"
+        onRequestClose={() => setShowResult(false)}
+      >
+        <CreateStudyGroupResultScreen
+          onClose={() => setShowResult(false)}
+          onConfirm={handleConfirm}
+          category={activeCategory}
+          primaryConfig={primaryConfig}
+          secondaryConfig={secondaryConfig}
+          members={members}
+          startDate={startDate}
+          endDate={endDate}
+          days={days}
+          imageUri={thumbnailUri}
+        />
+      </Modal>
+
     </SafeAreaView>
   );
 }
@@ -244,16 +362,30 @@ const styles = StyleSheet.create({
     paddingHorizontal: 28,
     paddingBottom: 26,
   },
-  primaryButton: {
-    backgroundColor: colors.primary,
-    borderRadius: 12,
-    paddingVertical: 16,
+  profileRow: {
+    flexDirection: 'row',
     alignItems: 'center',
+    gap: 16,
+    paddingHorizontal: 28,
+    paddingTop: 18,
+    paddingBottom: 6,
   },
-  primaryButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
+  profileField: {
+    paddingHorizontal: 0,
+    paddingTop: 0,
+  },
+  descriptionField: {
+    paddingHorizontal: 28,
+    paddingTop: 6,
+  },
+  profileTitleInput: {
+    fontSize: 18,
     fontWeight: '800',
+  },
+  profileDescInput: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.textSecondary,
   },
 });
 

@@ -20,6 +20,7 @@ type AuthMethodSectionProps = {
   secondaryConfig: MethodConfig | null;
   onSelectPrimary: (method: AuthMethod) => void;
   onAddSecondary: () => void;
+  onRemoveSecondary: () => void;
 };
 
 function AuthMethodSection({
@@ -28,21 +29,34 @@ function AuthMethodSection({
   secondaryConfig,
   onSelectPrimary,
   onAddSecondary,
+  onRemoveSecondary,
 }: AuthMethodSectionProps) {
   return (
     <View style={styles.section}>
       <View style={styles.sectionHeaderRow}>
         <Text style={styles.sectionTitle}>인증 방식</Text>
-        <Pressable
-          style={[
-            styles.plusButton,
-            (!primaryConfig || secondaryConfig) && styles.plusButtonDisabled,
-          ]}
-          onPress={onAddSecondary}
-          disabled={!primaryConfig || Boolean(secondaryConfig)}
-        >
-          <Text style={styles.plusText}>+</Text>
-        </Pressable>
+        <View style={styles.actionRow}>
+          <Pressable
+            style={[
+              styles.actionButton,
+              (!primaryConfig || secondaryConfig) && styles.actionButtonDisabled,
+            ]}
+            onPress={onAddSecondary}
+            disabled={!primaryConfig || Boolean(secondaryConfig)}
+          >
+            <Text style={styles.actionText}>+</Text>
+          </Pressable>
+          <Pressable
+            style={[
+              styles.actionButton,
+              !secondaryConfig && styles.actionButtonDisabled,
+            ]}
+            onPress={onRemoveSecondary}
+            disabled={!secondaryConfig}
+          >
+            <Text style={styles.actionText}>-</Text>
+          </Pressable>
+        </View>
       </View>
       <View style={styles.chipRow}>
         {methods.map((method) => {
@@ -108,7 +122,11 @@ const styles = StyleSheet.create({
   chipTextActive: {
     color: '#FFFFFF',
   },
-  plusButton: {
+  actionRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  actionButton: {
     width: 28,
     height: 28,
     borderRadius: 14,
@@ -117,10 +135,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  plusButtonDisabled: {
+  actionButtonDisabled: {
     opacity: 0.4,
   },
-  plusText: {
+  actionText: {
     fontSize: 18,
     fontWeight: '700',
     color: colors.textPrimary,

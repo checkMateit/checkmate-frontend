@@ -1,5 +1,11 @@
 import React, { useState } from 'react';
-import { SafeAreaView, ScrollView, StyleSheet, View } from 'react-native';
+import {
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  View,
+  type ImageSourcePropType,
+} from 'react-native';
 import StudyBoardTab from '../../study-board/components/StudyBoardTab';
 import StudyDetailHeader from '../components/StudyDetailHeader';
 import StudyDetailTabs from '../components/StudyDetailTabs';
@@ -18,11 +24,17 @@ export type StudyDetail = {
   schedule: string;
   count: string;
   methods: string[];
-  image: number;
+  image: ImageSourcePropType;
   statusText: string;
   statusVariant: 'success' | 'danger' | 'neutral';
   statusIcons: Array<'success' | 'danger'>;
   mascotSource: number;
+  authTimeLabel?: string;
+  authTime?: string;
+  authTimeLabel2?: string;
+  authTime2?: string;
+  authDays?: string;
+  period?: string;
 };
 
 type StudyDetailScreenProps = {
@@ -51,9 +63,10 @@ function StudyDetailScreen({ study, onClose }: StudyDetailScreenProps) {
           members={study.members}
           description={study.description}
           schedule={study.schedule}
-          count={study.count}
           methods={study.methods}
           image={study.image}
+          authTime={study.authTime}
+          authTime2={study.authTime2}
         />
         <StudyDetailTabs activeTab={activeTab} onChange={handleTabChange} />
         <View style={styles.section}>

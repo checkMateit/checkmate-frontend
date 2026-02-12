@@ -1,17 +1,11 @@
 import React, { useState } from 'react';
 import { Image, StyleSheet } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import HomeScreen from '../features/home/screens/HomeScreen';
+import HomeStack from './HomeStack';
 import SearchScreen from '../features/search/screens/SearchScreen';
 import HistoryScreen from '../features/history/screens/HistoryScreen';
 import MyPageScreen from '../features/mypage/screens/MyPageScreen';
-
-export type BottomTabParamList = {
-  Home: undefined;
-  Search: undefined;
-  History: undefined;
-  MyPage: undefined;
-};
+import { type BottomTabParamList } from './types';
 
 const Tab = createBottomTabNavigator<BottomTabParamList>();
 
@@ -67,7 +61,7 @@ function BottomTabs() {
       <Tab.Screen
         name="Home"
         key={`Home-${resetKeys.Home}`}
-        component={HomeScreen}
+        component={HomeStack}
         options={{
           title: '홈',
           tabBarIcon: ({ focused }) => (

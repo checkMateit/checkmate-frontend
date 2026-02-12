@@ -35,6 +35,10 @@
 	</dict>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string></string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>스터디 썸네일을 선택하기 위해 사진에 접근합니다.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>스터디 썸네일을 촬영하기 위해 카메라에 접근합니다.</string>
 	<key>RCTNewArchEnabled</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>

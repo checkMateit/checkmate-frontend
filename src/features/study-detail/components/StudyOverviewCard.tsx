@@ -1,7 +1,6 @@
 import React from 'react';
 import { Image, ImageBackground, ImageSourcePropType, StyleSheet, Text, View } from 'react-native';
 import { colors } from '../../../styles/colors';
-import AuthMethodRow from '../../../components/common/AuthMethodRow';
 
 type StudyOverviewCardProps = {
   tag: string;
@@ -9,9 +8,10 @@ type StudyOverviewCardProps = {
   members: string;
   description: string;
   schedule: string;
-  count: string;
   methods: string[];
   image: ImageSourcePropType;
+  authTime?: string;
+  authTime2?: string;
 };
 
 const categoryIcon = require('../../../assets/icon/category_icon.png');
@@ -24,10 +24,17 @@ function StudyOverviewCard({
   members,
   description,
   schedule,
-  count,
   methods,
   image,
+  authTime,
+  authTime2,
 }: StudyOverviewCardProps) {
+  const authRows = methods.map((method, index) => {
+    const rawTime = index === 0 ? authTime : authTime2;
+    const time = rawTime ? rawTime.replace(/\n/g, ' / ') : '-';
+    return { method, time, isFirst: index === 0 };
+  });
+
   return (
     <View style={styles.card}>
       <View style={styles.topRow}>
@@ -54,11 +61,25 @@ function StudyOverviewCard({
         <View style={styles.detailRow}>
           <Image source={timeIcon} style={styles.detailIcon} />
           <Text style={styles.detailValue}>{schedule}</Text>
-          <View style={styles.detailDivider} />
-          <Text style={styles.detailText}>횟수</Text>
-          <Text style={styles.detailValue}>{count}</Text>
         </View>
-        <AuthMethodRow methods={methods} label="방식" showIcon={false} />
+        <View style={styles.methodRow}>
+          <Text style={styles.detailLabel}>방식</Text>
+          <View style={styles.methodColumn}>
+            {authRows.length > 0 ? (
+              authRows.map((row) => (
+                <View key={`${row.method}-${row.time}`} style={styles.methodLine}>
+                  <View style={styles.methodChip}>
+                    <View style={styles.methodBar} />
+                    <Text style={styles.methodText}>{row.method}</Text>
+                  </View>
+                  <Text style={styles.methodTime}>{row.time}</Text>
+                </View>
+              ))
+            ) : (
+              <Text style={styles.methodTime}>-</Text>
+            )}
+          </View>
+        </View>
       </View>
     </View>
   );
@@ -157,19 +178,63 @@ const styles = StyleSheet.create({
   },
   detailText: {
     fontSize: 13,
-    fontWeight:'700',
+    fontWeight: '700',
     color: '#515151',
-  },
-  detailDivider: {
-    width: 1,
-    height: 12,
-    backgroundColor: '#C8C8C8',
-    marginHorizontal: 6,
   },
   detailValue: {
     fontSize: 13,
     color: colors.textSecondary,
     fontWeight: '500',
+  },
+  detailLabel: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    fontWeight: '700',
+  },
+  methodRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 16,
+  },
+  methodColumn: {
+    flex: 1,
+    gap: 8,
+  },
+  methodLine: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    flexWrap: 'wrap',
+  },
+  methodChip: {
+    height: 18,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 0.5,
+    borderColor: '#D9D9D9',
+    borderRadius: 2,
+    overflow: 'hidden',
+    paddingRight: 6,
+  },
+  methodBar: {
+    width: 4,
+    height: '100%',
+    backgroundColor: colors.primary,
+  },
+  methodText: {
+    fontSize: 10,
+    color: colors.textSecondary,
+    marginLeft: 5,
+    lineHeight: 18,
+    includeFontPadding: false,
+    textAlignVertical: 'center',
+  },
+  methodTime: {
+    fontSize: 12,
+    color: colors.textPrimary,
+    fontWeight: '600',
+    textAlign: 'right',
+    flexShrink: 1,
   },
 });
 

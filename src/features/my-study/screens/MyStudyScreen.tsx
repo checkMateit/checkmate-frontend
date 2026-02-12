@@ -117,7 +117,18 @@ function MyStudyScreen({ onClose }: MyStudyScreenProps) {
         animationType="slide"
         onRequestClose={() => setShowCreateStudy(false)}
       >
-        <CreateStudyGroupScreen onClose={() => setShowCreateStudy(false)} />
+        <CreateStudyGroupScreen
+          onClose={() => {
+            setShowCreateStudy(false);
+            onClose();
+          }}
+          onComplete={() => {
+            setShowCreateStudy(false);
+            setTimeout(() => {
+              onClose();
+            }, 300);
+          }}
+        />
       </Modal>
     </>
   );
