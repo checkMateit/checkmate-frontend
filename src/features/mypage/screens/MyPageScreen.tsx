@@ -11,12 +11,16 @@ import AccountSettingsScreen from './AccountSettingsScreen';
 import PointsHistoryScreen from '../../points/screens/PointsHistoryScreen';
 import PointsShopScreen from '../../points/screens/PointsShopScreen';
 import PointsExchangeScreen from '../../points/screens/PointsExchangeScreen';
+import InquiryListScreen from './InquiryListScreen';
+import InquiryWriteScreen from './InquiryWriteScreen';
 
 function MyPageScreen() {
   const [showSettings, setShowSettings] = useState(false);
   const [showPointsHistory, setShowPointsHistory] = useState(false);
   const [showPointsShop, setShowPointsShop] = useState(false);
   const [showPointsExchange, setShowPointsExchange] = useState(false);
+  const [showInquiryList, setShowInquiryList] = useState(false);
+  const [showInquiryWrite, setShowInquiryWrite] = useState(false);
 
   if (showSettings) {
     return <AccountSettingsScreen onClose={() => setShowSettings(false)} />;
@@ -29,6 +33,28 @@ function MyPageScreen() {
   }
   if (showPointsExchange) {
     return <PointsExchangeScreen onClose={() => setShowPointsExchange(false)} />;
+  }
+  if (showInquiryWrite) {
+    return (
+      <InquiryWriteScreen
+        onClose={() => setShowInquiryWrite(false)}
+        onBack={() => {
+          setShowInquiryWrite(false);
+          setShowInquiryList(true);
+        }}
+      />
+    );
+  }
+  if (showInquiryList) {
+    return (
+      <InquiryListScreen
+        onClose={() => setShowInquiryList(false)}
+        onPressWrite={() => {
+          setShowInquiryList(false);
+          setShowInquiryWrite(true);
+        }}
+      />
+    );
   }
 
   return (
@@ -58,7 +84,7 @@ function MyPageScreen() {
             title="고객지원"
             rows={[
               { left: '공지사항', right: '이용안내' },
-              { left: '문의하기' },
+              { left: '문의하기', onPress: () => setShowInquiryList(true) },
             ]}
           />
         </View>

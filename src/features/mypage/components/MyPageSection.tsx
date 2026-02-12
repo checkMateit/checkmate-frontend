@@ -1,10 +1,11 @@
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { colors } from '../../../styles/colors';
 
 type MyPageSectionRow = {
   left: string;
   right?: string;
+  onPress?: () => void;
 };
 
 type MyPageSectionProps = {
@@ -17,14 +18,19 @@ function MyPageSection({ title, rows }: MyPageSectionProps) {
     <View style={styles.section}>
       <Text style={styles.title}>{title}</Text>
       {rows.map((row, index) => (
-        <View key={`${row.left}-${index}`} style={styles.row}>
+        <Pressable
+          key={`${row.left}-${index}`}
+          style={styles.row}
+          onPress={row.onPress}
+          disabled={!row.onPress}
+        >
           <Text style={styles.item}>{row.left}</Text>
           {row.right ? (
             <Text style={styles.itemRight}>{row.right}</Text>
           ) : (
             <View style={styles.rightPlaceholder} />
           )}
-        </View>
+        </Pressable>
       ))}
     </View>
   );
