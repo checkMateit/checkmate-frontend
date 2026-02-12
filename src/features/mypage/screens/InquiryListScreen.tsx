@@ -384,6 +384,7 @@ const styles = StyleSheet.create({
     color: '#FF6B6B',
   },
   arrowIcon: {
+    marginRight: 20,
     width: 8,
     height: 20,
     tintColor: '#C2C2C2',
