@@ -312,7 +312,12 @@ function HomeScreen() {
           </>
         ) : (
           <View style={styles.emptyStudyWrap}>
-            <Pressable onPress={() => navigation.navigate('Search')}>
+            <Pressable
+              onPress={() => {
+                const parent = navigation.getParent<BottomTabNavigationProp<BottomTabParamList>>();
+                parent?.navigate('Search');
+              }}
+            >
               <ImageBackground
                 source={emptyCardBg}
                 style={styles.emptyStudyCard}

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   Image,
   Modal,
@@ -22,6 +22,9 @@ const mascotOne = require('../../../assets/character/cha_1.png');
 const mascotTwo = require('../../../assets/character/ch_2.png');
 const filterIcon = require('../../../assets/icon/filter_icon.png');
 
+const categoryOptions = ['코딩 테스트', '자격증', '언어', '기상', '착석', '기타'];
+const methodOptions = ['사진', '위치', 'TODO', 'GitHub', 'GPS'];
+
 type StudyItem = {
   id: string;
   image: number;
@@ -34,6 +37,9 @@ type StudyItem = {
 
 function MyStudyScreen({ onClose }: MyStudyScreenProps) {
   const [showCreateStudy, setShowCreateStudy] = useState(false);
+  const [showFilter, setShowFilter] = useState(false);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [selectedMethods, setSelectedMethods] = useState<string[]>([]);
   const [data, setData] = useState<StudyItem[]>([
     {
       id: 'study-1',
@@ -73,11 +79,39 @@ function MyStudyScreen({ onClose }: MyStudyScreenProps) {
     },
   ]);
 
+  const filteredData = useMemo(() => {
+    return data.filter((item) => {
+      const categoryMatch =
+        selectedCategories.length === 0 || selectedCategories.includes(item.tag);
+      const methodMatch =
+        selectedMethods.length === 0 ||
+        selectedMethods.some((method) => item.methods.includes(method));
+      return categoryMatch && methodMatch;
+    });
+  }, [data, selectedCategories, selectedMethods]);
+
+  const toggleCategory = (value: string) => {
+    setSelectedCategories((prev) =>
+      prev.includes(value) ? prev.filter((item) => item !== value) : [...prev, value],
+    );
+  };
+
+  const toggleMethod = (value: string) => {
+    setSelectedMethods((prev) =>
+      prev.includes(value) ? prev.filter((item) => item !== value) : [...prev, value],
+    );
+  };
+
+  const resetFilters = () => {
+    setSelectedCategories([]);
+    setSelectedMethods([]);
+  };
+
   return (
     <>
       <SafeAreaView style={styles.root}>
         <DraggableFlatList
-          data={data}
+          data={filteredData}
           keyExtractor={(item) => item.id}
           onDragEnd={({ data: next }) => setData(next)}
           contentContainerStyle={styles.scrollContent}
@@ -91,7 +125,7 @@ function MyStudyScreen({ onClose }: MyStudyScreenProps) {
                 </Pressable>
               </View>
               <View style={styles.filterRow}>
-                <Pressable style={styles.filterChip} onPress={() => {}}>
+                <Pressable style={styles.filterChip} onPress={() => setShowFilter(true)}>
                   <Text style={styles.filterText}>필터</Text>
                   <Image source={filterIcon} style={styles.filterIcon} />
                 </Pressable>
@@ -129,6 +163,63 @@ function MyStudyScreen({ onClose }: MyStudyScreenProps) {
             }, 300);
           }}
         />
+      </Modal>
+
+      <Modal
+        visible={showFilter}
+        animationType="fade"
+        transparent
+        onRequestClose={() => setShowFilter(false)}
+      >
+        <View style={styles.filterOverlay}>
+          <View style={styles.filterModal}>
+            <Text style={styles.filterTitle}>필터</Text>
+            <Text style={styles.filterSectionTitle}>카테고리</Text>
+            <View style={styles.filterList}>
+              {categoryOptions.map((option) => {
+                const isActive = selectedCategories.includes(option);
+                return (
+                  <Pressable
+                    key={option}
+                    style={[styles.filterItem, isActive && styles.filterItemActive]}
+                    onPress={() => toggleCategory(option)}
+                  >
+                    <View style={[styles.checkbox, isActive && styles.checkboxActive]} />
+                    <Text style={[styles.filterItemText, isActive && styles.filterItemTextActive]}>
+                      {option}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+            <Text style={styles.filterSectionTitle}>인증 방식</Text>
+            <View style={styles.filterList}>
+              {methodOptions.map((option) => {
+                const isActive = selectedMethods.includes(option);
+                return (
+                  <Pressable
+                    key={option}
+                    style={[styles.filterItem, isActive && styles.filterItemActive]}
+                    onPress={() => toggleMethod(option)}
+                  >
+                    <View style={[styles.checkbox, isActive && styles.checkboxActive]} />
+                    <Text style={[styles.filterItemText, isActive && styles.filterItemTextActive]}>
+                      {option}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+            <View style={styles.filterActions}>
+              <Pressable style={styles.resetButton} onPress={resetFilters}>
+                <Text style={styles.resetText}>초기화</Text>
+              </Pressable>
+              <Pressable style={styles.applyButton} onPress={() => setShowFilter(false)}>
+                <Text style={styles.applyText}>적용</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
       </Modal>
     </>
   );
@@ -191,6 +282,101 @@ const styles = StyleSheet.create({
     width: 14,
     height: 14,
     tintColor: colors.textSecondary,
+  },
+  filterOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.35)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+  },
+  filterModal: {
+    width: '100%',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 18,
+  },
+  filterTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: colors.textPrimary,
+    marginBottom: 12,
+  },
+  filterSectionTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: colors.textSecondary,
+    marginTop: 8,
+    marginBottom: 8,
+  },
+  filterList: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  filterItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    backgroundColor: '#F9F9F9',
+  },
+  filterItemActive: {
+    borderColor: colors.primary,
+    backgroundColor: '#E9FDF1',
+  },
+  checkbox: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#BDBDBD',
+    backgroundColor: '#FFFFFF',
+  },
+  checkboxActive: {
+    borderColor: colors.primary,
+    backgroundColor: colors.primary,
+  },
+  filterItemText: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    fontWeight: '600',
+  },
+  filterItemTextActive: {
+    color: colors.textPrimary,
+  },
+  filterActions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: 10,
+    marginTop: 16,
+  },
+  resetButton: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#D7D7D7',
+  },
+  resetText: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    fontWeight: '700',
+  },
+  applyButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+    backgroundColor: colors.primary,
+  },
+  applyText: {
+    fontSize: 12,
+    color: '#FFFFFF',
+    fontWeight: '700',
   },
   divider: {
     height: 1,
