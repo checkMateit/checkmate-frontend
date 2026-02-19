@@ -13,6 +13,15 @@ import MyStudyHeader from '../../study-board/components/MyStudyHeader';
 import MyStudyItem from '../../study-board/components/MyStudyItem';
 import { colors } from '../../../styles/colors';
 import CreateStudyGroupScreen from './CreateStudyGroupScreen';
+import {
+  categoryOptions,
+  formatCategory,
+  formatMembers,
+  formatMethods,
+  formatVerifyTime,
+  getStudyGroups,
+  methodOptions,
+} from '../../../mocks/studyGroups';
 
 type MyStudyScreenProps = {
   onClose: () => void;
@@ -20,10 +29,9 @@ type MyStudyScreenProps = {
 
 const mascotOne = require('../../../assets/character/cha_1.png');
 const mascotTwo = require('../../../assets/character/ch_2.png');
+const mascotThree = require('../../../assets/character/ch_3.png');
+const mascotFour = require('../../../assets/character/ch_4.png');
 const filterIcon = require('../../../assets/icon/filter_icon.png');
-
-const categoryOptions = ['코딩 테스트', '자격증', '언어', '기상', '착석', '기타'];
-const methodOptions = ['사진', '위치', 'TODO', 'GitHub', 'GPS'];
 
 type StudyItem = {
   id: string;
@@ -40,44 +48,19 @@ function MyStudyScreen({ onClose }: MyStudyScreenProps) {
   const [showFilter, setShowFilter] = useState(false);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedMethods, setSelectedMethods] = useState<string[]>([]);
-  const [data, setData] = useState<StudyItem[]>([
-    {
-      id: 'study-1',
-      image: mascotOne,
-      tag: '기상',
-      title: '기상 스터디',
-      members: '4/10',
-      time: '매일 · 오전 8:00',
-      methods: ['사진', 'GPS'],
-    },
-    {
-      id: 'study-2',
-      image: mascotTwo,
-      tag: '언어',
-      title: '일본어 뽀시기',
-      members: '4/10',
-      time: '월/금 · 오후 2:00',
-      methods: ['사진'],
-    },
-    {
-      id: 'study-3',
-      image: mascotOne,
-      tag: '기상',
-      title: '일어나',
-      members: '4/10',
-      time: '매일 · 오전 7:00',
-      methods: ['사진', 'GPS'],
-    },
-    {
-      id: 'study-4',
-      image: mascotTwo,
-      tag: '언어',
-      title: '봉쥬르',
-      members: '4/10',
-      time: '매일 · 오후 8:00',
-      methods: ['사진'],
-    },
-  ]);
+  const [data, setData] = useState<StudyItem[]>(() => {
+    const items = getStudyGroups();
+    const mascots = [mascotOne, mascotTwo, mascotThree, mascotFour];
+    return items.map((item, index) => ({
+      id: String(item.group_id),
+      image: mascots[index % mascots.length],
+      tag: formatCategory(item.category),
+      title: item.title,
+      members: formatMembers(item.member_count, item.max_members),
+      time: formatVerifyTime(item.verify_time),
+      methods: formatMethods(item.verify_methods),
+    }));
+  });
 
   const filteredData = useMemo(() => {
     return data.filter((item) => {

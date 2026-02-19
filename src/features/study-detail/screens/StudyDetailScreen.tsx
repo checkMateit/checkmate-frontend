@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   SafeAreaView,
   ScrollView,
@@ -6,6 +6,8 @@ import {
   View,
   type ImageSourcePropType,
 } from 'react-native';
+import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
+import { type NativeStackNavigationProp } from '@react-navigation/native-stack';
 import StudyBoardTab from '../../study-board/components/StudyBoardTab';
 import StudyDetailHeader from '../components/StudyDetailHeader';
 import StudyDetailTabs from '../components/StudyDetailTabs';
@@ -14,6 +16,7 @@ import StudyOverviewCard from '../components/StudyOverviewCard';
 import StudyReportTab from '../../study-report/components/StudyReportTab';
 import StudyStatusSection from '../components/StudyStatusSection';
 import { colors } from '../../../styles/colors';
+import { type HomeStackParamList } from '../../../navigation/types';
 
 export type StudyDetail = {
   id: string;
@@ -38,13 +41,33 @@ export type StudyDetail = {
 };
 
 type StudyDetailScreenProps = {
-  study: StudyDetail;
-  onClose: () => void;
+  study?: StudyDetail;
+  onClose?: () => void;
 };
 
-function StudyDetailScreen({ study, onClose }: StudyDetailScreenProps) {
+function StudyDetailScreen({ study: studyProp, onClose }: StudyDetailScreenProps) {
+  const navigation = useNavigation<NativeStackNavigationProp<HomeStackParamList>>();
+  const route = useRoute<RouteProp<HomeStackParamList, 'StudyDetail'>>();
+  const resolvedStudy = useMemo(
+    () => studyProp ?? route.params?.study,
+    [route.params, studyProp],
+  );
   const [activeTab, setActiveTab] = useState<'status' | 'report' | 'board' | 'info'>('status');
   const [statusResetKey, setStatusResetKey] = useState(0);
+
+  if (!resolvedStudy) {
+    return (
+      <SafeAreaView style={styles.root}>
+        <View style={styles.fallback}>
+          <View style={styles.fallbackCard}>
+            <View style={styles.fallbackTitle} />
+            <View style={styles.fallbackLine} />
+            <View style={styles.fallbackLine} />
+          </View>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   const handleTabChange = (tab: 'status' | 'report' | 'board' | 'info') => {
     setActiveTab(tab);
@@ -56,23 +79,25 @@ function StudyDetailScreen({ study, onClose }: StudyDetailScreenProps) {
   return (
     <SafeAreaView style={styles.root}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        <StudyDetailHeader title="내 스터디" onClose={onClose} />
+        <StudyDetailHeader title="내 스터디" onClose={onClose ?? navigation.goBack} />
         <StudyOverviewCard
-          tag={study.tag}
-          title={study.title}
-          members={study.members}
-          description={study.description}
-          schedule={study.schedule}
-          methods={study.methods}
-          image={study.image}
-          authTime={study.authTime}
-          authTime2={study.authTime2}
+          tag={resolvedStudy.tag}
+          title={resolvedStudy.title}
+          members={resolvedStudy.members}
+          description={resolvedStudy.description}
+          schedule={resolvedStudy.schedule}
+          methods={resolvedStudy.methods}
+          image={resolvedStudy.image}
+          authTime={resolvedStudy.authTime}
+          authTime2={resolvedStudy.authTime2}
         />
         <StudyDetailTabs activeTab={activeTab} onChange={handleTabChange} />
         <View style={styles.section}>
-          {activeTab === 'status' && <StudyStatusSection resetKey={statusResetKey} />}
+          {activeTab === 'status' && (
+            <StudyStatusSection resetKey={statusResetKey} methods={resolvedStudy.methods} />
+          )}
           {activeTab === 'report' && <StudyReportTab />}
-          {activeTab === 'board' && <StudyBoardTab studyName={study.title} />}
+          {activeTab === 'board' && <StudyBoardTab studyName={resolvedStudy.title} />}
           {activeTab === 'info' && <StudyInfoTab />}
         </View>
       </ScrollView>
@@ -90,6 +115,30 @@ const styles = StyleSheet.create({
   },
   section: {
     paddingTop: 6,
+  },
+  fallback: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 20,
+  },
+  fallbackCard: {
+    width: '100%',
+    maxWidth: 320,
+    backgroundColor: '#F4F4F4',
+    borderRadius: 12,
+    padding: 16,
+    gap: 8,
+  },
+  fallbackTitle: {
+    height: 18,
+    backgroundColor: '#E0E0E0',
+    borderRadius: 6,
+  },
+  fallbackLine: {
+    height: 12,
+    backgroundColor: '#E6E6E6',
+    borderRadius: 6,
   },
 });
 

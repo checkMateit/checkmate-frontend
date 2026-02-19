@@ -2,21 +2,40 @@ import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { colors } from '../../../styles/colors';
 
-type StatusTab = 'summary' | 'todo' | 'photo';
+type StatusTab = 'summary' | 'todo' | 'photo' | 'github' | 'location';
 
 type StudyStatusTabsProps = {
   activeTab: StatusTab;
   onChange: (tab: StatusTab) => void;
+  methods: string[];
 };
 
-function StudyStatusTabs({ activeTab, onChange }: StudyStatusTabsProps) {
+const buildTabs = (methods: string[]) => {
+  const normalized = methods.map((method) => method.toLowerCase());
+  const hasTodo = normalized.some((method) => method.includes('todo'));
+  const hasPhoto = normalized.some(
+    (method) => method.includes('사진') || method.includes('photo'),
+  );
+  const hasGithub = normalized.some((method) => method.includes('github'));
+  const hasLocation = normalized.some(
+    (method) => method.includes('gps') || method.includes('위치'),
+  );
+
+  return [
+    { key: 'summary' as const, label: '요약' },
+    ...(hasTodo ? [{ key: 'todo' as const, label: 'TODO' }] : []),
+    ...(hasPhoto ? [{ key: 'photo' as const, label: '사진' }] : []),
+    ...(hasGithub ? [{ key: 'github' as const, label: 'GitHub' }] : []),
+    ...(hasLocation ? [{ key: 'location' as const, label: '위치' }] : []),
+  ];
+};
+
+function StudyStatusTabs({ activeTab, onChange, methods }: StudyStatusTabsProps) {
+  const tabs = buildTabs(methods);
+
   return (
     <View style={styles.row}>
-      {[
-        { key: 'summary', label: '요약' },
-        { key: 'todo', label: 'TODO' },
-        { key: 'photo', label: '사진' },
-      ].map((tab) => (
+      {tabs.map((tab) => (
         <Pressable
           key={tab.key}
           style={[styles.chip, activeTab === tab.key && styles.chipActive]}

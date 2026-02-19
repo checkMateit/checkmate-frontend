@@ -23,6 +23,13 @@ import { colors } from '../../../styles/colors';
 import NotificationScreen from '../../notification/screens/NotificationScreen';
 import MyStudyScreen from '../../my-study/screens/MyStudyScreen';
 import { type StudyDetail } from '../../study-detail/screens/StudyDetailScreen';
+import {
+  formatCategory,
+  formatMembers,
+  formatMethods,
+  formatVerifyTime,
+  getStudyGroups,
+} from '../../../mocks/studyGroups';
 const rightIcon = require('../../../assets/icon/right_arrow.png');
 const backgroundSource = require('../../../assets/image/background.png');
 const emptyCardBg = require('../../../assets/image/linear_bg.png');
@@ -51,6 +58,36 @@ function HomeScreen() {
   const [helpIconLayout, setHelpIconLayout] = useState({ x: 0, width: 0 });
   const [helpBubbleWidth, setHelpBubbleWidth] = useState(0);
   const { notifications } = useNotificationCenter();
+
+  const recommendStudies = useMemo(() => {
+    const items = getStudyGroups();
+    const mascots = [studyMascotOne, studyMascotTwo, studyMascotThree, studyMascotFour];
+    return items.slice(0, 3).map((item, index) => ({
+      id: String(item.group_id),
+      tag: formatCategory(item.category),
+      members: formatMembers(item.member_count, item.max_members),
+      title: item.title,
+      time: formatVerifyTime(item.verify_time),
+      method: formatMethods(item.verify_methods).join(', '),
+      image: mascots[index % mascots.length],
+    }));
+  }, []);
+
+  const toStudyDetail = (item: typeof recommendStudies[number]): StudyDetail => ({
+    id: item.id,
+    tag: item.tag,
+    title: item.title,
+    members: item.members,
+    description: '스터디 설명',
+    schedule: item.time,
+    count: '0회 인증',
+    methods: item.method.split(',').map((value) => value.trim()),
+    image: item.image,
+    statusText: '인증 미완료',
+    statusVariant: 'neutral',
+    statusIcons: [],
+    mascotSource: item.image,
+  });
 
   const bubbleLeft = headerWidth && helpBubbleWidth ? (headerWidth - helpBubbleWidth) / 2 : 0;
   const tailCenter = helpIconLayout.x + helpIconLayout.width / 2 - bubbleLeft;
@@ -380,34 +417,17 @@ function HomeScreen() {
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.recommendRow}
           >
-            <RecommendStudyCard
-              tag="코딩"
-              members="4/10"
-              title="머시기 스터디"
-              time="매일 · 오전 10:00"
-              method="Github (필수), 사진"
-            />
-            <RecommendStudyCard
-              tag="책상"
-              members="3/6"
-              title="앉아 스터디"
-              time="매일 · 오전 10:00"
-              method="Github (필수), 사진"
-            />
-            <RecommendStudyCard
-              tag="언어"
-              members="2/5"
-              title="회화 스터디"
-              time="월/수/금 · 오후 7:00"
-              method="Github (필수), 사진"
-            />
-            <RecommendStudyCard
-              tag="코딩"
-              members="5/8"
-              title="알고리즘 스터디"
-              time="매일 · 오후 9:00"
-              method="Github (필수), 사진"
-            />
+            {recommendStudies.map((item) => (
+              <RecommendStudyCard
+                key={item.id}
+                tag={item.tag}
+                members={item.members}
+                title={item.title}
+                time={item.time}
+                method={item.method}
+                onPress={() => navigation.navigate('StudyDetail', { study: toStudyDetail(item) })}
+              />
+            ))}
           </ScrollView>
         </View>
 

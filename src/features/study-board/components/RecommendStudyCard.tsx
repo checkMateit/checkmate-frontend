@@ -1,5 +1,5 @@
 import React from 'react';
-import { Image, ImageBackground, StyleSheet, Text, View } from 'react-native';
+import { Image, ImageBackground, Pressable, StyleSheet, Text, View } from 'react-native';
 import { colors } from '../../../styles/colors';
 
 type RecommendStudyCardProps = {
@@ -8,15 +8,16 @@ type RecommendStudyCardProps = {
   title: string;
   time: string;
   method: string;
+  onPress?: () => void;
 };
 
 const timeIcon = require('../../../assets/icon/time_icon.png');
 const personIcon = require('../../../assets/icon/person_icon.png');
 const rightIcon = require('../../../assets/icon/right_arrow.png');
 
-function RecommendStudyCard({ tag, members, title, time, method }: RecommendStudyCardProps) {
+function RecommendStudyCard({ tag, members, title, time, method, onPress }: RecommendStudyCardProps) {
   return (
-    <View style={styles.card}>
+    <Pressable style={styles.card} onPress={onPress} disabled={!onPress}>
       <View style={styles.cardContent}>
         <View style={styles.cardTop}>
           <ImageBackground
@@ -47,7 +48,7 @@ function RecommendStudyCard({ tag, members, title, time, method }: RecommendStud
           <Image source={rightIcon} style={styles.footerIcon} />
         </View>
       </View>
-    </View>
+    </Pressable>
   );
 }
 
