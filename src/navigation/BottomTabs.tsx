@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Image, StyleSheet } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import HomeStack from './HomeStack';
-import SearchScreen from '../features/search/screens/SearchScreen';
+import SearchStack from './SearchStack';
 import HistoryScreen from '../features/history/screens/HistoryScreen';
 import MyPageScreen from '../features/mypage/screens/MyPageScreen';
 import { type BottomTabParamList } from './types';
@@ -75,7 +75,7 @@ function BottomTabs() {
       <Tab.Screen
         name="Search"
         key={`Search-${resetKeys.Search}`}
-        component={SearchScreen}
+        component={SearchStack}
         options={{
           title: '검색',
           tabBarIcon: ({ focused }) => (

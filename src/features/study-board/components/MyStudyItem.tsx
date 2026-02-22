@@ -19,15 +19,25 @@ type MyStudyItemProps = {
   time: string;
   methods: string[];
   onDrag?: () => void;
+  onPress?: () => void;
 };
 
 const personIcon = require('../../../assets/icon/person_icon.png');
 const timeIcon = require('../../../assets/icon/time_icon.png');
 const categoryIcon = require('../../../assets/icon/category_icon.png');
 
-function MyStudyItem({ image, tag, title, members, time, methods, onDrag }: MyStudyItemProps) {
+function MyStudyItem({
+  image,
+  tag,
+  title,
+  members,
+  time,
+  methods,
+  onDrag,
+  onPress,
+}: MyStudyItemProps) {
   return (
-    <View style={styles.card}>
+    <Pressable style={styles.card} onPress={onPress} onLongPress={onDrag} delayLongPress={150}>
       <View style={styles.avatarWrap}>
         <Image source={image} style={styles.avatar} resizeMode="contain" />
       </View>
@@ -47,7 +57,7 @@ function MyStudyItem({ image, tag, title, members, time, methods, onDrag }: MySt
         </View>
         <AuthMethodRow methods={methods} label="" showIcon={false} />
       </View>
-    </View>
+    </Pressable>
   );
 }
 

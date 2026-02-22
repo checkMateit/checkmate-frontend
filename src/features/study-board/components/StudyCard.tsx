@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { colors } from '../../../styles/colors';
 import MascotImage from '../../../components/common/CategoryImage';
+import AuthMethodRow from '../../../components/common/AuthMethodRow';
 export type StatusVariant = 'success' | 'danger' | 'neutral';
 export type StatusIconType = 'success' | 'danger';
 
@@ -21,6 +22,7 @@ export type StudyCardProps = {
   statusText: string;
   statusVariant?: StatusVariant;
   statusIcons?: StatusIconType[];
+  methods?: string[];
   mascotLabel?: string;
   mascotSource?: ImageSourcePropType;
   onPress?: () => void;
@@ -39,6 +41,7 @@ function StudyCard({
   statusText,
   statusVariant = 'neutral',
   statusIcons,
+  methods,
   mascotLabel,
   mascotSource,
   onPress,
@@ -66,6 +69,9 @@ function StudyCard({
 
           <Text style={styles.title}>{title}</Text>
           <Text style={styles.schedule}>{schedule}</Text>
+          {methods && methods.length > 0 ? (
+            <AuthMethodRow methods={methods} label="" showIcon={false} />
+          ) : null}
         </View>
 
         {/* right */}

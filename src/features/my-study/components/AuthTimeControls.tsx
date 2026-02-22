@@ -80,6 +80,17 @@ function AuthTimeControls({
             />
           </View>
         ) : null}
+        <View style={styles.timeRow}>
+          <View style={styles.timeGroup}>
+            <Text style={styles.timeLabel}>마감 시간</Text>
+            <Pressable
+              style={styles.timeChip}
+              onPress={() => onOpenTimePicker('rangeEnd', configKey)}
+            >
+              <Text style={styles.timeText}>{formatTime(config.rangeEnd)}</Text>
+            </Pressable>
+          </View>
+        </View>
       </View>
     );
   }
@@ -104,6 +115,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     gap: 14,
+    marginTop: 10,
     alignItems: 'center',
   },
   timeGroup: {
@@ -156,6 +168,7 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
   locationInputWrap: {
+    marginTop: 8,
     borderBottomWidth: 1,
     borderBottomColor: '#E0E0E0',
     paddingBottom: 2,

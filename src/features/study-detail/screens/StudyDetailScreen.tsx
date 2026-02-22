@@ -1,8 +1,11 @@
 import React, { useMemo, useState } from 'react';
 import {
+  Modal,
+  Pressable,
   SafeAreaView,
   ScrollView,
   StyleSheet,
+  Text,
   View,
   type ImageSourcePropType,
 } from 'react-native';
@@ -52,6 +55,7 @@ function StudyDetailScreen({ study: studyProp, onClose }: StudyDetailScreenProps
     () => studyProp ?? route.params?.study,
     [route.params, studyProp],
   );
+  const [showWelcome, setShowWelcome] = useState(!!route.params?.showWelcome);
   const [activeTab, setActiveTab] = useState<'status' | 'report' | 'board' | 'info'>('status');
   const [statusResetKey, setStatusResetKey] = useState(0);
 
@@ -101,6 +105,25 @@ function StudyDetailScreen({ study: studyProp, onClose }: StudyDetailScreenProps
           {activeTab === 'info' && <StudyInfoTab />}
         </View>
       </ScrollView>
+      <Modal visible={showWelcome} animationType="fade" transparent>
+        <View style={styles.welcomeOverlay}>
+          <View style={styles.welcomeCard}>
+            <Text style={styles.welcomeTitle}>승연님, 반가워요!</Text>
+            <Text style={styles.welcomeSubtitle}>
+              {resolvedStudy.title}에 오신 것을 환영합니다.
+            </Text>
+            <View style={styles.welcomeDivider} />
+            <Text style={styles.welcomeBody}>
+              스터디는 함께 만드는 공간입니다.{'\n'}
+              무단 결석이 반복될 경우 강퇴될 수 있습니다.{'\n'}
+              서로를 존중하는 태도로 참여해주세요.
+            </Text>
+            <Pressable style={styles.welcomeButton} onPress={() => setShowWelcome(false)}>
+              <Text style={styles.welcomeButtonText}>확인했어요</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -115,6 +138,64 @@ const styles = StyleSheet.create({
   },
   section: {
     paddingTop: 6,
+  },
+  welcomeOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.35)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+  },
+  welcomeCard: {
+    width: '100%',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    paddingVertical: 24,
+    paddingHorizontal: 20,
+    alignItems: 'center',
+    shadowColor: '#000000',
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 6,
+  },
+  welcomeTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: colors.textPrimary,
+    marginBottom: 8,
+  },
+  welcomeSubtitle: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    fontWeight: '600',
+    marginBottom: 14,
+    textAlign: 'center',
+  },
+  welcomeDivider: {
+    width: '100%',
+    height: 1,
+    backgroundColor: '#EAEAEA',
+    marginBottom: 14,
+  },
+  welcomeBody: {
+    fontSize: 13,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: 20,
+  },
+  welcomeButton: {
+    width: '100%',
+    backgroundColor: colors.primary,
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: 'center',
+  },
+  welcomeButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '800',
   },
   fallback: {
     flex: 1,

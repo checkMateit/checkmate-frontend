@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { colors } from '../../../styles/colors';
 import StudyStatusTabs from './StudyStatusTabs';
@@ -36,7 +36,7 @@ function StudyStatusSection({ resetKey, methods }: StudyStatusSectionProps) {
   const [activeTab, setActiveTab] = useState<
     'summary' | 'todo' | 'photo' | 'github' | 'location'
   >('summary');
-  const availableTabs = getAvailableTabs(methods);
+  const availableTabs = useMemo(() => getAvailableTabs(methods), [methods]);
 
   useEffect(() => {
     setActiveTab(availableTabs[0] ?? 'summary');
@@ -50,7 +50,7 @@ function StudyStatusSection({ resetKey, methods }: StudyStatusSectionProps) {
         </Text>
         <StudyStatusTabs activeTab={activeTab} onChange={setActiveTab} methods={methods} />
       </View>
-      {activeTab === 'summary' && <StudyStatusSummary />}
+      {activeTab === 'summary' && <StudyStatusSummary methods={methods} />}
       {activeTab === 'todo' && <StudyStatusTodo />}
       {activeTab === 'photo' && <StudyStatusPhoto />}
       {activeTab === 'github' && <StudyStatusGithub />}

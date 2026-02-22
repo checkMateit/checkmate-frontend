@@ -36,13 +36,20 @@ const buildAuthTime = (config: MethodConfig) => {
     )}`;
   }
   if (config.method === '위치') {
-    return `${config.locationType}${
-      config.locationType === '공통 위치' && config.locationName
-        ? `\n${config.locationName}`
-        : ''
-    }`;
+    return `마감 시간 ${formatTime(config.rangeEnd)}`;
   }
   return `마감 시간 ${formatTime(config.rangeEnd)}`;
+};
+
+const formatMethodLabel = (config: MethodConfig) => {
+  if (config.method !== '위치') {
+    return config.method;
+  }
+  const locationName =
+    config.locationType === '공통 위치' && config.locationName
+      ? `, ${config.locationName}`
+      : '';
+  return `${config.method} (${config.locationType}${locationName})`;
 };
 
 function CreateStudyGroupResultScreen({
@@ -62,9 +69,9 @@ function CreateStudyGroupResultScreen({
     { label: '카테고리', value: category },
     ...(primaryConfig
       ? [
-          { label: '인증 방식', value: primaryConfig.method },
+          { label: '인증 방식', value: formatMethodLabel(primaryConfig) },
           {
-            label: primaryConfig.method === '위치' ? '인증 위치' : '인증시간',
+            label: '인증시간',
             value: buildAuthTime(primaryConfig),
             multiline: true,
           },
@@ -72,9 +79,9 @@ function CreateStudyGroupResultScreen({
       : [{ label: '인증 방식', value: '-' }]),
     ...(secondaryConfig
       ? [
-          { label: '인증 방식 2', value: secondaryConfig.method },
+          { label: '인증 방식 2', value: formatMethodLabel(secondaryConfig) },
           {
-            label: secondaryConfig.method === '위치' ? '인증 위치' : '인증시간',
+            label: '인증시간',
             value: buildAuthTime(secondaryConfig),
             multiline: true,
           },

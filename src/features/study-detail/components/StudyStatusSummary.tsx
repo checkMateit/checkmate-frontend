@@ -6,9 +6,15 @@ const profileImage = require('../../../assets/icon/profile_1.png');
 const checkIcon = require('../../../assets/icon/check_icon.png');
 const cancelIcon = require('../../../assets/icon/cancel_icon.png');
 
-function StudyStatusSummary() {
+type StudyStatusSummaryProps = {
+  methods: string[];
+};
+
+function StudyStatusSummary({ methods }: StudyStatusSummaryProps) {
   const days = ['월', '화', '수', '목', '금', '토'];
   const todayLabel = ['일', '월', '화', '수', '목', '금', '토'][new Date().getDay()];
+  const normalizedMethods = methods.length > 0 ? methods : ['인증'];
+  const legendMethods = normalizedMethods.slice(0, 2);
   const rows = [
     {
       name: '라즈베리 님',
@@ -35,14 +41,17 @@ function StudyStatusSummary() {
   return (
     <View style={styles.container}>
       <View style={styles.legendRow}>
-        <View style={styles.legendItem}>
-          <View style={[styles.legendDot, styles.todoDot]} />
-          <Text style={styles.legendText}>TODO</Text>
-        </View>
-        <View style={styles.legendItem}>
-          <View style={[styles.legendDot, styles.photoDot]} />
-          <Text style={styles.legendText}>사진</Text>
-        </View>
+        {legendMethods.map((method, index) => (
+          <View key={`${method}-${index}`} style={styles.legendItem}>
+            <View
+              style={[
+                styles.legendDot,
+                index === 0 ? styles.primaryDot : styles.secondaryDot,
+              ]}
+            />
+            <Text style={styles.legendText}>{method}</Text>
+          </View>
+        ))}
       </View>
 
       <View style={styles.daysHeaderRow}>
@@ -67,7 +76,13 @@ function StudyStatusSummary() {
           </View>
           <View style={styles.daysRow}>
             {days.map((day, idx) => {
-              const dotList = row.dots[idx] ?? [];
+              const rawDotList = row.dots[idx] ?? [];
+              const dotList =
+                legendMethods.length === 1
+                  ? rawDotList.length > 0
+                    ? ['primary']
+                    : []
+                  : rawDotList.map((dot) => (dot === 'todo' ? 'primary' : 'secondary'));
               return (
                 <View key={`${day}-${idx}`} style={styles.dayCell}>
                   {dotList.length === 0 ? (
@@ -76,8 +91,8 @@ function StudyStatusSummary() {
                     <View
                       style={[
                         styles.dayDot,
-                        dotList[0] === 'todo' && styles.todoDot,
-                        dotList[0] === 'photo' && styles.photoDot,
+                        dotList[0] === 'primary' && styles.primaryDot,
+                        dotList[0] === 'secondary' && styles.secondaryDot,
                       ]}
                     />
                   ) : (
@@ -89,8 +104,8 @@ function StudyStatusSummary() {
                             styles.dayDot,
                             styles.dayDotStackItem,
                             dotIndex === 1 && styles.dayDotStackSecond,
-                            dot === 'todo' && styles.todoDot,
-                            dot === 'photo' && styles.photoDot,
+                            dot === 'primary' && styles.primaryDot,
+                            dot === 'secondary' && styles.secondaryDot,
                           ]}
                         />
                       ))}
@@ -209,11 +224,11 @@ const styles = StyleSheet.create({
   dayDotStackSecond: {
     left: 8,
   },
-  todoDot: {
-    backgroundColor: '#7E72FD',
-  },
-  photoDot: {
+  primaryDot: {
     backgroundColor: colors.primary,
+  },
+  secondaryDot: {
+    backgroundColor: '#7E72FD',
   },
   emptyDot: {
     backgroundColor: 'transparent',

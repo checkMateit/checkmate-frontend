@@ -9,6 +9,8 @@ import {
   View,
 } from 'react-native';
 import DraggableFlatList, { RenderItemParams } from 'react-native-draggable-flatlist';
+import { useNavigation } from '@react-navigation/native';
+import { type NativeStackNavigationProp } from '@react-navigation/native-stack';
 import MyStudyHeader from '../../study-board/components/MyStudyHeader';
 import MyStudyItem from '../../study-board/components/MyStudyItem';
 import { colors } from '../../../styles/colors';
@@ -18,13 +20,20 @@ import {
   formatCategory,
   formatMembers,
   formatMethods,
-  formatVerifyTime,
+  formatPrimaryAuthTime,
+  formatPeriod,
+  formatAuthTimes,
+  getMyStudyGroups,
   getStudyGroups,
   methodOptions,
 } from '../../../mocks/studyGroups';
+import { type HomeStackParamList, type SearchStackParamList } from '../../../navigation/types';
+import { type StudyPreview } from '../../search/types';
+import { type StudyDetail } from '../../study-detail/screens/StudyDetailScreen';
 
 type MyStudyScreenProps = {
   onClose: () => void;
+  mode?: 'my' | 'search';
 };
 
 const mascotOne = require('../../../assets/character/cha_1.png');
@@ -32,7 +41,6 @@ const mascotTwo = require('../../../assets/character/ch_2.png');
 const mascotThree = require('../../../assets/character/ch_3.png');
 const mascotFour = require('../../../assets/character/ch_4.png');
 const filterIcon = require('../../../assets/icon/filter_icon.png');
-
 type StudyItem = {
   id: string;
   image: number;
@@ -41,15 +49,19 @@ type StudyItem = {
   members: string;
   time: string;
   methods: string[];
+  description: string;
+  period: string;
+  authTimes: { method: string; time: string }[];
 };
 
-function MyStudyScreen({ onClose }: MyStudyScreenProps) {
+function MyStudyScreen({ onClose, mode = 'my' }: MyStudyScreenProps) {
+  const navigation = useNavigation<NativeStackNavigationProp<SearchStackParamList>>();
   const [showCreateStudy, setShowCreateStudy] = useState(false);
   const [showFilter, setShowFilter] = useState(false);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedMethods, setSelectedMethods] = useState<string[]>([]);
   const [data, setData] = useState<StudyItem[]>(() => {
-    const items = getStudyGroups();
+    const items = mode === 'search' ? getStudyGroups() : getMyStudyGroups();
     const mascots = [mascotOne, mascotTwo, mascotThree, mascotFour];
     return items.map((item, index) => ({
       id: String(item.group_id),
@@ -57,8 +69,11 @@ function MyStudyScreen({ onClose }: MyStudyScreenProps) {
       tag: formatCategory(item.category),
       title: item.title,
       members: formatMembers(item.member_count, item.max_members),
-      time: formatVerifyTime(item.verify_time),
+      time: formatPrimaryAuthTime(item.verify_methods, item.auth_times),
       methods: formatMethods(item.verify_methods),
+      description: '안녕하세요, 스터디입니다.',
+      period: formatPeriod(item.period),
+      authTimes: formatAuthTimes(item.verify_methods, item.auth_times),
     }));
   });
 
@@ -88,6 +103,48 @@ function MyStudyScreen({ onClose }: MyStudyScreenProps) {
   const resetFilters = () => {
     setSelectedCategories([]);
     setSelectedMethods([]);
+  };
+
+  const handlePressStudy = (item: StudyItem) => {
+    if (mode === 'search') {
+      const hasJoinRoute = navigation.getState().routeNames.includes('StudyJoin');
+      if (!hasJoinRoute) {
+        return;
+      }
+      const payload: StudyPreview = {
+        id: item.id,
+        tag: item.tag,
+        title: item.title,
+        members: item.members,
+        description: item.description,
+        schedule: item.time,
+        period: item.period,
+        methods: item.methods,
+        authTimes: item.authTimes,
+        image: item.image,
+      };
+      navigation.navigate('StudyJoin', { study: payload });
+      return;
+    }
+    const detail: StudyDetail = {
+      id: item.id,
+      tag: item.tag,
+      title: item.title,
+      members: item.members,
+      description: item.description,
+      schedule: item.time,
+      count: '-',
+      methods: item.methods,
+      image: item.image,
+      statusText: '인증 미완료',
+      statusVariant: 'neutral',
+      statusIcons: [],
+      mascotSource: item.image,
+    };
+    const parentHome = navigation.getParent<NativeStackNavigationProp<HomeStackParamList>>();
+    if (parentHome) {
+      parentHome.navigate('StudyDetail', { study: detail });
+    }
   };
 
   return (
@@ -125,6 +182,7 @@ function MyStudyScreen({ onClose }: MyStudyScreenProps) {
               time={item.time}
               methods={item.methods}
               onDrag={drag}
+              onPress={() => handlePressStudy(item)}
             />
           )}
         />
@@ -277,7 +335,9 @@ const styles = StyleSheet.create({
     width: '100%',
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
-    padding: 18,
+    padding: 22,
+    minHeight: 360,
+    maxHeight: '80%',
   },
   filterTitle: {
     fontSize: 18,
@@ -289,19 +349,19 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
     color: colors.textSecondary,
-    marginTop: 8,
-    marginBottom: 8,
+    marginTop: 12,
+    marginBottom: 12,
   },
   filterList: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: 12,
   },
   filterItem: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    paddingVertical: 6,
+    paddingVertical: 8,
     paddingHorizontal: 10,
     borderRadius: 16,
     borderWidth: 1,

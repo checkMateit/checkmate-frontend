@@ -23,11 +23,15 @@ import { colors } from '../../../styles/colors';
 import NotificationScreen from '../../notification/screens/NotificationScreen';
 import MyStudyScreen from '../../my-study/screens/MyStudyScreen';
 import { type StudyDetail } from '../../study-detail/screens/StudyDetailScreen';
+import { type StudyPreview } from '../../search/types';
 import {
   formatCategory,
   formatMembers,
   formatMethods,
-  formatVerifyTime,
+  formatPrimaryAuthTime,
+  formatPeriod,
+  formatAuthTimes,
+  getMyStudyGroups,
   getStudyGroups,
 } from '../../../mocks/studyGroups';
 const rightIcon = require('../../../assets/icon/right_arrow.png');
@@ -67,8 +71,9 @@ function HomeScreen() {
       tag: formatCategory(item.category),
       members: formatMembers(item.member_count, item.max_members),
       title: item.title,
-      time: formatVerifyTime(item.verify_time),
+      time: formatPrimaryAuthTime(item.verify_methods, item.auth_times),
       method: formatMethods(item.verify_methods).join(', '),
+      authTimes: formatAuthTimes(item.verify_methods, item.auth_times),
       image: mascots[index % mascots.length],
     }));
   }, []);
@@ -87,6 +92,19 @@ function HomeScreen() {
     statusVariant: 'neutral',
     statusIcons: [],
     mascotSource: item.image,
+  });
+
+  const toStudyPreview = (item: typeof recommendStudies[number]): StudyPreview => ({
+    id: item.id,
+    tag: item.tag,
+    title: item.title,
+    members: item.members,
+    description: '안녕하세요, 스터디입니다.',
+    schedule: item.time,
+    period: formatPeriod('2026-02-04~2026-03-04'),
+    methods: item.method.split(',').map((value) => value.trim()),
+    authTimes: item.authTimes,
+    image: item.image,
   });
 
   const bubbleLeft = headerWidth && helpBubbleWidth ? (headerWidth - helpBubbleWidth) / 2 : 0;
@@ -109,106 +127,50 @@ function HomeScreen() {
 
     return unsubscribe;
   }, [navigation]);
-  const studies = useMemo<StudyDetail[]>(
-    () => [],
-    [],
-  );
+  const studies = useMemo<StudyDetail[]>(() => {
+    const items = getMyStudyGroups();
+    const mascots = [studyMascotOne, studyMascotTwo, studyMascotThree, studyMascotFour];
+    return items.map((item, index) => ({
+      id: String(item.group_id),
+      tag: formatCategory(item.category),
+      title: item.title,
+      members: formatMembers(item.member_count, item.max_members),
+      description: '안녕하세요, 스터디입니다',
+      schedule: formatPrimaryAuthTime(item.verify_methods, item.auth_times),
+      count: '5회 인증',
+      methods: formatMethods(item.verify_methods),
+      image: mascots[index % mascots.length],
+      statusText: (() => {
+        const icons =
+          item.verify_methods.length > 1
+            ? index % 3 === 0
+              ? ['danger', 'danger']
+              : index % 3 === 1
+                ? ['success', 'danger']
+                : ['success', 'success']
+            : index % 2 === 0
+              ? ['danger']
+              : ['success'];
+        const hasSuccess = icons.includes('success');
+        const hasDanger = icons.includes('danger');
+        if (hasSuccess && hasDanger) return '인증 진행중';
+        if (hasSuccess) return '인증 완료';
+        return '인증 미완료';
+      })(),
+      statusVariant: index % 2 === 0 ? ('danger' as const) : ('success' as const),
+      statusIcons:
+        item.verify_methods.length > 1
+          ? index % 3 === 0
+            ? ['danger', 'danger']
+            : index % 3 === 1
+              ? ['success', 'danger']
+              : ['success', 'success']
+          : [index % 2 === 0 ? 'danger' : 'success'],
+      mascotSource: mascots[index % mascots.length],
+    }));
+  }, []);
 
-  // const studies = useMemo<StudyDetail[]>(
-  //   () => [
-  //     {
-  //       id: 'study-1',
-  //       tag: '코딩',
-  //       title: '코테 스터디',
-  //       members: '3/5',
-  //       description: '안녕하세요, 코테 스터디룸입니다',
-  //       schedule: '월/화/수 · 10:00 - 13:00',
-  //       count: '5회 인증',
-  //       methods: ['TODO', '사진'],
-  //       image: studyMascotOne,
-  //       statusText: '인증 미완료',
-  //       statusVariant: 'danger' as const,
-  //       statusIcons: ['danger', 'danger'],
-  //       mascotSource: studyMascotOne,
-  //     },
-  //     {
-  //       id: 'study-2',
-  //       tag: '언어',
-  //       title: '토익 스터디',
-  //       members: '6/6',
-  //       description: '안녕하세요, 토익 빡공 스터디룸입니다',
-  //       schedule: '매일 · 8:00 - 9:00',
-  //       count: '5회 인증',
-  //       methods: ['TODO', '사진'],
-  //       image: studyMascotTwo,
-  //       statusText: 'TODO 인증 완료',
-  //       statusVariant: 'success' as const,
-  //       statusIcons: ['success'],
-  //       mascotSource: studyMascotTwo,
-  //     },
-  //     {
-  //       id: 'study-3',
-  //       tag: '코딩',
-  //       title: '머시기 스터디',
-  //       members: '4/10',
-  //       description: '안녕하세요, 머시기 스터디입니다',
-  //       schedule: '매일 · 오전 10:00',
-  //       count: '3회 인증',
-  //       methods: ['TODO', '사진'],
-  //       image: studyMascotThree,
-  //       statusText: '인증 진행중',
-  //       statusVariant: 'danger' as const,
-  //       statusIcons: ['danger', 'success'],
-  //       mascotSource: studyMascotThree,
-  //     },
-  //     {
-  //       id: 'study-4',
-  //       tag: '책상',
-  //       title: '앉아 스터디',
-  //       members: '3/6',
-  //       description: '안녕하세요, 앉아 스터디입니다',
-  //       schedule: '매일 · 오전 10:00',
-  //       count: '2회 인증',
-  //       methods: ['TODO', '사진'],
-  //       image: studyMascotFour,
-  //       statusText: 'TODO 인증 완료',
-  //       statusVariant: 'success' as const,
-  //       statusIcons: ['success', 'success'],
-  //       mascotSource: studyMascotFour,
-  //     },
-  //     {
-  //       id: 'study-5',
-  //       tag: '코딩',
-  //       title: '깃허브 스터디',
-  //       members: '2/5',
-  //       description: '안녕하세요, 깃허브 스터디입니다',
-  //       schedule: '매일 · 오후 8:00',
-  //       count: '4회 인증',
-  //       methods: ['TODO', '사진'],
-  //       image: studyMascotOne,
-  //       statusText: '인증 미완료',
-  //       statusVariant: 'danger' as const,
-  //       statusIcons: ['danger'],
-  //       mascotSource: studyMascotOne,
-  //     },
-  //     {
-  //       id: 'study-6',
-  //       tag: '영어',
-  //       title: '회화 스터디',
-  //       members: '5/8',
-  //       description: '안녕하세요, 회화 스터디입니다',
-  //       schedule: '월/수/금 · 오후 7:00',
-  //       count: '5회 인증',
-  //       methods: ['TODO', '사진'],
-  //       image: studyMascotTwo,
-  //       statusText: '인증 진행중',
-  //       statusVariant: 'success' as const,
-  //       statusIcons: ['success', 'danger'],
-  //       mascotSource: studyMascotTwo,
-  //     },
-  //   ],
-  //   [],
-  // );
+
 
   const studyPages = useMemo(() => {
     const pages = [];
@@ -327,6 +289,7 @@ function HomeScreen() {
                         statusText={card.statusText}
                         statusVariant={card.statusVariant}
                         statusIcons={card.statusIcons}
+                        methods={card.methods}
                         mascotSource={card.mascotSource}
                         onPress={() => {
                           navigation.navigate('StudyDetail', { study: card });
@@ -352,7 +315,7 @@ function HomeScreen() {
             <Pressable
               onPress={() => {
                 const parent = navigation.getParent<BottomTabNavigationProp<BottomTabParamList>>();
-                parent?.navigate('Search');
+                parent?.navigate('Search', { screen: 'SearchMain' });
               }}
             >
               <ImageBackground
@@ -425,7 +388,17 @@ function HomeScreen() {
                 title={item.title}
                 time={item.time}
                 method={item.method}
-                onPress={() => navigation.navigate('StudyDetail', { study: toStudyDetail(item) })}
+                onPress={() => {
+                  const parent = navigation.getParent<BottomTabNavigationProp<BottomTabParamList>>();
+                  if (parent) {
+                    parent.navigate('Search', {
+                      screen: 'StudyJoin',
+                      params: { study: toStudyPreview(item) },
+                    });
+                  } else {
+                    navigation.navigate('StudyDetail', { study: toStudyDetail(item) });
+                  }
+                }}
               />
             ))}
           </ScrollView>
@@ -559,11 +532,11 @@ const styles = StyleSheet.create({
     tintColor: '#FFFFFF',
   },
   heroCardsWrap: {
-    
+    marginTop: -400,
     paddingHorizontal: 0,
   },
   emptyStudyWrap: {
-    marginTop: -310,
+    marginTop: -330,
     marginBottom: 20,
     paddingHorizontal: 20,
   },
