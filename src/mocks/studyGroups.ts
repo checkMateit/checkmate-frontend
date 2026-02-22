@@ -5,6 +5,7 @@ export type StudyGroupItem = {
   title: string;
   member_count: number;
   max_members: number;
+  auth_days?: string[];
   period: string;
   hashtags: string[];
   thumbnail_url: string;
@@ -35,9 +36,10 @@ export const studyGroupMock: StudyGroupResponse = {
         title: '매일 6시 기상 인증',
         member_count: 7,
         max_members: 10,
+        auth_days: ['월', '화', '수', '목', '금'],
         auth_times: {
-          PHOTO: '07:00',
-          GPS: '08:00',
+          PHOTO: '07:00~08:00',
+          GPS: '08:00~09:00',
         },
         period: '2026-02-01~2026-02-28',
         hashtags: ['기상', '아침루틴'],
@@ -50,8 +52,9 @@ export const studyGroupMock: StudyGroupResponse = {
         title: '영어 회화 루틴',
         member_count: 4,
         max_members: 8,
+        auth_days: ['월', '수', '금'],
         auth_times: {
-          TODO: '19:00|21:00',
+          TODO: '19:00~20:00|21:00~22:00',
         },
         period: '2026-02-03~2026-03-10',
         hashtags: ['언어', '회화'],
@@ -64,9 +67,10 @@ export const studyGroupMock: StudyGroupResponse = {
         title: '코테 30분 챌린지',
         member_count: 5,
         max_members: 10,
+        auth_days: ['화', '목', '토'],
         auth_times: {
-          GITHUB: '22:00',
-          PHOTO: '23:00',
+          GITHUB: '21:00~22:00',
+          PHOTO: '22:00~23:00',
         },
         period: '2026-02-05~2026-03-05',
         hashtags: ['코딩', '알고리즘'],
@@ -79,8 +83,9 @@ export const studyGroupMock: StudyGroupResponse = {
         title: '자격증 한 달 완성',
         member_count: 6,
         max_members: 12,
+        auth_days: ['월', '수', '금'],
         auth_times: {
-          TODO: '09:00|10:00',
+          TODO: '08:00~09:00|09:00~10:00',
         },
         period: '2026-02-10~2026-03-15',
         hashtags: ['자격증', '아침공부'],
@@ -93,8 +98,9 @@ export const studyGroupMock: StudyGroupResponse = {
         title: '착석 인증 챌린지',
         member_count: 8,
         max_members: 10,
+        auth_days: ['월', '화', '목'],
         auth_times: {
-          PHOTO: '11:00',
+          PHOTO: '10:00~12:00',
         },
         period: '2026-02-12~2026-03-12',
         hashtags: ['착석', '루틴'],
@@ -107,9 +113,10 @@ export const studyGroupMock: StudyGroupResponse = {
         title: '5시 기상과 할일',
         member_count: 3,
         max_members: 6,
+        auth_days: ['월', '화', '수', '목', '금'],
         auth_times: {
-          PHOTO: '05:30',
-          TODO: '05:30|06:30',
+          PHOTO: '05:00~06:00',
+          TODO: '05:30~06:00|06:00~06:30',
         },
         period: '2026-02-15~2026-03-20',
         hashtags: ['기상', 'TODO'],
@@ -122,8 +129,9 @@ export const studyGroupMock: StudyGroupResponse = {
         title: '일본어 한자 쓰기',
         member_count: 5,
         max_members: 9,
+        auth_days: ['화', '목'],
         auth_times: {
-          PHOTO: '08:30',
+          PHOTO: '08:00~09:00',
         },
         period: '2026-02-18~2026-03-22',
         hashtags: ['언어', '일본어'],
@@ -136,8 +144,9 @@ export const studyGroupMock: StudyGroupResponse = {
         title: '매일 알고리즘 1문제',
         member_count: 9,
         max_members: 12,
+        auth_days: ['월', '수', '금'],
         auth_times: {
-          GITHUB: '23:00',
+          GITHUB: '22:00~23:00',
         },
         period: '2026-02-20~2026-03-25',
         hashtags: ['코딩', '깃허브'],
@@ -150,9 +159,10 @@ export const studyGroupMock: StudyGroupResponse = {
         title: '도서관 출석 인증',
         member_count: 4,
         max_members: 7,
+        auth_days: ['월', '수', '금'],
         auth_times: {
-          PHOTO: '15:00',
-          GPS: '16:00',
+          PHOTO: '14:00~15:00',
+          GPS: '15:00~16:00',
         },
         period: '2026-02-22~2026-03-30',
         hashtags: ['자격증', '도서관'],
@@ -165,9 +175,10 @@ export const studyGroupMock: StudyGroupResponse = {
         title: '저녁 집중 스터디',
         member_count: 2,
         max_members: 6,
+        auth_days: ['월', '화', '목'],
         auth_times: {
-          TODO: '19:30|21:00',
-          PHOTO: '22:00',
+          TODO: '19:00~20:00|21:00~22:00',
+          PHOTO: '22:00~23:00',
         },
         period: '2026-02-25~2026-03-31',
         hashtags: ['착석', '집중'],
@@ -180,8 +191,9 @@ export const studyGroupMock: StudyGroupResponse = {
         title: '러닝 루틴 인증',
         member_count: 10,
         max_members: 15,
+        auth_days: ['토', '일'],
         auth_times: {
-          GPS: '08:00',
+          GPS: '07:00~08:00',
         },
         period: '2026-02-27~2026-04-01',
         hashtags: ['운동', 'GPS'],
@@ -194,9 +206,10 @@ export const studyGroupMock: StudyGroupResponse = {
         title: '프로젝트 회고 챌린지',
         member_count: 1,
         max_members: 5,
+        auth_days: ['금'],
         auth_times: {
-          PHOTO: '22:00',
-          GITHUB: '23:30',
+          PHOTO: '21:00~22:00',
+          GITHUB: '22:30~23:30',
         },
         period: '2026-03-01~2026-04-05',
         hashtags: ['회고', '깃허브'],
@@ -241,9 +254,10 @@ export const myStudyGroupMock: StudyGroupResponse = {
         title: '기상 스터디',
         member_count: 3,
         max_members: 5,
+        auth_days: ['월', '화', '목'],
         auth_times: {
-          PHOTO: '07:00',
-          GPS: '08:00',
+          PHOTO: '07:00~08:00',
+          GPS: '08:00~09:00',
         },
         period: '2026-02-01~2026-03-01',
         hashtags: ['기상', '루틴'],
@@ -256,8 +270,9 @@ export const myStudyGroupMock: StudyGroupResponse = {
         title: '일본어 뽀시기',
         member_count: 6,
         max_members: 6,
+        auth_days: ['화', '목'],
         auth_times: {
-          PHOTO: '16:00',
+          PHOTO: '15:00~16:00',
         },
         period: '2026-02-05~2026-03-05',
         hashtags: ['언어', '일본어'],
@@ -270,8 +285,9 @@ export const myStudyGroupMock: StudyGroupResponse = {
         title: '코테 스터디',
         member_count: 4,
         max_members: 10,
+        auth_days: ['월', '수', '금'],
         auth_times: {
-          GITHUB: '22:00',
+          GITHUB: '21:00~22:00',
         },
         period: '2026-02-10~2026-03-20',
         hashtags: ['코딩', '알고리즘'],
@@ -284,9 +300,10 @@ export const myStudyGroupMock: StudyGroupResponse = {
         title: '착석 스터디',
         member_count: 2,
         max_members: 4,
+        auth_days: ['월', '수', '금'],
         auth_times: {
-          TODO: '09:00|11:00',
-          PHOTO: '11:00',
+          TODO: '09:00~10:00|10:00~11:00',
+          PHOTO: '11:00~12:00',
         },
         period: '2026-02-12~2026-03-12',
         hashtags: ['착석'],
@@ -321,8 +338,21 @@ export const formatPrimaryAuthTime = (
   return raw;
 };
 
-export const formatPeriod = (period: string) =>
-  period.replace('~', ' - ').replace(/-/g, '. ');
+export const formatPeriod = (period: string) => {
+  const [start, end] = period.split('~').map((value) => value.trim());
+  const formatDate = (value: string) => value.replace(/-/g, '. ');
+  if (!end) {
+    return formatDate(start);
+  }
+  return `${formatDate(start)} - ${formatDate(end)}`;
+};
+
+export const formatAuthDays = (days?: string[]) => {
+  if (!days || days.length === 0) {
+    return '-';
+  }
+  return `매주 ${days.join('/')}`;
+};
 
 export const formatAuthTimes = (
   methods: string[],
@@ -334,10 +364,9 @@ export const formatAuthTimes = (
       const [deadline, complete] = raw.split('|').map((value) => value.trim());
       return {
         method: formatMethods([method])[0],
-        time:
-          deadline && complete
-            ? `작성 마감 ${deadline} / 완료 시간 ${complete}`
-            : `작성 마감 ${raw}`,
+        time: raw,
+        deadline,
+        complete,
       };
     }
     return {

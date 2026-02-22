@@ -31,6 +31,7 @@ import {
   formatPrimaryAuthTime,
   formatPeriod,
   formatAuthTimes,
+  formatAuthDays,
   getMyStudyGroups,
   getStudyGroups,
 } from '../../../mocks/studyGroups';
@@ -74,6 +75,7 @@ function HomeScreen() {
       time: formatPrimaryAuthTime(item.verify_methods, item.auth_times),
       method: formatMethods(item.verify_methods).join(', '),
       authTimes: formatAuthTimes(item.verify_methods, item.auth_times),
+      authDays: formatAuthDays(item.auth_days),
       image: mascots[index % mascots.length],
     }));
   }, []);
@@ -87,6 +89,9 @@ function HomeScreen() {
     schedule: item.time,
     count: '0회 인증',
     methods: item.method.split(',').map((value) => value.trim()),
+    authTimes: item.authTimes,
+    authDays: item.authDays,
+    period: formatPeriod('2026-02-04~2026-03-04'),
     image: item.image,
     statusText: '인증 미완료',
     statusVariant: 'neutral',
@@ -104,6 +109,7 @@ function HomeScreen() {
     period: formatPeriod('2026-02-04~2026-03-04'),
     methods: item.method.split(',').map((value) => value.trim()),
     authTimes: item.authTimes,
+    authDays: item.authDays,
     image: item.image,
   });
 
@@ -139,6 +145,9 @@ function HomeScreen() {
       schedule: formatPrimaryAuthTime(item.verify_methods, item.auth_times),
       count: '5회 인증',
       methods: formatMethods(item.verify_methods),
+      authTimes: formatAuthTimes(item.verify_methods, item.auth_times),
+      authDays: formatAuthDays(item.auth_days),
+      period: formatPeriod(item.period),
       image: mascots[index % mascots.length],
       statusText: (() => {
         const icons =
@@ -290,6 +299,8 @@ function HomeScreen() {
                         statusVariant={card.statusVariant}
                         statusIcons={card.statusIcons}
                         methods={card.methods}
+                        authTimes={card.authTimes}
+                        authDays={card.authDays}
                         mascotSource={card.mascotSource}
                         onPress={() => {
                           navigation.navigate('StudyDetail', { study: card });
@@ -388,6 +399,7 @@ function HomeScreen() {
                 title={item.title}
                 time={item.time}
                 method={item.method}
+                authTimes={item.authTimes}
                 onPress={() => {
                   const parent = navigation.getParent<BottomTabNavigationProp<BottomTabParamList>>();
                   if (parent) {

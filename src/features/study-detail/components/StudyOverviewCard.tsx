@@ -10,8 +10,9 @@ type StudyOverviewCardProps = {
   schedule: string;
   methods: string[];
   image: ImageSourcePropType;
-  authTime?: string;
-  authTime2?: string;
+  authTimes?: { method: string; time: string; deadline?: string; complete?: string }[];
+  authDays?: string;
+  period?: string;
 };
 
 const categoryIcon = require('../../../assets/icon/category_icon.png');
@@ -26,14 +27,17 @@ function StudyOverviewCard({
   schedule,
   methods,
   image,
-  authTime,
-  authTime2,
+  authTimes,
+  authDays,
+  period,
 }: StudyOverviewCardProps) {
-  const authRows = methods.map((method, index) => {
-    const rawTime = index === 0 ? authTime : authTime2;
-    const time = rawTime ? rawTime.replace(/\n/g, ' / ') : '-';
-    return { method, time, isFirst: index === 0 };
-  });
+  const authRows =
+    authTimes && authTimes.length > 0
+      ? authTimes.map((item) => ({
+          method: item.method,
+          time: item.method === 'TODO' ? item.time.replace('|', ' | ') : item.time,
+        }))
+      : methods.map((method) => ({ method, time: '-' }));
 
   return (
     <View style={styles.card}>
@@ -60,7 +64,8 @@ function StudyOverviewCard({
       <View style={styles.detailBox}>
         <View style={styles.detailRow}>
           <Image source={timeIcon} style={styles.detailIcon} />
-          <Text style={styles.detailValue}>{schedule}</Text>
+          <Text style={styles.detailValue}>{period ?? schedule}</Text>
+          {authDays ? <Text style={styles.detailValue}>{authDays}</Text> : null}
         </View>
         <View style={styles.methodRow}>
           <Text style={styles.detailLabel}>방식</Text>
