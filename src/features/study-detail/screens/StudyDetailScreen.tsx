@@ -34,7 +34,8 @@ export type StudyDetail = {
   statusText: string;
   statusVariant: 'success' | 'danger' | 'neutral';
   statusIcons: Array<'success' | 'danger'>;
-  mascotSource: number;
+  mascotSource: ImageSourcePropType;
+  authTimes?: { method: string; time: string; deadline?: string; complete?: string }[];
   authTimeLabel?: string;
   authTime?: string;
   authTimeLabel2?: string;
@@ -92,8 +93,9 @@ function StudyDetailScreen({ study: studyProp, onClose }: StudyDetailScreenProps
           schedule={resolvedStudy.schedule}
           methods={resolvedStudy.methods}
           image={resolvedStudy.image}
-          authTime={resolvedStudy.authTime}
-          authTime2={resolvedStudy.authTime2}
+          authTimes={resolvedStudy.authTimes}
+          authDays={resolvedStudy.authDays}
+          period={resolvedStudy.period}
         />
         <StudyDetailTabs activeTab={activeTab} onChange={handleTabChange} />
         <View style={styles.section}>

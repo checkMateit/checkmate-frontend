@@ -23,6 +23,8 @@ export type StudyCardProps = {
   statusVariant?: StatusVariant;
   statusIcons?: StatusIconType[];
   methods?: string[];
+  authTimes?: { method: string; time: string; deadline?: string; complete?: string }[];
+  authDays?: string;
   mascotLabel?: string;
   mascotSource?: ImageSourcePropType;
   onPress?: () => void;
@@ -42,6 +44,8 @@ function StudyCard({
   statusVariant = 'neutral',
   statusIcons,
   methods,
+  authTimes,
+  authDays,
   mascotLabel,
   mascotSource,
   onPress,
@@ -60,35 +64,51 @@ function StudyCard({
       <View style={styles.topRow}>
         {/* left */}
         <View style={styles.leftInfo}>
-          <ImageBackground
-            source={require('../../../assets/icon/category_icon.png')}
-            style={styles.category}
-            resizeMode="contain">
-            <Text style={styles.chipText}>{tag}</Text>
-          </ImageBackground>
+          <View style={styles.categoryRow}>
+            <ImageBackground
+              source={require('../../../assets/icon/category_icon.png')}
+              style={styles.category}
+              resizeMode="contain">
+              <Text style={styles.chipText}>{tag}</Text>
+            </ImageBackground>
+            <View style={styles.membersInline}>
+              <Image source={personIcon} style={styles.membersIcon} />
+              <Text style={styles.membersText}>{members}</Text>
+            </View>
+          </View>
 
           <Text style={styles.title}>{title}</Text>
-          <Text style={styles.schedule}>{schedule}</Text>
-          {methods && methods.length > 0 ? (
+          {authDays ? <Text style={styles.schedule}>{authDays}</Text> : null}
+          {authTimes && authTimes.length > 0 ? (
+            <View style={styles.methodList}>
+              {authTimes.map((item, index) => (
+                <View key={`${item.method}-${index}`} style={styles.methodLine}>
+                  <AuthMethodRow methods={[item.method]} label="" showIcon={false} />
+                  <Text style={styles.methodTime}>
+                    {item.method === 'TODO' ? item.time.replace('|', ' | ') : item.time}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          ) : methods && methods.length > 0 ? (
             <AuthMethodRow methods={methods} label="" showIcon={false} />
           ) : null}
         </View>
 
         {/* right */}
-        <View style={styles.mascot}>
-          {mascotSource ? (
-            <MascotImage source={mascotSource} />
-          ) : (
-            <Text style={styles.mascotText}>{mascotLabel}</Text>
-          )}
+        <View style={styles.rightCol}>
+          <View style={styles.mascot}>
+            {mascotSource ? (
+              <MascotImage source={mascotSource} />
+            ) : (
+              <Text style={styles.mascotText}>{mascotLabel}</Text>
+            )}
+          </View>
         </View>
       </View>
 
       <View style={styles.footer}>
-        <View style={styles.membersRow}>
-          <Image source={personIcon} style={styles.membersIcon} />
-          <Text style={styles.membersText}>{members}</Text>
-        </View>
+        <View style={styles.membersRow} />
         <View style={styles.statusRow}>
           <Text style={styles.statusText}>{statusText}</Text>
           {statusIconList.map((iconType, index) => (
@@ -118,7 +138,7 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 4 },
     elevation: 3,
-    justifyContent: 'space-between',
+    justifyContent: 'flex-start',
   },
   topRow: {
     flexDirection: 'row',
@@ -130,14 +150,24 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingRight: 12, 
   },
+  categoryRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginTop: 8,
+    marginBottom: 8,
+  },
   category: {
     paddingHorizontal: 10,
     height: 20,
-    marginTop: 8,
-    marginBottom: 8,
     justifyContent: 'center',
     alignItems: 'center',
     alignSelf: 'flex-start',
+  },
+  membersInline: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
   chipText: {
     fontSize: 11,
@@ -148,6 +178,10 @@ const styles = StyleSheet.create({
     height: 94,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  rightCol: {
+    alignItems: 'flex-end',
+    gap: 6,
   },
   mascotText: {
     fontSize: 26,
@@ -163,12 +197,28 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: colors.textSecondary,
     marginBottom: 10,
-   
+  },
+  methodList: {
+    gap: 6,
+  },
+  methodLine: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  methodTime: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    fontWeight: '600',
   },
   footer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    position: 'absolute',
+    left: 30,
+    right: 30,
+    bottom: 12,
   },
   membersRow: {
     flexDirection: 'row',

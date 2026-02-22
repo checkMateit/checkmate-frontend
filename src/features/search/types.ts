@@ -9,6 +9,7 @@ export type StudyPreview = {
   schedule: string;
   period: string;
   methods: string[];
-  authTimes: { method: string; time: string }[];
+  authTimes: { method: string; time: string; deadline?: string; complete?: string }[];
+  authDays?: string;
   image: ImageSourcePropType;
 };

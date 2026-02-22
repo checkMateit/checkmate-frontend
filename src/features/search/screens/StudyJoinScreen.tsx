@@ -35,6 +35,9 @@ function StudyJoinScreen() {
       schedule: study.schedule,
       count: '-',
       methods: study.methods,
+      authTimes: study.authTimes,
+      authDays: study.authDays,
+      period: study.period,
       image: study.image,
       statusText: '인증 미완료',
       statusVariant: 'neutral',
@@ -104,10 +107,23 @@ function StudyJoinScreen() {
           <View style={styles.methodSection}>
             <Text style={styles.methodLabel}>인증 방식</Text>
             <View style={styles.methodList}>
-              {authTimeRows.map((item) => (
+              {authTimeRows.map((item, index) => (
                 <View key={`${item.method}-${item.time}`} style={styles.methodLine}>
                   <AuthMethodRow methods={[item.method]} label="" showIcon={false} />
-                  <Text style={styles.methodTime}>{item.time}</Text>
+                  <View style={styles.methodTimeGroup}>
+                    {item.method === 'TODO' ? (
+                      <>
+                        <Text style={styles.methodTime}>
+                          작성 마감  {item.deadline ?? item.time}
+                        </Text>
+                        {item.complete ? (
+                          <Text style={styles.methodTime}>인증 완료 {item.complete}</Text>
+                        ) : null}
+                      </>
+                    ) : (
+                      <Text style={styles.methodTime}>인증 완료 {item.time}</Text>
+                    )}
+                  </View>
                 </View>
               ))}
             </View>
@@ -116,6 +132,12 @@ function StudyJoinScreen() {
             <Text style={styles.methodLabel}>기간</Text>
             <Text style={styles.metaText}>{study.period}</Text>
           </View>
+          {study.authDays ? (
+            <View style={styles.periodRow}>
+              <Text style={styles.methodLabel}>인증 요일</Text>
+              <Text style={styles.metaText}>{study.authDays}</Text>
+            </View>
+          ) : null}
         </View>
       </ScrollView>
 
@@ -239,6 +261,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
+  },
+  methodTimeGroup: {
+    gap: 2,
   },
   methodLabel: {
     fontSize: 12,

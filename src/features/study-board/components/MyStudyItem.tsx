@@ -18,6 +18,8 @@ type MyStudyItemProps = {
   members: string;
   time: string;
   methods: string[];
+  authTimes?: { method: string; time: string; deadline?: string; complete?: string }[];
+  authDays?: string;
   onDrag?: () => void;
   onPress?: () => void;
 };
@@ -33,6 +35,8 @@ function MyStudyItem({
   members,
   time,
   methods,
+  authTimes,
+  authDays,
   onDrag,
   onPress,
 }: MyStudyItemProps) {
@@ -52,10 +56,25 @@ function MyStudyItem({
           </View>
         </View>
         <Text style={styles.title}>{title}</Text>
-        <View style={styles.metaRow}>
-          <Text style={styles.metaText}>{time}</Text>
-        </View>
-        <AuthMethodRow methods={methods} label="" showIcon={false} />
+        {authDays && authDays !== '-' ? (
+          <Text style={styles.authDayText}>{authDays}</Text>
+        ) : null}
+        {authTimes && authTimes.length > 0 ? (
+          <View style={styles.authTimeList}>
+            {authTimes.map((item, index) => {
+              const timeText =
+                item.method === 'TODO'
+                  ? `${item.deadline ?? item.time}${item.complete ? ` | ${item.complete}` : ''}`
+                  : `${item.time}`;
+              return (
+                <View key={`${item.method}-${index}`} style={styles.authTimeRow}>
+                  <AuthMethodRow methods={[item.method]} label="" showIcon={false} />
+                  <Text style={styles.authTimeValue}>{timeText}</Text>
+                </View>
+              );
+            })}
+          </View>
+        ) : null}
       </View>
     </Pressable>
   );
@@ -124,15 +143,27 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '800',
     color: colors.textPrimary,
-    marginBottom: 6,
-  },
-  metaRow: {
     marginBottom: 4,
   },
-  metaText: {
+  authDayText: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#515151',
+    color: colors.textSecondary,
+    marginBottom: 6,
+  },
+  authTimeList: {
+    marginTop: 8,
+    gap: 6,
+  },
+  authTimeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  authTimeValue: {
+    fontSize: 11,
+    color: colors.textSecondary,
+    fontWeight: '600',
   },
 });
 

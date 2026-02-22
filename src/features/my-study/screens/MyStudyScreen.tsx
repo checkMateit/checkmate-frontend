@@ -23,6 +23,7 @@ import {
   formatPrimaryAuthTime,
   formatPeriod,
   formatAuthTimes,
+  formatAuthDays,
   getMyStudyGroups,
   getStudyGroups,
   methodOptions,
@@ -51,7 +52,8 @@ type StudyItem = {
   methods: string[];
   description: string;
   period: string;
-  authTimes: { method: string; time: string }[];
+  authTimes: { method: string; time: string; deadline?: string; complete?: string }[];
+  authDays: string;
 };
 
 function MyStudyScreen({ onClose, mode = 'my' }: MyStudyScreenProps) {
@@ -74,6 +76,7 @@ function MyStudyScreen({ onClose, mode = 'my' }: MyStudyScreenProps) {
       description: '안녕하세요, 스터디입니다.',
       period: formatPeriod(item.period),
       authTimes: formatAuthTimes(item.verify_methods, item.auth_times),
+      authDays: formatAuthDays(item.auth_days),
     }));
   });
 
@@ -135,6 +138,9 @@ function MyStudyScreen({ onClose, mode = 'my' }: MyStudyScreenProps) {
       schedule: item.time,
       count: '-',
       methods: item.methods,
+      authTimes: item.authTimes,
+      authDays: item.authDays,
+      period: item.period,
       image: item.image,
       statusText: '인증 미완료',
       statusVariant: 'neutral',
@@ -181,6 +187,8 @@ function MyStudyScreen({ onClose, mode = 'my' }: MyStudyScreenProps) {
               members={item.members}
               time={item.time}
               methods={item.methods}
+              authTimes={item.authTimes}
+              authDays={item.authDays}
               onDrag={drag}
               onPress={() => handlePressStudy(item)}
             />
