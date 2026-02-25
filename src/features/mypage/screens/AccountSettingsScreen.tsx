@@ -1,4 +1,5 @@
 import React, { useEffect, useState} from 'react';
+import { useNavigation } from '@react-navigation/native';
 import {
   Image,
   Pressable,
@@ -25,6 +26,7 @@ function AccountSettingsScreen({ onClose }: AccountSettingsScreenProps) {
   // 1. 상태 관리: 서버에서 받아온 유저 정보를 담을 공간
   const [userInfo, setUserInfo] = useState<UserResponse | null>(null);
   const [loading, setLoading] = useState(true);
+  const navigation = useNavigation<any>();
 
   // 2. 데이터 페칭: 화면이 열릴 때 실행
   useEffect(() => {
@@ -118,7 +120,8 @@ function AccountSettingsScreen({ onClose }: AccountSettingsScreenProps) {
 
           <View>
             <View style={styles.cardDivider} />
-            <Pressable style={styles.actionButton}>
+            <Pressable style={styles.actionButton}
+            onPress={() => navigation.navigate('EditProfileScreen', { userInfo })}>
               <Text style={styles.actionText}>정보 수정</Text>
             </Pressable>
             <View style={styles.cardDivider} />
