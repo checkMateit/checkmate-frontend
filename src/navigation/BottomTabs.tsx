@@ -6,6 +6,7 @@ import SearchStack from './SearchStack';
 import HistoryScreen from '../features/history/screens/HistoryScreen';
 import MyPageScreen from '../features/mypage/screens/MyPageScreen';
 import { type BottomTabParamList } from './types';
+import MyPageStack from './MyPageStack';
 
 const Tab = createBottomTabNavigator<BottomTabParamList>();
 
@@ -110,7 +111,7 @@ function BottomTabs() {
       <Tab.Screen
         name="MyPage"
         key={`MyPage-${resetKeys.MyPage}`}
-        component={MyPageScreen}
+        component={MyPageStack}
         options={{
           title: '마이페이지',
           tabBarIcon: ({ focused }) => (
