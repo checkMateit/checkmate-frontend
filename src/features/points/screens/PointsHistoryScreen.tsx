@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import {
   Image,
   Pressable,
@@ -7,11 +7,14 @@ import {
   StyleSheet,
   Text,
   View,
+  ActivityIndicator,
 } from 'react-native';
 import { colors } from '../../../styles/colors';
 import PointsHistoryList from '../history/PointsHistoryList';
 import PointsHistoryMonthNav from '../history/PointsHistoryMonthNav';
 import PointsHistoryTabs from '../history/PointsHistoryTabs';
+import { getPointHistory } from '../../../api/point';
+import { PointTransaction } from '../../../types/point';
 
 const backIcon = require('../../../assets/icon/left_arrow.png');
 
@@ -21,51 +24,45 @@ type PointsHistoryScreenProps = {
 
 function PointsHistoryScreen({ onClose }: PointsHistoryScreenProps) {
   const [activeTab, setActiveTab] = useState('all');
-  const [currentMonth, setCurrentMonth] = useState(new Date(2025, 10, 1));
+  const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [transactions, setTransactions] = useState<PointTransaction[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const monthLabel = `${currentMonth.getFullYear()}년 ${currentMonth.getMonth() + 1}월`;
 
-  const allItems = useMemo(
-    () => [
-      {
-        id: '1',
-        dateLabel: '23일 화요일',
-        title: '기상 스터디 인증',
-        type: 'earn' as const,
-        amountLabel: '+1000P',
-      },
-      {
-        id: '2',
-        dateLabel: '22일 월요일',
-        title: '일일 인증 무료권 구매',
-        type: 'use' as const,
-        amountLabel: '-2000P',
-      },
-      {
-        id: '3',
-        dateLabel: '21일 일요일',
-        title: '기상 스터디 인증',
-        type: 'exchange' as const,
-        amountLabel: '-3000P',
-      },
-    ],
-    [],
-  );
+  
+
+useEffect(() => {
+    const fetchHistory = async () => {
+      try {
+        setLoading(true);
+        const response = await getPointHistory(activeTab);
+        if (response.data && response.data.data) {
+          setTransactions(response.data.data.content);
+        }
+      } catch (error) {
+        console.error('포인트 내역 로드 실패:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchHistory();
+  }, [activeTab]);
 
   const items = useMemo(() => {
-    if (activeTab === 'all') {
-      return allItems;
-    }
-    return allItems.filter((item) => item.type === activeTab);
-  }, [activeTab, allItems]);
-
-  const handlePrevMonth = () => {
-    setCurrentMonth((prev) => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
-  };
-
-  const handleNextMonth = () => {
-    setCurrentMonth((prev) => new Date(prev.getFullYear(), prev.getMonth() + 1, 1));
-  };
+    return transactions.map((t) => {
+      const date = new Date(t.createdAt);
+      const dayNames = ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일'];
+      
+      return {
+        id: t.transactionId,
+        dateLabel: `${date.getDate()}일 ${dayNames[date.getDay()]}`,
+        title: t.description,
+        type: (t.type === '적립' ? 'earn' : t.type === '사용' ? 'use' : 'exchange') as 'earn' | 'use' | 'exchange',
+        amountLabel: `${t.amount > 0 ? '+' : ''}${t.amount.toLocaleString()}P`,
+      };
+    });
+  }, [transactions]);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -80,10 +77,17 @@ function PointsHistoryScreen({ onClose }: PointsHistoryScreenProps) {
         <PointsHistoryTabs activeKey={activeTab} onChange={setActiveTab} />
         <PointsHistoryMonthNav
           label={monthLabel}
-          onPrev={handlePrevMonth}
-          onNext={handleNextMonth}
+          onPrev={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1))}
+          onNext={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1))}
         />
-        <PointsHistoryList items={items} />
+
+        {loading ? (
+          <View style={styles.center}>
+            <ActivityIndicator size="large" color={colors.primary} />
+          </View>
+        ) : (
+          <PointsHistoryList items={items} />
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -118,6 +122,10 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: '700',
     color: colors.textPrimary,
+  },
+    center: {
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
 
