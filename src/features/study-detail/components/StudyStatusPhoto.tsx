@@ -1,96 +1,144 @@
 import React, { useState } from 'react';
-import { Image, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import {
+  Alert,
+  Image,
+  Modal,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
+import { launchImageLibrary } from 'react-native-image-picker';
 import { colors } from '../../../styles/colors';
+import { submitPhotoVerification, getVerificationDateToday } from '../../../api/verification';
+import { getCurrentUserDisplayName } from '../../../api/client';
 
 const profileImage = require('../../../assets/icon/profile_1.png');
-const editIcon = require('../../../assets/icon/modify_icon.png');
 const checkIcon = require('../../../assets/icon/check_icon.png');
 const cancelIcon = require('../../../assets/icon/cancel_icon.png');
 const vectorIcon = require('../../../assets/icon/sizeup_icon.png');
 const closeIcon = require('../../../assets/icon/x_icon.png');
 
-const rows = [
-  {
-    name: '라즈베리',
-    time: '--:--',
-    status: { label: '미인증', tone: 'fail' as const },
-    editable: true,
-    hasPhoto: false,
-  },
-  {
-    name: '단쌀말',
-    time: '08:06 AM',
-    status: { label: '완료', tone: 'success' as const },
-    editable: false,
-    hasPhoto: true,
-  },
-  {
-    name: 'LDK',
-    time: '08:06 AM',
-    status: { label: '완료', tone: 'success' as const },
-    editable: false,
-    hasPhoto: true,
-  },
-  {
-    name: '서윤호',
-    time: '--:--',
-    status: { label: '미인증', tone: 'fail' as const },
-    editable: false,
-    hasPhoto: false,
-  },
-];
+type StudyStatusPhotoProps = {
+  groupId: string;
+  slot: number;
+};
 
-function StudyStatusPhoto() {
+function StudyStatusPhoto({ groupId, slot }: StudyStatusPhotoProps) {
+  const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [previewVisible, setPreviewVisible] = useState(false);
+  const [previewUri, setPreviewUri] = useState<string | null>(null);
 
   const openPreview = () => setPreviewVisible(true);
   const closePreview = () => setPreviewVisible(false);
 
+  const handleVerify = () => {
+    launchImageLibrary(
+      {
+        mediaType: 'photo',
+        selectionLimit: 10,
+      },
+      (res) => {
+        if (res.didCancel || !res.assets?.length) return;
+        const files = res.assets.map((a) => ({
+          uri: a.uri ?? '',
+          name: a.fileName ?? undefined,
+          type: a.type ?? 'image/jpeg',
+        })).filter((f) => f.uri);
+        if (files.length === 0) {
+          Alert.alert('사진을 선택해 주세요.');
+          return;
+        }
+        setSubmitting(true);
+        const date = getVerificationDateToday();
+        submitPhotoVerification(groupId, slot, files, date)
+          .then(() => {
+            setSubmitted(true);
+            if (files[0]?.uri) setPreviewUri(files[0].uri);
+          })
+          .catch((err) => {
+            const msg =
+              err?.response?.status === 400
+                ? err?.response?.data?.message ?? '제출 시간이 지났거나 이미 제출했어요.'
+                : '사진 인증 제출에 실패했어요.';
+            Alert.alert('인증 실패', msg);
+          })
+          .finally(() => setSubmitting(false));
+      },
+    );
+  };
+
+  const displayName = getCurrentUserDisplayName();
+  const isDone = submitted;
+
   return (
     <View style={styles.container}>
-      {rows.map((row, index) => (
-        <View key={`${row.name}-${index}`} style={styles.row}>
-          <Image source={profileImage} style={styles.avatar} />
-          <View style={styles.content}>
-            <View style={styles.nameRow}>
-              <Text style={styles.name}>{row.name} 님</Text>
-              {row.editable && <Image source={editIcon} style={styles.editIcon} />}
-            </View>
-            <View style={styles.metaRow}>
-              <Text style={styles.time}>{row.time}</Text>
-              <View style={styles.statusWrap}>
-                <Text style={[styles.statusText, row.status.tone === 'fail' && styles.statusFail]}>
-                  {row.status.label}
-                </Text>
-                <Image
-                  source={row.status.tone === 'fail' ? cancelIcon : checkIcon}
-                  style={styles.statusIcon}
-                />
-              </View>
+      <View style={styles.row}>
+        <Image source={profileImage} style={styles.avatar} />
+        <View style={styles.content}>
+          <View style={styles.nameRow}>
+            <Text style={styles.name}>{displayName} 님</Text>
+          </View>
+          <View style={styles.metaRow}>
+            <Text style={styles.time}>{isDone ? '제출 완료' : '--:--'}</Text>
+            <View style={styles.statusWrap}>
+              <Text
+                style={[
+                  styles.statusText,
+                  !isDone && styles.statusFail,
+                ]}
+              >
+                {isDone ? '완료' : '미인증'}
+              </Text>
+              <Image
+                source={isDone ? checkIcon : cancelIcon}
+                style={styles.statusIcon}
+              />
             </View>
           </View>
-          {row.status.tone === 'fail' ? (
-            <Pressable style={styles.verifyButton}>
-              <Text style={styles.verifyText}>인증하기</Text>
-            </Pressable>
-          ) : (
-            <View style={styles.photoBox}>
-              <Text style={styles.photoText}>사진</Text>
-              <Pressable onPress={openPreview} hitSlop={6} style={styles.photoIconButton}>
-                <Image source={vectorIcon} style={styles.photoIcon} />
-              </Pressable>
-            </View>
-          )}
         </View>
-      ))}
-      <Modal visible={previewVisible} transparent animationType="fade" onRequestClose={closePreview}>
+        {!isDone ? (
+          <Pressable
+            style={[styles.verifyButton, submitting && styles.verifyButtonDisabled]}
+            onPress={handleVerify}
+            disabled={submitting}
+          >
+            <Text style={styles.verifyText}>
+              {submitting ? '제출 중…' : '인증하기'}
+            </Text>
+          </Pressable>
+        ) : (
+          <View style={styles.photoBox}>
+            <Text style={styles.photoText}>사진</Text>
+            <Pressable onPress={openPreview} hitSlop={6} style={styles.photoIconButton}>
+              <Image source={vectorIcon} style={styles.photoIcon} />
+            </Pressable>
+          </View>
+        )}
+      </View>
+
+      <Modal
+        visible={previewVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={closePreview}
+      >
         <View style={styles.modalBackdrop}>
           <View style={styles.modalCard}>
             <Pressable style={styles.modalClose} onPress={closePreview} hitSlop={6}>
               <Image source={closeIcon} style={styles.closeIcon} />
             </Pressable>
             <View style={styles.modalImage}>
-              <Text style={styles.modalImageText}>사진</Text>
+              {previewUri ? (
+                <Image
+                  source={{ uri: previewUri }}
+                  style={styles.modalImageImg}
+                  resizeMode="contain"
+                />
+              ) : (
+                <Text style={styles.modalImageText}>사진</Text>
+              )}
             </View>
           </View>
         </View>
@@ -130,11 +178,6 @@ const styles = StyleSheet.create({
     color: '#6E6E6E',
     fontWeight: '400',
   },
-  editIcon: {
-    width: 8,
-    height: 9,
-    tintColor: '#7D7D7D',
-  },
   metaRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -159,9 +202,21 @@ const styles = StyleSheet.create({
   statusFail: {
     color: '#7D7D7D',
   },
-  statusIcon: {
-    width: 11,
-    height: 11,
+  verifyButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#E4E4E4',
+    backgroundColor: '#F6F6F6',
+  },
+  verifyButtonDisabled: {
+    opacity: 0.6,
+  },
+  verifyText: {
+    fontSize: 12,
+    color: '#6F6F6F',
+    fontWeight: '600',
   },
   photoBox: {
     width: 62,
@@ -185,25 +240,6 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     tintColor: '#969696',
-  },
-  verifyButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#E4E4E4',
-    backgroundColor: '#F6F6F6',
-  },
-  verifyText: {
-    fontSize: 12,
-    color: '#6F6F6F',
-    fontWeight: '600',
-  },
-  photoPlaceholder: {
-    width: 62,
-    height: 62,
-    borderRadius: 12,
-    backgroundColor: '#F0F0F0',
   },
   modalBackdrop: {
     flex: 1,
@@ -236,6 +272,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 12,
+    overflow: 'hidden',
+  },
+  modalImageImg: {
+    width: '100%',
+    height: '100%',
   },
   modalImageText: {
     fontSize: 14,

@@ -25,7 +25,8 @@ import StudyReportTab from '../../study-report/components/StudyReportTab';
 import StudyStatusSection from '../components/StudyStatusSection';
 import { colors } from '../../../styles/colors';
 import { type HomeStackParamList } from '../../../navigation/types';
-import { getCurrentUserId, getCurrentUserDisplayName } from '../../../api/authDev';
+import { getCurrentUserId } from '../../../api/client';
+import { getMyInfo } from '../../../api/users';
 import {
   deleteStudyGroup,
   fetchStudyGroupDetail,
@@ -68,6 +69,7 @@ function StudyDetailScreen({ study: studyProp, onClose }: StudyDetailScreenProps
     [route.params, studyProp],
   );
   const [showWelcome, setShowWelcome] = useState(!!route.params?.showWelcome);
+  const [welcomeUserName, setWelcomeUserName] = useState<string>('회원');
   const [activeTab, setActiveTab] = useState<'status' | 'report' | 'board' | 'info'>('status');
   const [statusResetKey, setStatusResetKey] = useState(0);
   const [infoSubView, setInfoSubView] = useState<'members' | 'rules' | 'info' | 'leave' | null>(null);
@@ -84,6 +86,19 @@ function StudyDetailScreen({ study: studyProp, onClose }: StudyDetailScreenProps
       studyDetailForOwner &&
       studyDetailForOwner.ownerUserId === currentUserId,
   );
+
+  React.useEffect(() => {
+    if (!showWelcome) return;
+    let cancelled = false;
+    getMyInfo()
+      .then(({ data }) => {
+        if (cancelled) return;
+        const user = data?.data;
+        const name = user?.name?.trim() || user?.nickname?.trim();
+        if (name) setWelcomeUserName(name);
+      })
+      .catch(() => {});
+  }, [showWelcome]);
 
   React.useEffect(() => {
     if (!resolvedStudy?.id) return;
@@ -145,10 +160,19 @@ function StudyDetailScreen({ study: studyProp, onClose }: StudyDetailScreenProps
         <StudyDetailTabs activeTab={activeTab} onChange={handleTabChange} />
         <View style={styles.section}>
           {activeTab === 'status' && (
-            <StudyStatusSection resetKey={statusResetKey} methods={resolvedStudy.methods} />
+            <StudyStatusSection
+              resetKey={statusResetKey}
+              groupId={String(resolvedStudy.id)}
+              verificationRules={studyDetailForOwner?.verificationRules ?? []}
+              methods={resolvedStudy.methods}
+            />
           )}
-          {activeTab === 'report' && <StudyReportTab />}
-          {activeTab === 'board' && <StudyBoardTab studyName={resolvedStudy.title} />}
+          {activeTab === 'report' && (
+              <StudyReportTab groupId={String(resolvedStudy.id)} />
+            )}
+          {activeTab === 'board' && (
+              <StudyBoardTab groupId={String(resolvedStudy.id)} studyName={resolvedStudy.title} />
+            )}
           {activeTab === 'info' &&
             (infoSubView === 'members' ? (
               <StudyMemberInfoView
@@ -264,7 +288,7 @@ function StudyDetailScreen({ study: studyProp, onClose }: StudyDetailScreenProps
       <Modal visible={showWelcome} animationType="fade" transparent>
         <View style={styles.welcomeOverlay}>
           <View style={styles.welcomeCard}>
-            <Text style={styles.welcomeTitle}>{getCurrentUserDisplayName()}님, 반가워요!</Text>
+            <Text style={styles.welcomeTitle}>{welcomeUserName} 회원님, 반가워요!</Text>
             <Text style={styles.welcomeSubtitle}>
               {resolvedStudy.title}에 오신 것을 환영합니다.
             </Text>
