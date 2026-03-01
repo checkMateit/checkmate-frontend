@@ -14,3 +14,24 @@ export interface UserResponse {
     gender: string;
     phoneNumber: string;
   }
+
+export interface CategoryInfo {
+  id: string;
+  name: string;
+}
+
+export interface FavoriteCategoryRes {
+  userId: string;
+  favorites: CategoryInfo[]; 
+  count: number; 
+  updatedAt: string;
+}
+
+export interface FavoriteCategoryReq {
+  category_ids: string[];
+}
+
+export interface SocialAccountRes {
+  provider: string;
+  email: string;
+}

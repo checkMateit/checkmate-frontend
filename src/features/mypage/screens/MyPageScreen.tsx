@@ -11,8 +11,10 @@ import AccountSettingsScreen from './AccountSettingsScreen';
 import PointsHistoryScreen from '../../points/screens/PointsHistoryScreen';
 import PointsShopScreen from '../../points/screens/PointsShopScreen';
 import PointsExchangeScreen from '../../points/screens/PointsExchangeScreen';
+import SocialAccountSettingScreen from './SocialAccountSettingScreen';
 import InquiryListScreen from './InquiryListScreen';
 import InquiryWriteScreen from './InquiryWriteScreen';
+import CategorySettingsScreen from './CategorySettingScreen';
 import { getMyInfo } from '../../../api/users';
 import { UserResponse } from '../../../types/users';
 import { getPointBalance } from '../../../api/point';
@@ -24,6 +26,8 @@ function MyPageScreen() {
   const [showPointsExchange, setShowPointsExchange] = useState(false);
   const [showInquiryList, setShowInquiryList] = useState(false);
   const [showInquiryWrite, setShowInquiryWrite] = useState(false);
+  const [showCategorySettings, setShowCategorySettings] = useState(false);
+  const [showSocialSettings, setShowSocialSettings] = useState(false);
   
   const [userInfo, setUserInfo] = useState<UserResponse | null>(null);
   const [balance, setBalance] = useState<number>(0);
@@ -54,10 +58,20 @@ function MyPageScreen() {
     fetchAllData();
   }, []);
 
+    if (loading) {
+    return (
+      <SafeAreaView style={[styles.container, styles.center]}>
+        <ActivityIndicator size="large" color={colors.primary} />
+      </SafeAreaView>
+    );
+  }
+
   if (showSettings) return <AccountSettingsScreen onClose={() => setShowSettings(false)} />;
   if (showPointsHistory) return <PointsHistoryScreen onClose={() => setShowPointsHistory(false)} />;
   if (showPointsShop) return <PointsShopScreen onClose={() => setShowPointsShop(false)} />;
   if (showPointsExchange) return <PointsExchangeScreen onClose={() => setShowPointsExchange(false)} />;
+  if (showCategorySettings) {return <CategorySettingsScreen onClose={() => setShowCategorySettings(false)} />;}
+  if (showSocialSettings) return <SocialAccountSettingScreen onClose={() => setShowSocialSettings(false)} />;
   
   if (showInquiryWrite) {
     return (
@@ -77,13 +91,7 @@ function MyPageScreen() {
     );
   }
 
-  if (loading) {
-    return (
-      <SafeAreaView style={[styles.container, styles.center]}>
-        <ActivityIndicator size="large" color={colors.primary} />
-      </SafeAreaView>
-    );
-  }
+
 
   return (
     <SafeAreaView style={styles.container}>
@@ -102,7 +110,17 @@ function MyPageScreen() {
           <Text>광고</Text>
         </View>
         <View style={styles.sectionGroup}>
-          <MyPageSection title="관리" rows={[{ left: '스터디', right: '연동계정' }, { left: '아이템', right: '뱃지' }, { left: '추천 스터디 카테고리' }]} />
+          <MyPageSection 
+            title="관리" 
+            rows={[
+              { left: '스터디', right: '연동계정', onPress: () => setShowSocialSettings(true) }, 
+              { left: '아이템', right: '뱃지' }, 
+              { 
+                left: '추천 스터디 카테고리', 
+                onPress: () => setShowCategorySettings(true) 
+              }
+            ]} 
+          />
           <MyPageSection title="고객지원" rows={[{ left: '공지사항', right: '이용안내' }, { left: '문의하기', onPress: () => setShowInquiryList(true) }]} />
         </View>
       </ScrollView>
