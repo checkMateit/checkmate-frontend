@@ -1,7 +1,7 @@
 import { apiClient } from './client';
 import { ENDPOINTS } from './endpoints';
 import { ApiResponse } from '../types/api';
-import { UserResponse, UserUpdateReq } from '../types/users';
+import { UserResponse, UserUpdateReq, FavoriteCategoryRes, FavoriteCategoryReq } from '../types/users';
 
 export const getMyInfo = () => 
 apiClient.get<ApiResponse<UserResponse>>(`${ENDPOINTS.users}/me`);
@@ -16,3 +16,9 @@ apiClient.get<ApiResponse<{isAvailable: boolean}>>(`${ENDPOINTS.users}/check-nic
 
 export const withdrawAccount = () =>
 apiClient.patch<ApiResponse<void>>(`${ENDPOINTS.users}/me/withdraw`);
+
+export const getFavoriteCategories = () =>
+  apiClient.get<ApiResponse<FavoriteCategoryRes>>(`${ENDPOINTS.users}/me/favorite-categories`);
+
+export const updateFavoriteCategories = (data: FavoriteCategoryReq) =>
+  apiClient.patch<ApiResponse<FavoriteCategoryRes>>(`${ENDPOINTS.users}/me/favorite-categories`, data);
