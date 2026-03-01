@@ -1,71 +1,57 @@
-import React, { useState } from 'react';
-import { Image, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import React from 'react';
+import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { colors } from '../../../styles/colors';
+import type { ChecklistItemRes } from '../../../api/verification';
 
-const mascotImage = require('../../../assets/character/ch_2.png');
 const vectorIcon = require('../../../assets/icon/vector_icon.png');
+const mascotImage = require('../../../assets/character/ch_2.png');
 
-const initialTodos = [
-  { id: 1, label: '영단어 10개 외우기', checked: true },
-  { id: 2, label: '영단어 10개 외우기', checked: false },
-  { id: 3, label: '영단어 10개 외우기', checked: false },
-];
+type StudyStatusTodoMyFilledProps = {
+  items: ChecklistItemRes[];
+  result: { passed: boolean } | null;
+  onToggleCheck: (itemId: number, checked: boolean) => void;
+  onAddPress: () => void;
+};
 
-function StudyStatusTodoMyFilled() {
-  const [todos, setTodos] = useState(initialTodos);
-  const [showInput, setShowInput] = useState(false);
-  const [draft, setDraft] = useState('');
-
-  const toggleTodo = (id: number) => {
-    setTodos((prev) =>
-      prev.map((todo) => (todo.id === id ? { ...todo, checked: !todo.checked } : todo)),
-    );
-  };
-
-  const handleSubmit = () => {
-    const trimmed = draft.trim();
-    if (!trimmed) return;
-    setTodos((prev) => [...prev, { id: Date.now(), label: trimmed, checked: false }]);
-    setDraft('');
-    setShowInput(false);
-  };
-
+function StudyStatusTodoMyFilled({
+  items,
+  result,
+  onToggleCheck,
+  onAddPress,
+}: StudyStatusTodoMyFilledProps) {
   return (
     <View style={styles.card}>
-      <Text style={styles.title}>나의 TODO</Text>
+      <View style={styles.titleRow}>
+        <Text style={styles.title}>나의 TODO</Text>
+        {result != null && (
+          <Text style={result.passed ? styles.resultPass : styles.resultFail}>
+            {result.passed ? '인증 완료' : '인증 미완료'}
+          </Text>
+        )}
+      </View>
       <View style={styles.contentRow}>
         <View style={styles.todoList}>
-          {todos.map((todo) => (
-            <View key={todo.id} style={styles.todoRow}>
+          {items.map((item) => (
+            <View key={item.itemId} style={styles.todoRow}>
               <Pressable
-                style={[styles.check, todo.checked && styles.checkActive]}
-                onPress={() => toggleTodo(todo.id)}
+                style={[styles.check, item.checked && styles.checkActive]}
+                onPress={() => onToggleCheck(item.itemId, !item.checked)}
               >
-                {todo.checked && <Image source={vectorIcon} style={styles.checkIcon} />}
+                {item.checked && (
+                  <Image source={vectorIcon} style={styles.checkIcon} />
+                )}
               </Pressable>
-              <Text style={[styles.todoText, todo.checked && styles.todoTextChecked]}>
-                {todo.label}
+              <Text
+                style={[styles.todoText, item.checked && styles.todoTextChecked]}
+              >
+                {item.content}
               </Text>
             </View>
           ))}
-          {showInput && (
-            <View style={styles.todoRow}>
-              <View style={styles.check} />
-              <TextInput
-                value={draft}
-                onChangeText={setDraft}
-                onSubmitEditing={handleSubmit}
-                placeholder="새로운 TODO 입력"
-                placeholderTextColor="#B0B0B0"
-                style={styles.todoInput}
-                returnKeyType="done"
-              />
-            </View>
-          )}
         </View>
         <Image source={mascotImage} style={styles.mascot} resizeMode="contain" />
       </View>
-      <Pressable style={styles.addButton} onPress={() => setShowInput(true)}>
+      <Pressable style={styles.addButton} onPress={onAddPress}>
         <Text style={styles.addText}>+ 추가하기</Text>
       </Pressable>
     </View>
@@ -79,11 +65,26 @@ const styles = StyleSheet.create({
     padding: 18,
     marginBottom: 16,
   },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
   title: {
     fontSize: 16,
     fontWeight: '800',
     color: colors.textPrimary,
-    marginBottom: 12,
+  },
+  resultPass: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: colors.primary,
+  },
+  resultFail: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#999',
   },
   contentRow: {
     flexDirection: 'row',
@@ -125,12 +126,6 @@ const styles = StyleSheet.create({
   },
   todoTextChecked: {
     textDecorationLine: 'line-through',
-  },
-  todoInput: {
-    flex: 1,
-    fontSize: 12,
-    color: colors.textPrimary,
-    paddingVertical: 0,
   },
   mascot: {
     width: 86,

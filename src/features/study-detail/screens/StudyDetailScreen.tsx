@@ -160,7 +160,12 @@ function StudyDetailScreen({ study: studyProp, onClose }: StudyDetailScreenProps
         <StudyDetailTabs activeTab={activeTab} onChange={handleTabChange} />
         <View style={styles.section}>
           {activeTab === 'status' && (
-            <StudyStatusSection resetKey={statusResetKey} methods={resolvedStudy.methods} />
+            <StudyStatusSection
+              resetKey={statusResetKey}
+              groupId={String(resolvedStudy.id)}
+              verificationRules={studyDetailForOwner?.verificationRules ?? []}
+              methods={resolvedStudy.methods}
+            />
           )}
           {activeTab === 'report' && (
               <StudyReportTab groupId={String(resolvedStudy.id)} />

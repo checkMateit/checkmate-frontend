@@ -2,12 +2,16 @@ import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { colors } from '../../../styles/colors';
 
-function StudyStatusTodoMyEmpty() {
+type StudyStatusTodoMyEmptyProps = {
+  onAddPress: () => void;
+};
+
+function StudyStatusTodoMyEmpty({ onAddPress }: StudyStatusTodoMyEmptyProps) {
   return (
     <View style={styles.card}>
       <Text style={styles.title}>나의 TODO</Text>
       <View style={styles.emptyWrap}>
-        <Pressable style={styles.plusButton}>
+        <Pressable style={styles.plusButton} onPress={onAddPress}>
           <Text style={styles.plusText}>+</Text>
         </Pressable>
         <Text style={styles.emptyText}>등록한 일정이 없어요.</Text>
