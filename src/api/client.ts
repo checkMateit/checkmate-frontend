@@ -22,3 +22,19 @@ export const setAuthToken = (token?: string) => {
     delete apiClient.defaults.headers.common.Authorization;
   }
 };
+
+export const setUserId = (userId?: string) => {
+  if (userId) {
+    apiClient.defaults.headers.common['X-User-Id'] = userId;
+  } else {
+    delete apiClient.defaults.headers.common['X-User-Id'];
+  }
+};
+
+export const setUserRole = (role?: string) => {
+  if (role) {
+    apiClient.defaults.headers.common['X-User-Role'] = role;
+  } else {
+    delete apiClient.defaults.headers.common['X-User-Role'];
+  }
+};

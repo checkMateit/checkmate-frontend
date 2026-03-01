@@ -13,7 +13,7 @@ import { useNavigation, useRoute, type RouteProp } from '@react-navigation/nativ
 import { type NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { colors } from '../../../styles/colors';
 import { type SearchStackParamList, type HomeStackParamList } from '../../../navigation/types';
-import AuthMethodRow from '../../../components/common/AuthMethodRow';
+import AuthMethodRow from '../../../components/Common/AuthMethodRow';
 import { type StudyDetail } from '../../study-detail/screens/StudyDetailScreen';
 import { type StudyPreview } from '../types';
 

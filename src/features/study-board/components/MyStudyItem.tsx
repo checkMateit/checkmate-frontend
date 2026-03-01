@@ -9,7 +9,7 @@ import {
   View,
 } from 'react-native';
 import { colors } from '../../../styles/colors';
-import AuthMethodRow from '../../../components/common/AuthMethodRow';
+import AuthMethodRow from '../../../components/Common/AuthMethodRow';
 
 type MyStudyItemProps = {
   image: ImageSourcePropType;

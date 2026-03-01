@@ -2,7 +2,7 @@ import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import BottomTabs from './navigation/BottomTabs';
+import AuthGate from './features/auth/AuthGate';
 import { NotificationCenterProvider } from './state/NotificationCenterContext';
 
 function App() {
@@ -11,7 +11,7 @@ function App() {
       <SafeAreaProvider>
         <NotificationCenterProvider>
           <NavigationContainer>
-            <BottomTabs />
+            <AuthGate />
           </NavigationContainer>
         </NotificationCenterProvider>
       </SafeAreaProvider>

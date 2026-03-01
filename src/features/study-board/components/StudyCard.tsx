@@ -9,8 +9,8 @@ import {
   View,
 } from 'react-native';
 import { colors } from '../../../styles/colors';
-import MascotImage from '../../../components/common/CategoryImage';
-import AuthMethodRow from '../../../components/common/AuthMethodRow';
+import MascotImage from '../../../components/Common/CategoryImage';
+import AuthMethodRow from '../../../components/Common/AuthMethodRow';
 export type StatusVariant = 'success' | 'danger' | 'neutral';
 export type StatusIconType = 'success' | 'danger';
 
