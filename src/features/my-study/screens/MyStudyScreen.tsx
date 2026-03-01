@@ -188,9 +188,11 @@ function MyStudyScreen({ onClose, mode = 'my' }: MyStudyScreenProps) {
       statusIcons: [],
       mascotSource: item.image,
     };
-    const parentHome = navigation.getParent<NativeStackNavigationProp<HomeStackParamList>>();
-    if (parentHome) {
-      parentHome.navigate('StudyDetail', { study: detail });
+    // 스터디 전체 보기(모달): MyStudyScreen은 HomeScreen 모달 안에 있어서 navigation이 Home 스택
+    const homeNav = navigation as unknown as NativeStackNavigationProp<HomeStackParamList>;
+    if (homeNav.navigate) {
+      homeNav.navigate('StudyDetail', { study: detail });
+      onClose();
     }
   };
 
