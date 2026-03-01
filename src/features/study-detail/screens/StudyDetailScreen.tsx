@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import {
+  Alert,
   Modal,
   Pressable,
   SafeAreaView,
@@ -15,11 +16,21 @@ import StudyBoardTab from '../../study-board/components/StudyBoardTab';
 import StudyDetailHeader from '../components/StudyDetailHeader';
 import StudyDetailTabs from '../components/StudyDetailTabs';
 import StudyInfoTab from '../components/StudyInfoTab';
+import StudyMemberInfoView from '../components/StudyMemberInfoView';
+import StudySummaryInfoView from '../components/StudySummaryInfoView';
 import StudyOverviewCard from '../components/StudyOverviewCard';
+import CreateStudyGroupScreen from '../../my-study/screens/CreateStudyGroupScreen';
+import type { StudyGroupDetailRes } from '../../../api/studyGroups';
 import StudyReportTab from '../../study-report/components/StudyReportTab';
 import StudyStatusSection from '../components/StudyStatusSection';
 import { colors } from '../../../styles/colors';
 import { type HomeStackParamList } from '../../../navigation/types';
+import { getCurrentUserId, getCurrentUserDisplayName } from '../../../api/authDev';
+import {
+  deleteStudyGroup,
+  fetchStudyGroupDetail,
+  leaveStudyGroup,
+} from '../../../api/studyGroups';
 
 export type StudyDetail = {
   id: string;
@@ -59,6 +70,34 @@ function StudyDetailScreen({ study: studyProp, onClose }: StudyDetailScreenProps
   const [showWelcome, setShowWelcome] = useState(!!route.params?.showWelcome);
   const [activeTab, setActiveTab] = useState<'status' | 'report' | 'board' | 'info'>('status');
   const [statusResetKey, setStatusResetKey] = useState(0);
+  const [infoSubView, setInfoSubView] = useState<'members' | 'rules' | 'info' | 'leave' | null>(null);
+  const [showEditStudyModal, setShowEditStudyModal] = useState(false);
+  const [editGroupId, setEditGroupId] = useState<string | null>(null);
+  const [editInitialData, setEditInitialData] = useState<StudyGroupDetailRes | null>(null);
+  const [refreshSummaryKey, setRefreshSummaryKey] = useState(0);
+  const [studyDetailForOwner, setStudyDetailForOwner] = useState<StudyGroupDetailRes | null>(null);
+
+  const currentUserId = getCurrentUserId();
+  const isOwner = Boolean(
+    resolvedStudy &&
+      currentUserId &&
+      studyDetailForOwner &&
+      studyDetailForOwner.ownerUserId === currentUserId,
+  );
+
+  React.useEffect(() => {
+    if (!resolvedStudy?.id) return;
+    let cancelled = false;
+    fetchStudyGroupDetail(resolvedStudy.id)
+      .then(({ data }) => {
+        if (cancelled) return;
+        if (data?.data) setStudyDetailForOwner(data.data);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [resolvedStudy?.id]);
 
   if (!resolvedStudy) {
     return (
@@ -81,6 +120,12 @@ function StudyDetailScreen({ study: studyProp, onClose }: StudyDetailScreenProps
     }
   };
 
+  const overviewImage =
+    studyDetailForOwner?.thumbnailType === 'UPLOAD' &&
+    studyDetailForOwner?.thumbnailUrl?.trim()
+      ? { uri: studyDetailForOwner.thumbnailUrl.trim() }
+      : resolvedStudy.image;
+
   return (
     <SafeAreaView style={styles.root}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -92,7 +137,7 @@ function StudyDetailScreen({ study: studyProp, onClose }: StudyDetailScreenProps
           description={resolvedStudy.description}
           schedule={resolvedStudy.schedule}
           methods={resolvedStudy.methods}
-          image={resolvedStudy.image}
+          image={overviewImage}
           authTimes={resolvedStudy.authTimes}
           authDays={resolvedStudy.authDays}
           period={resolvedStudy.period}
@@ -104,13 +149,122 @@ function StudyDetailScreen({ study: studyProp, onClose }: StudyDetailScreenProps
           )}
           {activeTab === 'report' && <StudyReportTab />}
           {activeTab === 'board' && <StudyBoardTab studyName={resolvedStudy.title} />}
-          {activeTab === 'info' && <StudyInfoTab />}
+          {activeTab === 'info' &&
+            (infoSubView === 'members' ? (
+              <StudyMemberInfoView
+                groupId={resolvedStudy.id}
+                currentUserId={getCurrentUserId()}
+                onBack={() => setInfoSubView(null)}
+              />
+            ) : infoSubView === 'info' ? (
+              <StudySummaryInfoView
+                groupId={resolvedStudy.id}
+                currentUserId={getCurrentUserId()}
+                onBack={() => setInfoSubView(null)}
+                refreshTrigger={refreshSummaryKey}
+                onEdit={(groupId, data) => {
+                  setEditGroupId(groupId);
+                  setEditInitialData(data);
+                  setShowEditStudyModal(true);
+                }}
+              />
+            ) : (
+              <StudyInfoTab
+                isOwner={isOwner}
+                onSelectRow={(id) => {
+                  if (id === 'members') setInfoSubView('members');
+                  if (id === 'info') setInfoSubView('info');
+                  if (id === 'leave') {
+                    const groupName = resolvedStudy.title || '이 스터디';
+                    if (isOwner) {
+                      Alert.alert(
+                        '삭제하기',
+                        `${groupName}을 정말로 삭제하시겠습니까?`,
+                        [
+                          { text: '아니오', style: 'cancel' },
+                          {
+                            text: '예',
+                            style: 'destructive',
+                            onPress: async () => {
+                              try {
+                                const { data } = await deleteStudyGroup(resolvedStudy.id);
+                                const ok =
+                                  data &&
+                                  ((data as { isSuccess?: boolean }).isSuccess === true ||
+                                    (data as { success?: boolean }).success === true);
+                                if (ok) {
+                                  if (onClose) onClose();
+                                  else navigation.goBack();
+                                } else {
+                                  Alert.alert(
+                                    '삭제 실패',
+                                    (data as { message?: string })?.message ??
+                                      '스터디 그룹 삭제에 실패했습니다.',
+                                  );
+                                }
+                              } catch (err: unknown) {
+                                const msg =
+                                  err &&
+                                  typeof err === 'object' &&
+                                  'response' in err &&
+                                  (err as { response?: { data?: { message?: string } } }).response
+                                    ?.data?.message;
+                                Alert.alert('오류', msg ?? '삭제 요청을 처리하지 못했어요.');
+                              }
+                            },
+                          },
+                        ]
+                      );
+                    } else {
+                      Alert.alert(
+                        '탈퇴하기',
+                        `${groupName}를 탈퇴하시겠습니까?`,
+                        [
+                          { text: '아니오', style: 'cancel' },
+                          {
+                            text: '예',
+                            style: 'destructive',
+                            onPress: async () => {
+                              try {
+                                const { data } = await leaveStudyGroup(resolvedStudy.id);
+                                const ok =
+                                  data &&
+                                  ((data as { isSuccess?: boolean }).isSuccess === true ||
+                                    (data as { success?: boolean }).success === true);
+                                if (ok) {
+                                  if (onClose) onClose();
+                                  else navigation.goBack();
+                                } else {
+                                  Alert.alert(
+                                    '탈퇴 실패',
+                                    (data as { message?: string })?.message ??
+                                      '탈퇴에 실패했습니다.',
+                                  );
+                                }
+                              } catch (err: unknown) {
+                                const msg =
+                                  err &&
+                                  typeof err === 'object' &&
+                                  'response' in err &&
+                                  (err as { response?: { data?: { message?: string } } }).response
+                                    ?.data?.message;
+                                Alert.alert('오류', msg ?? '탈퇴 요청을 처리하지 못했어요.');
+                              }
+                            },
+                          },
+                        ]
+                      );
+                    }
+                  }
+                }}
+              />
+            ))}
         </View>
       </ScrollView>
       <Modal visible={showWelcome} animationType="fade" transparent>
         <View style={styles.welcomeOverlay}>
           <View style={styles.welcomeCard}>
-            <Text style={styles.welcomeTitle}>승연님, 반가워요!</Text>
+            <Text style={styles.welcomeTitle}>{getCurrentUserDisplayName()}님, 반가워요!</Text>
             <Text style={styles.welcomeSubtitle}>
               {resolvedStudy.title}에 오신 것을 환영합니다.
             </Text>
@@ -125,6 +279,29 @@ function StudyDetailScreen({ study: studyProp, onClose }: StudyDetailScreenProps
             </Pressable>
           </View>
         </View>
+      </Modal>
+
+      <Modal
+        visible={showEditStudyModal}
+        animationType="slide"
+        onRequestClose={() => setShowEditStudyModal(false)}
+      >
+        <CreateStudyGroupScreen
+          mode="edit"
+          groupId={editGroupId ?? undefined}
+          initialData={editInitialData ?? undefined}
+          onClose={() => {
+            setShowEditStudyModal(false);
+            setEditGroupId(null);
+            setEditInitialData(null);
+          }}
+          onComplete={() => {
+            setShowEditStudyModal(false);
+            setEditGroupId(null);
+            setEditInitialData(null);
+            setRefreshSummaryKey((k) => k + 1);
+          }}
+        />
       </Modal>
     </SafeAreaView>
   );

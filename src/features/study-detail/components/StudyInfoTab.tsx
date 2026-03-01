@@ -13,20 +13,34 @@ const rows = [
   { id: 'rules', label: '상세규칙', icon: rulesIcon, width: 24, height: 22 },
   { id: 'info', label: '스터디 정보', icon: infoIcon, width: 24, height: 24 },
   { id: 'leave', label: '탈퇴하기', icon: leaveIcon, width: 18, height: 26 },
-];
+] as const;
 
-function StudyInfoTab() {
+type InfoRowId = (typeof rows)[number]['id'];
+
+type StudyInfoTabProps = {
+  onSelectRow?: (id: InfoRowId) => void;
+  /** 방장일 때 탈퇴하기 대신 삭제하기 표시 */
+  isOwner?: boolean;
+};
+
+function StudyInfoTab({ onSelectRow, isOwner }: StudyInfoTabProps) {
+  const getRowLabel = (row: (typeof rows)[number]) =>
+    row.id === 'leave' && isOwner ? '삭제하기' : row.label;
+
   return (
     <View style={styles.container}>
       <View style={styles.card}>
-        {rows.map((row, index) => (
-          <Pressable key={row.id} style={styles.row}>
+        {rows.map((row) => (
+          <Pressable
+            key={row.id}
+            style={styles.row}
+            onPress={() => onSelectRow?.(row.id)}
+          >
             <View style={styles.rowLeft}>
               <Image source={row.icon} style={[styles.icon, { width: row.width, height: row.height }]} />
-              <Text style={styles.label}>{row.label}</Text>
+              <Text style={styles.label}>{getRowLabel(row)}</Text>
             </View>
             <Image source={arrowIcon} style={styles.arrow} />
-            {/* {index < rows.length - 1 && <View style={styles.divider} />} */}
           </Pressable>
         ))}
       </View>

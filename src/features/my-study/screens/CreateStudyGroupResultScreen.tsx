@@ -18,6 +18,8 @@ type CreateStudyGroupResultScreenProps = {
   endDate: Date;
   days: string[];
   imageUri?: string | null;
+  /** 생성된 스터디 그룹 ID (API 성공 시 전달) */
+  createdGroupId?: number | null;
 };
 
 const formatDate = (value: Date) =>
@@ -63,9 +65,11 @@ function CreateStudyGroupResultScreen({
   endDate,
   days,
   imageUri,
+  createdGroupId,
 }: CreateStudyGroupResultScreenProps) {
   const weekdayText = days.length > 0 ? `매주 ${days.join('')}` : '-';
   const rows = [
+    ...(createdGroupId != null ? [{ label: '그룹 ID', value: String(createdGroupId) }] : []),
     { label: '카테고리', value: category },
     ...(primaryConfig
       ? [
