@@ -20,6 +20,9 @@ export type StudyGroupCardRes = {
   endDate: string | null;
   isIndefinite: boolean;
   hashtags: string[];
+  /** UPLOAD 시 thumbnailUrl 사용, 없으면 디폴트 아이콘 */
+  thumbnailType?: string;
+  thumbnailUrl?: string | null;
 };
 
 const CATEGORY_LABEL: Record<string, string> = {
@@ -78,6 +81,18 @@ function formatPeriodFromDates(startDate: string | null, endDate: string | null)
   return `${fmt(startDate)} - ${fmt(endDate)}`;
 }
 
+/** 썸네일 설정 시 이미지 소스, 아니면 디폴트 마스코트 */
+function cardImageSource(
+  card: StudyGroupCardRes,
+  index: number,
+  mascotSources: ImageSourcePropType[],
+): ImageSourcePropType {
+  if (card.thumbnailType === 'UPLOAD' && card.thumbnailUrl?.trim()) {
+    return { uri: card.thumbnailUrl.trim() };
+  }
+  return mascotSources[index % mascotSources.length];
+}
+
 /**
  * API 카드 한 건 → 메인 페이지 StudyDetail (StudyCard, 상세 이동)
  */
@@ -90,6 +105,7 @@ export function mapCardToStudyDetail(
   const methods = methodCodesToLabels(card.methodCodes);
   const schedule = verificationSummaryToKorean(card.verificationTimeSummary || '-');
   const authTimes = methods.map((method) => ({ method, time: schedule }));
+  const imageSource = cardImageSource(card, index, mascotSources);
 
   return {
     id: String(card.groupId),
@@ -103,11 +119,11 @@ export function mapCardToStudyDetail(
     authTimes,
     authDays: schedule,
     period: formatPeriodFromDates(card.startDate, card.endDate),
-    image: mascotSources[index % mascotSources.length],
+    image: imageSource,
     statusText: '인증 미완료',
     statusVariant: 'neutral',
     statusIcons: [],
-    mascotSource: mascotSources[index % mascotSources.length],
+    mascotSource: imageSource,
   };
 }
 
@@ -141,7 +157,7 @@ export function mapCardToStudyItem(
 
   return {
     id: String(card.groupId),
-    image: mascotSources[index % mascotSources.length],
+    image: cardImageSource(card, index, mascotSources),
     tag,
     title: card.title,
     members: formatMembers(card.currentMembers, card.maxMembers),

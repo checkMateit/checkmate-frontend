@@ -120,6 +120,12 @@ function StudyDetailScreen({ study: studyProp, onClose }: StudyDetailScreenProps
     }
   };
 
+  const overviewImage =
+    studyDetailForOwner?.thumbnailType === 'UPLOAD' &&
+    studyDetailForOwner?.thumbnailUrl?.trim()
+      ? { uri: studyDetailForOwner.thumbnailUrl.trim() }
+      : resolvedStudy.image;
+
   return (
     <SafeAreaView style={styles.root}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -131,7 +137,7 @@ function StudyDetailScreen({ study: studyProp, onClose }: StudyDetailScreenProps
           description={resolvedStudy.description}
           schedule={resolvedStudy.schedule}
           methods={resolvedStudy.methods}
-          image={resolvedStudy.image}
+          image={overviewImage}
           authTimes={resolvedStudy.authTimes}
           authDays={resolvedStudy.authDays}
           period={resolvedStudy.period}
