@@ -3,6 +3,39 @@ import { ENDPOINTS } from './endpoints';
 import type { ApiResponse, StudyGroupCreateRes } from './studyGroupCreate';
 import type { StudyGroupCardRes } from './studyGroupCard';
 
+/** GET /study-groups 목록 응답 data (페이징) — api-study-group-search.md */
+export type StudyGroupPageRes = {
+  content: StudyGroupCardRes[];
+  totalElements: number;
+  totalPages: number;
+  size: number;
+  number: number;
+  first: boolean;
+  last: boolean;
+};
+
+/** GET /study-groups 쿼리 파라미터 — category, verificationMethod, keyword, page, size, sort 등 */
+export type StudyGroupListParams = {
+  category?: string;
+  verificationMethod?: string[];
+  keyword?: string;
+  page?: number;
+  size?: number;
+  sort?: string;
+};
+
+/** GET /study-groups — 검색·필터·페이징 (최신순 기본) */
+export const fetchStudyGroupsList = (params?: StudyGroupListParams) => {
+  const page = params?.page ?? 0;
+  const size = params?.size ?? 20;
+  const sort = params?.sort ?? 'createdAt,desc';
+  const build: Record<string, unknown> = { page, size, sort };
+  if (params?.category != null && params.category !== '') build.category = params.category;
+  if (params?.verificationMethod?.length) build.verificationMethod = params.verificationMethod;
+  if (params?.keyword != null && params.keyword.trim() !== '') build.keyword = params.keyword.trim();
+  return apiClient.get<ApiResponse<StudyGroupPageRes>>(ENDPOINTS.studyGroups, { params: build });
+};
+
 /** GET /study-groups/{groupId} 응답 data */
 export type StudyGroupDetailRes = {
   groupId: number;

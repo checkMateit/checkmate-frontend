@@ -2,7 +2,7 @@ import React from 'react';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { type BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { type CompositeNavigationProp } from '@react-navigation/native';
-import MyStudyScreen from '../../my-study/screens/MyStudyScreen';
+import SearchTabScreen from './SearchTabScreen';
 import { type SearchStackParamList } from '../../../navigation/types';
 import { type BottomTabParamList } from '../../../navigation/types';
 
@@ -23,7 +23,7 @@ function SearchScreen() {
     }
   };
 
-  return <MyStudyScreen onClose={handleClose} mode="search" />;
+  return <SearchTabScreen onClose={handleClose} />;
 }
 
 export default SearchScreen;

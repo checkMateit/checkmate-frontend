@@ -131,6 +131,22 @@ export function mapCardToStudyDetail(
 export const categoryOptions = ['코테', '자격증', '언어', '기상', '착석', '기타'];
 export const methodOptions = ['사진', '위치', 'TODO', 'GitHub'];
 
+/** 라벨 → GET /study-groups 파라미터용 코드 */
+export const CATEGORY_TO_CODE: Record<string, string> = {
+  기상: 'WAKE',
+  착석: 'SEATED',
+  코테: 'COTE',
+  언어: 'LANG',
+  자격증: 'CERT',
+  기타: 'ETC',
+};
+export const METHOD_TO_CODE: Record<string, string> = {
+  사진: 'PHOTO',
+  TODO: 'CHECKLIST',
+  위치: 'GPS',
+  GitHub: 'GITHUB',
+};
+
 /**
  * API 카드 한 건 → MyStudyScreen 리스트용 StudyItem 형태
  */
