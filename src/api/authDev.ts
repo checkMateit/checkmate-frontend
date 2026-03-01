@@ -7,10 +7,10 @@
 
 /** OAuth2 로그인 후 받은 accessToken (JWT). Authorization: Bearer 로 전송됨 */
 export const DEV_ACCESS_TOKEN =
-  'eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiI1MWMxOTU2Ni05MGQyLTQ0OTUtOTFkMC00Y2Q0OTgxMjQ4MjIiLCJyb2xlIjoiVVNFUiIsImlhdCI6MTc3MjM0MjkzNSwiZXhwIjoxNzcyOTQ3NzM1fQ.Jmd1ZHNT8XT7x9o-iYm7kdL-AK-8nrloOQ8HcgK7m9RtPcshlFoT1EtmSXIsA5pqwHcjMfqyL9ODyGl8A6Drqg';
+  'eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZDNhZjhlZi1lZDBkLTQxYTYtYjllNC03MzZkNmY3ZDM5Y2MiLCJyb2xlIjoiVVNFUiIsImlhdCI6MTc3MjM0MzIxMSwiZXhwIjoxNzcyOTQ4MDExfQ.Bapxi9kMw8gPPaJQOHn9sUP41tWh6pY-hbX10L0L46m36xVov_erNfu0W3GacXusWvYyhDQyEi7umjl1R9zrWg';
 
 /** JWT payload 의 sub (사용자 UUID). study-service 의 X-User-Id 로 전송됨 */
-export const DEV_USER_ID = '51c19566-90d2-4495-91d0-4cd498124822';
+export const DEV_USER_ID = 'ad3af8ef-ed0d-41a6-b9e4-736d6f7d39cc';
 
 /** 개발용 인증 사용 여부. true 면 앱 시작 시 위 토큰/유저ID 로 API 헤더 설정 */
 export const USE_DEV_AUTH = true;

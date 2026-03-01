@@ -316,7 +316,7 @@ function HomeScreen() {
             <Pressable
               onPress={() => {
                 const parent = navigation.getParent<BottomTabNavigationProp<BottomTabParamList>>();
-                parent?.navigate('Search', { screen: 'SearchMain' });
+                parent?.navigate('Search', { screen: 'SearchMain', params: { fromHomeEmptyCard: true } });
               }}
             >
               <ImageBackground
