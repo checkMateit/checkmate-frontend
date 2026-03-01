@@ -7,6 +7,11 @@ export const apiClient = axios.create({
   headers: {
     Accept: 'application/json',
     'Content-Type': 'application/json',
+
+    'Authorization': 'Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiI2YmM2MDlkMC1iYjJhLTRmOTAtOTIyZi00YjU3NmI0MjllMGIiLCJyb2xlIjoiVVNFUiIsImlhdCI6MTc3MjM2NjQ1MCwiZXhwIjoxNzcyMzcwMDUwfQ.WRLUKDIwgJ3eaMZH31xSlyk0rCORelcdzmPXeox9KcaeLl4C7dYDVt7Nv-8CxWsJqyuDMC6jYFY_kZvd2viWOg',
+    'X-User-Id': '6bc609d0-bb2a-4f90-922f-4b576b429e0b',
+    'X-User-Role': 'USER',
+
   },
 });
 
