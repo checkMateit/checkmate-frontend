@@ -24,6 +24,8 @@ import NotificationScreen from '../../notification/screens/NotificationScreen';
 import MyStudyScreen from '../../my-study/screens/MyStudyScreen';
 import { type StudyDetail } from '../../study-detail/screens/StudyDetailScreen';
 import { type StudyPreview } from '../../search/types';
+import AdminHomeScreen from '../../admin/screen/AdminHomeScreen';
+import { apiClient } from '../../../api';
 import {
   formatCategory,
   formatMembers,
@@ -52,6 +54,10 @@ const HERO_TEXT_TOP = 12;
 function HomeScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NativeStackNavigationProp<HomeStackParamList>>();
+
+  const [role, setRole] = useState<string | null>(null);
+  const [isReady, setIsReady] = useState(false);
+
   const screenWidth = Dimensions.get('window').width;
   const heroHeight = Math.round((screenWidth * bgHeight) / bgWidth) + insets.top;
   const heroContentTop = HEADER_HEIGHT + insets.top + HERO_TEXT_TOP;
@@ -63,6 +69,18 @@ function HomeScreen() {
   const [helpIconLayout, setHelpIconLayout] = useState({ x: 0, width: 0 });
   const [helpBubbleWidth, setHelpBubbleWidth] = useState(0);
   const { notifications } = useNotificationCenter();
+
+  useEffect(() => {
+    try {
+      const userRole = apiClient.defaults.headers['X-User-Role'] as string;
+      setRole(userRole || 'USER');
+    } catch (e) {
+      setRole('USER');
+    } finally {
+      setIsReady(true);
+    }
+  }, []);
+
 
   const recommendStudies = useMemo(() => {
     const items = getStudyGroups();
@@ -191,6 +209,14 @@ function HomeScreen() {
   const hasStudies = studies.length > 0;
   const heroHeightEmpty = heroHeight;
   const activeHeroHeight = hasStudies ? heroHeight : heroHeightEmpty;
+
+  if (!isReady) {
+    return <View style={{ flex: 1, backgroundColor: colors.background }} />;
+  }
+
+  if (role === 'ADMIN') {
+    return <AdminHomeScreen />;
+  }
 
   return (
     <SafeAreaView style={styles.root}>
