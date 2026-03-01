@@ -1,7 +1,7 @@
 import { apiClient } from './client';
 import { ENDPOINTS } from './endpoints';
 import { ApiResponse } from '../types/api';
-import { UserResponse, UserUpdateReq, FavoriteCategoryRes, FavoriteCategoryReq } from '../types/users';
+import { UserResponse, UserUpdateReq, FavoriteCategoryRes, FavoriteCategoryReq, SocialAccountRes } from '../types/users';
 
 export const getMyInfo = () => 
 apiClient.get<ApiResponse<UserResponse>>(`${ENDPOINTS.users}/me`);
@@ -22,3 +22,9 @@ export const getFavoriteCategories = () =>
 
 export const updateFavoriteCategories = (data: FavoriteCategoryReq) =>
   apiClient.patch<ApiResponse<FavoriteCategoryRes>>(`${ENDPOINTS.users}/me/favorite-categories`, data);
+
+export const getSocialAccounts = () =>
+  apiClient.get<ApiResponse<SocialAccountRes[]>>(`${ENDPOINTS.users}/me/social`);
+
+export const unlinkSocialAccount = (provider: string) =>
+  apiClient.patch<ApiResponse<void>>(`${ENDPOINTS.users}/me/social/${provider}/unlink`);

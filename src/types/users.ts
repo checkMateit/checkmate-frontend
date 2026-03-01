@@ -30,3 +30,8 @@ export interface FavoriteCategoryRes {
 export interface FavoriteCategoryReq {
   category_ids: string[];
 }
+
+export interface SocialAccountRes {
+  provider: string;
+  email: string;
+}

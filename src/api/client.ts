@@ -7,9 +7,9 @@ export const apiClient = axios.create({
   headers: {
     Accept: 'application/json',
     'Content-Type': 'application/json',
-    'Authorization': 'Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiIzZmExNDczMC01MWE0LTQ2NzYtODBmNS1mZmZjY2QwODVjZTciLCJyb2xlIjoiVVNFUiIsImlhdCI6MTc3MjM0MzIzNCwiZXhwIjoxNzcyMzQ2ODM0fQ.wvU5D07MmDNvj9sqxAQt2PeNj05b9g8Wwxm1k28vEBiyJf-GN1Hn60gJmcroqjyW3XhSNsBId83ZUWmMLgjCNg',
-    'X-User-Id': '3fa14730-51a4-4676-80f5-fffccd085ce7',
-    'X-User-Role': 'USER',
+    'Authorization': 'Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJmYmQxYTkyMS00ZGZmLTRkYzYtODQxZi1hNzUwMTcwYmVhOWMiLCJyb2xlIjoiQURNSU4iLCJpYXQiOjE3NzIzNDk3NTgsImV4cCI6MTc3MjM1MzM1OH0.JUOEaAMr4bsQfrfFQ2THszoR9zwzV2-7S7iVdFz1sI_n8P6zPIxaqwp6FoAAsBWtwMa3F8I9yC1uiOCHC82cew',
+    'X-User-Id': 'fbd1a921-4dff-4dc6-841f-a750170bea9c',
+    'X-User-Role': 'ADMIN',
   },
 });
 
