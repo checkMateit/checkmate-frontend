@@ -8,7 +8,7 @@ export type HomeStackParamList = {
 };
 
 export type SearchStackParamList = {
-  SearchMain: undefined;
+  SearchMain: { fromHomeEmptyCard?: boolean };
   StudyJoin: { study: StudyPreview };
 };
 

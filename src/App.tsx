@@ -4,7 +4,6 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import BottomTabs from './navigation/BottomTabs';
 import { NotificationCenterProvider } from './state/NotificationCenterContext';
-
 function App() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
