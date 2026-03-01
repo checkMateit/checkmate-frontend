@@ -25,7 +25,7 @@ import StudyReportTab from '../../study-report/components/StudyReportTab';
 import StudyStatusSection from '../components/StudyStatusSection';
 import { colors } from '../../../styles/colors';
 import { type HomeStackParamList } from '../../../navigation/types';
-import { getCurrentUserId } from '../../../api/authDev';
+import { getCurrentUserId, getCurrentUserDisplayName } from '../../../api/authDev';
 import {
   deleteStudyGroup,
   fetchStudyGroupDetail,
@@ -264,7 +264,7 @@ function StudyDetailScreen({ study: studyProp, onClose }: StudyDetailScreenProps
       <Modal visible={showWelcome} animationType="fade" transparent>
         <View style={styles.welcomeOverlay}>
           <View style={styles.welcomeCard}>
-            <Text style={styles.welcomeTitle}>승연님, 반가워요!</Text>
+            <Text style={styles.welcomeTitle}>{getCurrentUserDisplayName()}님, 반가워요!</Text>
             <Text style={styles.welcomeSubtitle}>
               {resolvedStudy.title}에 오신 것을 환영합니다.
             </Text>

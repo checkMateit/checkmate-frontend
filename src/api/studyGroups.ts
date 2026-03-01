@@ -120,3 +120,8 @@ export const kickStudyGroupMember = (groupId: string | number, userId: string) =
 /** POST /study-groups/{groupId}/leave — 스터디 그룹 탈퇴 (그룹장 불가). X-User-Id 필수 */
 export const leaveStudyGroup = (groupId: string | number) =>
   apiClient.post<ApiResponse<null>>(`${ENDPOINTS.studyGroups}/${groupId}/leave`);
+
+/** POST /study-groups/{groupId}/join — 공개 스터디 가입. X-User-Id 필수. api-study-group-join-public.md */
+export type StudyGroupJoinRes = { groupId: number; joinedAt: string };
+export const joinStudyGroup = (groupId: string | number) =>
+  apiClient.post<ApiResponse<StudyGroupJoinRes>>(`${ENDPOINTS.studyGroups}/${groupId}/join`);
