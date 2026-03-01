@@ -13,20 +13,29 @@ const rows = [
   { id: 'rules', label: '상세규칙', icon: rulesIcon, width: 24, height: 22 },
   { id: 'info', label: '스터디 정보', icon: infoIcon, width: 24, height: 24 },
   { id: 'leave', label: '탈퇴하기', icon: leaveIcon, width: 18, height: 26 },
-];
+] as const;
 
-function StudyInfoTab() {
+type InfoRowId = (typeof rows)[number]['id'];
+
+type StudyInfoTabProps = {
+  onSelectRow?: (id: InfoRowId) => void;
+};
+
+function StudyInfoTab({ onSelectRow }: StudyInfoTabProps) {
   return (
     <View style={styles.container}>
       <View style={styles.card}>
         {rows.map((row, index) => (
-          <Pressable key={row.id} style={styles.row}>
+          <Pressable
+            key={row.id}
+            style={styles.row}
+            onPress={() => onSelectRow?.(row.id)}
+          >
             <View style={styles.rowLeft}>
               <Image source={row.icon} style={[styles.icon, { width: row.width, height: row.height }]} />
               <Text style={styles.label}>{row.label}</Text>
             </View>
             <Image source={arrowIcon} style={styles.arrow} />
-            {/* {index < rows.length - 1 && <View style={styles.divider} />} */}
           </Pressable>
         ))}
       </View>

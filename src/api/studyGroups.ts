@@ -3,6 +3,15 @@ import { ENDPOINTS } from './endpoints';
 import type { ApiResponse, StudyGroupCreateRes } from './studyGroupCreate';
 import type { StudyGroupCardRes } from './studyGroupCard';
 
+/** GET /study-groups/{groupId}/members 응답 한 건 */
+export type StudyGroupMemberRes = {
+  userId: string;
+  role: 'Leader' | 'Member';
+  status: string;
+  joinedAt: string;
+  nickname: string | null;
+};
+
 export const fetchStudyGroups = <T = unknown>(params?: Record<string, unknown>) =>
   apiClient.get<T>(ENDPOINTS.studyGroups, { params });
 
@@ -30,3 +39,15 @@ export const updateStudyGroup = <T = unknown, P = unknown>(
 
 export const deleteStudyGroup = <T = unknown>(groupId: string | number) =>
   apiClient.delete<T>(`${ENDPOINTS.studyGroups}/${groupId}`);
+
+/** GET /study-groups/{groupId}/members — 멤버 목록 (그룹 멤버만). X-User-Id 필수 */
+export const fetchStudyGroupMembers = (groupId: string | number) =>
+  apiClient.get<ApiResponse<StudyGroupMemberRes[]>>(
+    `${ENDPOINTS.studyGroups}/${groupId}/members`,
+  );
+
+/** DELETE /study-groups/{groupId}/members/{userId} — 그룹장이 멤버 강퇴. X-User-Id 필수 */
+export const kickStudyGroupMember = (groupId: string | number, userId: string) =>
+  apiClient.delete<ApiResponse<null>>(
+    `${ENDPOINTS.studyGroups}/${groupId}/members/${userId}`,
+  );

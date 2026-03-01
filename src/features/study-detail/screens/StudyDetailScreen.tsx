@@ -15,11 +15,13 @@ import StudyBoardTab from '../../study-board/components/StudyBoardTab';
 import StudyDetailHeader from '../components/StudyDetailHeader';
 import StudyDetailTabs from '../components/StudyDetailTabs';
 import StudyInfoTab from '../components/StudyInfoTab';
+import StudyMemberInfoView from '../components/StudyMemberInfoView';
 import StudyOverviewCard from '../components/StudyOverviewCard';
 import StudyReportTab from '../../study-report/components/StudyReportTab';
 import StudyStatusSection from '../components/StudyStatusSection';
 import { colors } from '../../../styles/colors';
 import { type HomeStackParamList } from '../../../navigation/types';
+import { getCurrentUserId } from '../../../api/authDev';
 
 export type StudyDetail = {
   id: string;
@@ -59,6 +61,7 @@ function StudyDetailScreen({ study: studyProp, onClose }: StudyDetailScreenProps
   const [showWelcome, setShowWelcome] = useState(!!route.params?.showWelcome);
   const [activeTab, setActiveTab] = useState<'status' | 'report' | 'board' | 'info'>('status');
   const [statusResetKey, setStatusResetKey] = useState(0);
+  const [infoSubView, setInfoSubView] = useState<'members' | 'rules' | 'info' | 'leave' | null>(null);
 
   if (!resolvedStudy) {
     return (
@@ -104,7 +107,21 @@ function StudyDetailScreen({ study: studyProp, onClose }: StudyDetailScreenProps
           )}
           {activeTab === 'report' && <StudyReportTab />}
           {activeTab === 'board' && <StudyBoardTab studyName={resolvedStudy.title} />}
-          {activeTab === 'info' && <StudyInfoTab />}
+          {activeTab === 'info' &&
+            (infoSubView === 'members' ? (
+              <StudyMemberInfoView
+                groupId={resolvedStudy.id}
+                currentUserId={getCurrentUserId()}
+                onBack={() => setInfoSubView(null)}
+              />
+            ) : (
+              <StudyInfoTab
+                onSelectRow={(id) => {
+                  if (id === 'members') setInfoSubView('members');
+                  // rules, info, leave 는 추후 화면 연동
+                }}
+              />
+            ))}
         </View>
       </ScrollView>
       <Modal visible={showWelcome} animationType="fade" transparent>

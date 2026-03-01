@@ -14,3 +14,7 @@ export const DEV_USER_ID = '51c19566-90d2-4495-91d0-4cd498124822';
 
 /** 개발용 인증 사용 여부. true 면 앱 시작 시 위 토큰/유저ID 로 API 헤더 설정 */
 export const USE_DEV_AUTH = true;
+
+/** 현재 로그인 사용자 ID (개발용). 실제 앱에서는 AuthContext 등에서 가져올 것 */
+export const getCurrentUserId = (): string | null =>
+  USE_DEV_AUTH ? DEV_USER_ID : null;
