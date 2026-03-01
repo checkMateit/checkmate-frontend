@@ -83,3 +83,7 @@ export const kickStudyGroupMember = (groupId: string | number, userId: string) =
   apiClient.delete<ApiResponse<null>>(
     `${ENDPOINTS.studyGroups}/${groupId}/members/${userId}`,
   );
+
+/** POST /study-groups/{groupId}/leave — 스터디 그룹 탈퇴 (그룹장 불가). X-User-Id 필수 */
+export const leaveStudyGroup = (groupId: string | number) =>
+  apiClient.post<ApiResponse<null>>(`${ENDPOINTS.studyGroups}/${groupId}/leave`);

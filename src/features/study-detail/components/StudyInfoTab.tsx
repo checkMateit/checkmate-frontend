@@ -19,13 +19,18 @@ type InfoRowId = (typeof rows)[number]['id'];
 
 type StudyInfoTabProps = {
   onSelectRow?: (id: InfoRowId) => void;
+  /** 방장일 때 탈퇴하기 대신 삭제하기 표시 */
+  isOwner?: boolean;
 };
 
-function StudyInfoTab({ onSelectRow }: StudyInfoTabProps) {
+function StudyInfoTab({ onSelectRow, isOwner }: StudyInfoTabProps) {
+  const getRowLabel = (row: (typeof rows)[number]) =>
+    row.id === 'leave' && isOwner ? '삭제하기' : row.label;
+
   return (
     <View style={styles.container}>
       <View style={styles.card}>
-        {rows.map((row, index) => (
+        {rows.map((row) => (
           <Pressable
             key={row.id}
             style={styles.row}
@@ -33,7 +38,7 @@ function StudyInfoTab({ onSelectRow }: StudyInfoTabProps) {
           >
             <View style={styles.rowLeft}>
               <Image source={row.icon} style={[styles.icon, { width: row.width, height: row.height }]} />
-              <Text style={styles.label}>{row.label}</Text>
+              <Text style={styles.label}>{getRowLabel(row)}</Text>
             </View>
             <Image source={arrowIcon} style={styles.arrow} />
           </Pressable>

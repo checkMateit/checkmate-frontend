@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import {
+  Alert,
   Modal,
   Pressable,
   SafeAreaView,
@@ -25,6 +26,11 @@ import StudyStatusSection from '../components/StudyStatusSection';
 import { colors } from '../../../styles/colors';
 import { type HomeStackParamList } from '../../../navigation/types';
 import { getCurrentUserId } from '../../../api/authDev';
+import {
+  deleteStudyGroup,
+  fetchStudyGroupDetail,
+  leaveStudyGroup,
+} from '../../../api/studyGroups';
 
 export type StudyDetail = {
   id: string;
@@ -69,6 +75,29 @@ function StudyDetailScreen({ study: studyProp, onClose }: StudyDetailScreenProps
   const [editGroupId, setEditGroupId] = useState<string | null>(null);
   const [editInitialData, setEditInitialData] = useState<StudyGroupDetailRes | null>(null);
   const [refreshSummaryKey, setRefreshSummaryKey] = useState(0);
+  const [studyDetailForOwner, setStudyDetailForOwner] = useState<StudyGroupDetailRes | null>(null);
+
+  const currentUserId = getCurrentUserId();
+  const isOwner = Boolean(
+    resolvedStudy &&
+      currentUserId &&
+      studyDetailForOwner &&
+      studyDetailForOwner.ownerUserId === currentUserId,
+  );
+
+  React.useEffect(() => {
+    if (!resolvedStudy?.id) return;
+    let cancelled = false;
+    fetchStudyGroupDetail(resolvedStudy.id)
+      .then(({ data }) => {
+        if (cancelled) return;
+        if (data?.data) setStudyDetailForOwner(data.data);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [resolvedStudy?.id]);
 
   if (!resolvedStudy) {
     return (
@@ -135,10 +164,92 @@ function StudyDetailScreen({ study: studyProp, onClose }: StudyDetailScreenProps
               />
             ) : (
               <StudyInfoTab
+                isOwner={isOwner}
                 onSelectRow={(id) => {
                   if (id === 'members') setInfoSubView('members');
                   if (id === 'info') setInfoSubView('info');
-                  // rules, leave 는 추후 화면 연동
+                  if (id === 'leave') {
+                    const groupName = resolvedStudy.title || '이 스터디';
+                    if (isOwner) {
+                      Alert.alert(
+                        '삭제하기',
+                        `${groupName}을 정말로 삭제하시겠습니까?`,
+                        [
+                          { text: '아니오', style: 'cancel' },
+                          {
+                            text: '예',
+                            style: 'destructive',
+                            onPress: async () => {
+                              try {
+                                const { data } = await deleteStudyGroup(resolvedStudy.id);
+                                const ok =
+                                  data &&
+                                  ((data as { isSuccess?: boolean }).isSuccess === true ||
+                                    (data as { success?: boolean }).success === true);
+                                if (ok) {
+                                  if (onClose) onClose();
+                                  else navigation.goBack();
+                                } else {
+                                  Alert.alert(
+                                    '삭제 실패',
+                                    (data as { message?: string })?.message ??
+                                      '스터디 그룹 삭제에 실패했습니다.',
+                                  );
+                                }
+                              } catch (err: unknown) {
+                                const msg =
+                                  err &&
+                                  typeof err === 'object' &&
+                                  'response' in err &&
+                                  (err as { response?: { data?: { message?: string } } }).response
+                                    ?.data?.message;
+                                Alert.alert('오류', msg ?? '삭제 요청을 처리하지 못했어요.');
+                              }
+                            },
+                          },
+                        ]
+                      );
+                    } else {
+                      Alert.alert(
+                        '탈퇴하기',
+                        `${groupName}를 탈퇴하시겠습니까?`,
+                        [
+                          { text: '아니오', style: 'cancel' },
+                          {
+                            text: '예',
+                            style: 'destructive',
+                            onPress: async () => {
+                              try {
+                                const { data } = await leaveStudyGroup(resolvedStudy.id);
+                                const ok =
+                                  data &&
+                                  ((data as { isSuccess?: boolean }).isSuccess === true ||
+                                    (data as { success?: boolean }).success === true);
+                                if (ok) {
+                                  if (onClose) onClose();
+                                  else navigation.goBack();
+                                } else {
+                                  Alert.alert(
+                                    '탈퇴 실패',
+                                    (data as { message?: string })?.message ??
+                                      '탈퇴에 실패했습니다.',
+                                  );
+                                }
+                              } catch (err: unknown) {
+                                const msg =
+                                  err &&
+                                  typeof err === 'object' &&
+                                  'response' in err &&
+                                  (err as { response?: { data?: { message?: string } } }).response
+                                    ?.data?.message;
+                                Alert.alert('오류', msg ?? '탈퇴 요청을 처리하지 못했어요.');
+                              }
+                            },
+                          },
+                        ]
+                      );
+                    }
+                  }
                 }}
               />
             ))}
