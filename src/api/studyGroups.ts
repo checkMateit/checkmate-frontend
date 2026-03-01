@@ -3,6 +3,37 @@ import { ENDPOINTS } from './endpoints';
 import type { ApiResponse, StudyGroupCreateRes } from './studyGroupCreate';
 import type { StudyGroupCardRes } from './studyGroupCard';
 
+/** GET /study-groups/{groupId} 응답 data */
+export type StudyGroupDetailRes = {
+  groupId: number;
+  title: string;
+  description: string;
+  thumbnailType: string;
+  thumbnailUrl: string | null;
+  category: string;
+  status: string;
+  ownerUserId: string;
+  minMembers: number;
+  maxMembers: number;
+  currentMembers: number;
+  joinType: string;
+  startDate: string | null;
+  endDate: string | null;
+  durationWeeks: number | null;
+  isIndefinite: boolean;
+  verificationRules: Array<{
+    slot: number;
+    endTime: string;
+    checkEndTime: string | null;
+    daysOfWeek: string[];
+    timezone: string;
+    frequency: { unit: string; requiredCnt: number };
+    exemption: unknown;
+    methodCode: string;
+  }>;
+  hashtags: string[];
+};
+
 /** GET /study-groups/{groupId}/members 응답 한 건 */
 export type StudyGroupMemberRes = {
   userId: string;
@@ -25,8 +56,9 @@ export const fetchRecommendedStudyGroups = (params?: { size?: number }) =>
     params: params?.size != null ? { size: params.size } : undefined,
   });
 
-export const fetchStudyGroupById = <T = unknown>(groupId: string | number) =>
-  apiClient.get<T>(`${ENDPOINTS.studyGroups}/${groupId}`);
+/** GET /study-groups/{groupId} — 스터디 그룹 상세 */
+export const fetchStudyGroupDetail = (groupId: string | number) =>
+  apiClient.get<ApiResponse<StudyGroupDetailRes>>(`${ENDPOINTS.studyGroups}/${groupId}`);
 
 /** POST /study-groups. 응답은 ApiResponse<StudyGroupCreateRes> (data.groupId, data.createdAt) */
 export const createStudyGroup = (payload: Record<string, unknown>) =>

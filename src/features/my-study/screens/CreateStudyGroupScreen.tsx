@@ -32,12 +32,16 @@ import PeriodPicker from '../components/PeriodPicker';
 import PrimaryActionButton from '../components/PrimaryActionButton';
 import DatePickerModal from '../components/DatePickerModal';
 import CreateStudyGroupResultScreen from './CreateStudyGroupResultScreen';
-import { createStudyGroup } from '../../../api/studyGroups';
+import { createStudyGroup, updateStudyGroup } from '../../../api/studyGroups';
+import type { StudyGroupDetailRes } from '../../../api/studyGroups';
 import { buildStudyGroupCreatePayload } from '../../../api/studyGroupCreate';
 
 type CreateStudyGroupScreenProps = {
   onClose: () => void;
   onComplete?: () => void;
+  mode?: 'create' | 'edit';
+  groupId?: string;
+  initialData?: StudyGroupDetailRes;
 };
 
 const categories = ['코딩 테스트', '자격증', '언어', '기상', '착석', '기타'];
@@ -49,6 +53,96 @@ const createTime = (hours: number, minutes = 0) => {
   next.setHours(hours, minutes, 0, 0);
   return next;
 };
+
+const CATEGORY_REVERSE: Record<string, string> = {
+  WAKE: '기상',
+  SEATED: '착석',
+  COTE: '코딩 테스트',
+  LANG: '언어',
+  CERT: '자격증',
+  ETC: '기타',
+};
+const METHOD_REVERSE: Record<string, AuthMethod> = {
+  PHOTO: '사진',
+  GPS: '위치',
+  CHECKLIST: 'TODO',
+  GITHUB: 'GitHub',
+};
+const DAY_REVERSE: Record<string, string> = {
+  MON: '월',
+  TUE: '화',
+  WED: '수',
+  THU: '목',
+  FRI: '금',
+  SAT: '토',
+  SUN: '일',
+};
+
+function parseTimeToDate(timeStr: string): Date {
+  const [h, m] = timeStr.split(':').map(Number);
+  return createTime(h ?? 0, m ?? 0);
+}
+
+function detailToInitialState(d: StudyGroupDetailRes): {
+  name: string;
+  description: string;
+  activeCategory: string;
+  primaryConfig: MethodConfig | null;
+  secondaryConfig: MethodConfig | null;
+  members: number;
+  days: string[];
+  startDate: Date;
+  endDate: Date;
+  thumbnailUri: string | null;
+} {
+  const r0 = d.verificationRules?.[0];
+  const r1 = d.verificationRules?.[1];
+  const method0 = r0 ? (METHOD_REVERSE[r0.methodCode] ?? 'TODO') : 'TODO';
+  const method1 = r1 ? (METHOD_REVERSE[r1.methodCode] ?? '사진') : '사진';
+  const days =
+    r0?.daysOfWeek?.map((day) => DAY_REVERSE[day] ?? day).filter(Boolean) ?? ['월', '화'];
+  const endTime0 = r0?.endTime ? parseTimeToDate(r0.endTime) : createTime(10, 0);
+  const checkTime0 =
+    r0?.methodCode === 'CHECKLIST' && r0?.checkEndTime
+      ? parseTimeToDate(r0.checkEndTime)
+      : createTime(22, 0);
+  const endTime1 = r1?.endTime ? parseTimeToDate(r1.endTime) : createTime(10, 0);
+  const startDate = d.startDate
+    ? (() => {
+        const [y, m, day] = d.startDate.split('-').map(Number);
+        return new Date(y ?? 2026, (m ?? 1) - 1, day ?? 1);
+      })()
+    : new Date(2026, 1, 4);
+  const endDate = d.endDate
+    ? (() => {
+        const [y, m, day] = d.endDate.split('-').map(Number);
+        return new Date(y ?? 2026, (m ?? 1) - 1, day ?? 1);
+      })()
+    : new Date(2026, 2, 4);
+
+  return {
+    name: d.title ?? '',
+    description: d.description ?? '',
+    activeCategory: CATEGORY_REVERSE[d.category] ?? '기타',
+    primaryConfig: r0
+      ? {
+          method: method0,
+          todoDeadline: method0 === 'TODO' ? endTime0 : createTime(10, 0),
+          todoComplete: method0 === 'TODO' ? checkTime0 : createTime(22, 0),
+          rangeStart: method0 !== 'TODO' ? endTime0 : createTime(10, 0),
+          rangeEnd: method0 !== 'TODO' ? endTime0 : createTime(22, 0),
+          locationType: '공통 위치',
+          locationName: '',
+        }
+      : createDefaultConfig('TODO'),
+    secondaryConfig: r1 ? createDefaultConfig(method1) : null,
+    members: d.maxMembers ?? 2,
+    days: days.length > 0 ? days : ['화', '목'],
+    startDate,
+    endDate,
+    thumbnailUri: d.thumbnailType === 'UPLOAD' && d.thumbnailUrl ? d.thumbnailUrl : null,
+  };
+}
 
 const formatTime = (value: Date) => {
   const hours = value.getHours().toString().padStart(2, '0');
@@ -66,7 +160,16 @@ const createDefaultConfig = (method: AuthMethod): MethodConfig => ({
   locationName: '',
 });
 
-function CreateStudyGroupScreen({ onClose, onComplete }: CreateStudyGroupScreenProps) {
+function CreateStudyGroupScreen({
+  onClose,
+  onComplete,
+  mode = 'create',
+  groupId,
+  initialData,
+}: CreateStudyGroupScreenProps) {
+  const isEdit = mode === 'edit' && groupId;
+  const currentMembers = initialData?.currentMembers ?? 0;
+
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [activeCategory, setActiveCategory] = useState<string>('착석');
@@ -92,7 +195,24 @@ function CreateStudyGroupScreen({ onClose, onComplete }: CreateStudyGroupScreenP
   >('todoDeadline');
   const [activeConfigKey, setActiveConfigKey] = useState<'primary' | 'secondary'>('primary');
 
+  React.useEffect(() => {
+    if (initialData) {
+      const init = detailToInitialState(initialData);
+      setName(init.name);
+      setDescription(init.description);
+      setActiveCategory(init.activeCategory);
+      setPrimaryConfig(init.primaryConfig);
+      setSecondaryConfig(init.secondaryConfig);
+      setMembers(init.members);
+      setDays(init.days);
+      setStartDate(init.startDate);
+      setEndDate(init.endDate);
+      setThumbnailUri(init.thumbnailUri);
+    }
+  }, [initialData]);
+
   const nameCount = useMemo(() => name.length, [name]);
+  const membersBelowCurrent = isEdit && members < currentMembers;
   const timeTitle =
     activeTimeField === 'todoDeadline'
       ? '작성마감 시간'
@@ -168,6 +288,10 @@ function CreateStudyGroupScreen({ onClose, onComplete }: CreateStudyGroupScreenP
       Alert.alert('안내', '인증 요일을 하나 이상 선택해주세요.');
       return;
     }
+    if (isEdit && members < currentMembers) {
+      Alert.alert('안내', '현재 스터디 그룹 인원보다 작게 설정할 수 없습니다.');
+      return;
+    }
     setIsSubmitting(true);
     try {
       const payload = buildStudyGroupCreatePayload({
@@ -182,13 +306,38 @@ function CreateStudyGroupScreen({ onClose, onComplete }: CreateStudyGroupScreenP
         primaryConfig,
         secondaryConfig,
       });
-      const { data } = await createStudyGroup(payload);
-      const ok = data && ((data as { success?: boolean; isSuccess?: boolean }).success === true || data.isSuccess === true);
-      if (ok && data?.data?.groupId != null) {
-        setCreatedGroupId(data.data.groupId);
-        setShowResult(true);
+      if (isEdit && groupId) {
+        const updatePayload = {
+          title: payload.title,
+          description: payload.description,
+          thumbnailType: payload.thumbnailType,
+          thumbnailUrl: payload.thumbnailUrl,
+          category: payload.category,
+          joinType: payload.joinType,
+          minMembers: payload.minMembers,
+          maxMembers: payload.maxMembers,
+          period: payload.period,
+          hashtags: payload.hashtags,
+        };
+        const { data } = await updateStudyGroup(groupId, updatePayload);
+        const res = data as { isSuccess?: boolean; success?: boolean; message?: string } | undefined;
+        const ok = res && (res.success === true || res.isSuccess === true);
+        if (ok) {
+          Alert.alert('수정 완료', '스터디 그룹 정보가 수정되었습니다.', [
+            { text: '확인', onPress: () => (onComplete ? onComplete() : onClose()) },
+          ]);
+        } else {
+          Alert.alert('수정 실패', res?.message ?? '스터디 그룹 수정에 실패했습니다.');
+        }
       } else {
-        Alert.alert('생성 실패', data?.message ?? '스터디 그룹 생성에 실패했습니다.');
+        const { data } = await createStudyGroup(payload);
+        const ok = data && ((data as { success?: boolean; isSuccess?: boolean }).success === true || data.isSuccess === true);
+        if (ok && data?.data?.groupId != null) {
+          setCreatedGroupId(data.data.groupId);
+          setShowResult(true);
+        } else {
+          Alert.alert('생성 실패', data?.message ?? '스터디 그룹 생성에 실패했습니다.');
+        }
       }
     } catch (err: unknown) {
       const message =
@@ -288,7 +437,10 @@ function CreateStudyGroupScreen({ onClose, onComplete }: CreateStudyGroupScreenP
   return (
     <SafeAreaView style={styles.root}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        <CreateStudyHeader title="스터디 그룹 생성" onClose={onClose} />
+        <CreateStudyHeader
+          title={isEdit ? '스터디 그룹 수정' : '스터디 그룹 생성'}
+          onClose={onClose}
+        />
 
         <View style={styles.profileRow}>
           <StudyThumbnailPicker compact imageUri={thumbnailUri} onChangeImage={setThumbnailUri} />
@@ -313,7 +465,17 @@ function CreateStudyGroupScreen({ onClose, onComplete }: CreateStudyGroupScreenP
           onSelect={setActiveCategory}
         />
 
-        <MemberCounter value={members} onChange={setMembers} />
+        <MemberCounter
+          value={members}
+          onChange={setMembers}
+          min={isEdit ? currentMembers : 2}
+          max={50}
+        />
+        {membersBelowCurrent && (
+          <Text style={styles.membersError}>
+            현재 스터디 그룹 인원보다 작게 설정할 수 없습니다
+          </Text>
+        )}
 
         <AuthMethodSection
           methods={authMethods}
@@ -361,9 +523,15 @@ function CreateStudyGroupScreen({ onClose, onComplete }: CreateStudyGroupScreenP
 
       <View style={styles.bottom}>
         <PrimaryActionButton
-          label={isSubmitting ? '생성 중…' : '완료'}
+          label={
+            isSubmitting
+              ? isEdit
+                ? '수정 중…'
+                : '생성 중…'
+              : '완료'
+          }
           onPress={handleSubmitComplete}
-          disabled={isSubmitting}
+          disabled={isSubmitting || Boolean(membersBelowCurrent)}
         />
         {isSubmitting ? (
           <View style={styles.loaderWrap}>
@@ -456,6 +624,14 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: colors.textSecondary,
+  },
+  membersError: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#E53935',
+    paddingHorizontal: 28,
+    marginTop: -8,
+    marginBottom: 8,
   },
 });
 

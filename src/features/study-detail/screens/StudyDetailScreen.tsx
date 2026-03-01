@@ -16,7 +16,10 @@ import StudyDetailHeader from '../components/StudyDetailHeader';
 import StudyDetailTabs from '../components/StudyDetailTabs';
 import StudyInfoTab from '../components/StudyInfoTab';
 import StudyMemberInfoView from '../components/StudyMemberInfoView';
+import StudySummaryInfoView from '../components/StudySummaryInfoView';
 import StudyOverviewCard from '../components/StudyOverviewCard';
+import CreateStudyGroupScreen from '../../my-study/screens/CreateStudyGroupScreen';
+import type { StudyGroupDetailRes } from '../../../api/studyGroups';
 import StudyReportTab from '../../study-report/components/StudyReportTab';
 import StudyStatusSection from '../components/StudyStatusSection';
 import { colors } from '../../../styles/colors';
@@ -62,6 +65,10 @@ function StudyDetailScreen({ study: studyProp, onClose }: StudyDetailScreenProps
   const [activeTab, setActiveTab] = useState<'status' | 'report' | 'board' | 'info'>('status');
   const [statusResetKey, setStatusResetKey] = useState(0);
   const [infoSubView, setInfoSubView] = useState<'members' | 'rules' | 'info' | 'leave' | null>(null);
+  const [showEditStudyModal, setShowEditStudyModal] = useState(false);
+  const [editGroupId, setEditGroupId] = useState<string | null>(null);
+  const [editInitialData, setEditInitialData] = useState<StudyGroupDetailRes | null>(null);
+  const [refreshSummaryKey, setRefreshSummaryKey] = useState(0);
 
   if (!resolvedStudy) {
     return (
@@ -114,11 +121,24 @@ function StudyDetailScreen({ study: studyProp, onClose }: StudyDetailScreenProps
                 currentUserId={getCurrentUserId()}
                 onBack={() => setInfoSubView(null)}
               />
+            ) : infoSubView === 'info' ? (
+              <StudySummaryInfoView
+                groupId={resolvedStudy.id}
+                currentUserId={getCurrentUserId()}
+                onBack={() => setInfoSubView(null)}
+                refreshTrigger={refreshSummaryKey}
+                onEdit={(groupId, data) => {
+                  setEditGroupId(groupId);
+                  setEditInitialData(data);
+                  setShowEditStudyModal(true);
+                }}
+              />
             ) : (
               <StudyInfoTab
                 onSelectRow={(id) => {
                   if (id === 'members') setInfoSubView('members');
-                  // rules, info, leave 는 추후 화면 연동
+                  if (id === 'info') setInfoSubView('info');
+                  // rules, leave 는 추후 화면 연동
                 }}
               />
             ))}
@@ -142,6 +162,29 @@ function StudyDetailScreen({ study: studyProp, onClose }: StudyDetailScreenProps
             </Pressable>
           </View>
         </View>
+      </Modal>
+
+      <Modal
+        visible={showEditStudyModal}
+        animationType="slide"
+        onRequestClose={() => setShowEditStudyModal(false)}
+      >
+        <CreateStudyGroupScreen
+          mode="edit"
+          groupId={editGroupId ?? undefined}
+          initialData={editInitialData ?? undefined}
+          onClose={() => {
+            setShowEditStudyModal(false);
+            setEditGroupId(null);
+            setEditInitialData(null);
+          }}
+          onComplete={() => {
+            setShowEditStudyModal(false);
+            setEditGroupId(null);
+            setEditInitialData(null);
+            setRefreshSummaryKey((k) => k + 1);
+          }}
+        />
       </Modal>
     </SafeAreaView>
   );
