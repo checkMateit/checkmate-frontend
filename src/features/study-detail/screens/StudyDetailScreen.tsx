@@ -162,8 +162,12 @@ function StudyDetailScreen({ study: studyProp, onClose }: StudyDetailScreenProps
           {activeTab === 'status' && (
             <StudyStatusSection resetKey={statusResetKey} methods={resolvedStudy.methods} />
           )}
-          {activeTab === 'report' && <StudyReportTab />}
-          {activeTab === 'board' && <StudyBoardTab studyName={resolvedStudy.title} />}
+          {activeTab === 'report' && (
+              <StudyReportTab groupId={String(resolvedStudy.id)} />
+            )}
+          {activeTab === 'board' && (
+              <StudyBoardTab groupId={String(resolvedStudy.id)} studyName={resolvedStudy.title} />
+            )}
           {activeTab === 'info' &&
             (infoSubView === 'members' ? (
               <StudyMemberInfoView

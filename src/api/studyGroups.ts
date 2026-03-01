@@ -125,3 +125,29 @@ export const leaveStudyGroup = (groupId: string | number) =>
 export type StudyGroupJoinRes = { groupId: number; joinedAt: string };
 export const joinStudyGroup = (groupId: string | number) =>
   apiClient.post<ApiResponse<StudyGroupJoinRes>>(`${ENDPOINTS.studyGroups}/${groupId}/join`);
+
+/** GET /study-groups/{groupId}/report — 인증 현황 리포트. api-study-group-report.md */
+export type VerificationReportMemberStat = {
+  userId: string;
+  role: string;
+  fulfilledCount: number;
+  opportunityCount: number;
+  /** 인증률 0~100, 소수 둘째 자리 반올림 */
+  percentage: number;
+};
+
+export type VerificationReportRes = {
+  startDate: string;
+  endDate: string;
+  opportunityCount: number;
+  members: VerificationReportMemberStat[];
+};
+
+export const fetchVerificationReport = (
+  groupId: string | number,
+  params?: { endDate?: string },
+) =>
+  apiClient.get<ApiResponse<VerificationReportRes>>(
+    `${ENDPOINTS.studyGroups}/${groupId}/report`,
+    { params: params?.endDate != null ? { endDate: params.endDate } : undefined },
+  );

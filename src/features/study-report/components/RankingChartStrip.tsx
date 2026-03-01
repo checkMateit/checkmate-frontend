@@ -28,7 +28,9 @@ function RankingChartStrip({ items }: RankingChartStripProps) {
           </View>
           <Image source={item.profile} style={styles.profile} />
           <Text style={styles.chartName}>{item.name}</Text>
-          <Text style={styles.chartScore}>{item.percent}%</Text>
+          <Text style={styles.chartScore}>
+            {Number(item.percent).toFixed(1)}%
+          </Text>
           <Image source={item.badge} style={styles.badge} />
           <View style={styles.badgeTag}>
             <Text style={styles.badgeTagText}>{item.tag}</Text>
