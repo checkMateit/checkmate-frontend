@@ -8,6 +8,8 @@ import {
   Pressable,
   Platform,
   Modal,
+  Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { type DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { colors } from '../../../styles/colors';
@@ -30,6 +32,8 @@ import PeriodPicker from '../components/PeriodPicker';
 import PrimaryActionButton from '../components/PrimaryActionButton';
 import DatePickerModal from '../components/DatePickerModal';
 import CreateStudyGroupResultScreen from './CreateStudyGroupResultScreen';
+import { createStudyGroup } from '../../../api/studyGroups';
+import { buildStudyGroupCreatePayload } from '../../../api/studyGroupCreate';
 
 type CreateStudyGroupScreenProps = {
   onClose: () => void;
@@ -81,6 +85,8 @@ function CreateStudyGroupScreen({ onClose, onComplete }: CreateStudyGroupScreenP
   const [tempTime, setTempTime] = useState(createTime(10, 0));
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [showResult, setShowResult] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [createdGroupId, setCreatedGroupId] = useState<number | null>(null);
   const [activeTimeField, setActiveTimeField] = useState<
     'todoDeadline' | 'todoComplete' | 'rangeStart' | 'rangeEnd'
   >('todoDeadline');
@@ -139,6 +145,7 @@ function CreateStudyGroupScreen({ onClose, onComplete }: CreateStudyGroupScreenP
 
   const handleConfirm = () => {
     setShowResult(false);
+    setCreatedGroupId(null);
     setTimeout(() => {
       if (onComplete) {
         onComplete();
@@ -146,6 +153,55 @@ function CreateStudyGroupScreen({ onClose, onComplete }: CreateStudyGroupScreenP
       }
       onClose();
     }, 300);
+  };
+
+  const handleSubmitComplete = async () => {
+    if (!primaryConfig) {
+      Alert.alert('안내', '인증 방식을 하나 이상 선택해주세요.');
+      return;
+    }
+    if (!name.trim()) {
+      Alert.alert('안내', '스터디 이름을 입력해주세요.');
+      return;
+    }
+    if (days.length === 0) {
+      Alert.alert('안내', '인증 요일을 하나 이상 선택해주세요.');
+      return;
+    }
+    setIsSubmitting(true);
+    try {
+      const payload = buildStudyGroupCreatePayload({
+        title: name,
+        description,
+        activeCategory,
+        thumbnailUri,
+        members,
+        days,
+        startDate,
+        endDate,
+        primaryConfig,
+        secondaryConfig,
+      });
+      const { data } = await createStudyGroup(payload);
+      const ok = data && ((data as { success?: boolean; isSuccess?: boolean }).success === true || data.isSuccess === true);
+      if (ok && data?.data?.groupId != null) {
+        setCreatedGroupId(data.data.groupId);
+        setShowResult(true);
+      } else {
+        Alert.alert('생성 실패', data?.message ?? '스터디 그룹 생성에 실패했습니다.');
+      }
+    } catch (err: unknown) {
+      const message =
+        err && typeof err === 'object' && 'response' in err
+          ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
+          : null;
+      Alert.alert(
+        '오류',
+        message ?? '서버에 연결할 수 없습니다. X-User-Id 설정 및 네트워크를 확인해주세요.',
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const openTimePicker = (
@@ -304,7 +360,16 @@ function CreateStudyGroupScreen({ onClose, onComplete }: CreateStudyGroupScreenP
       </ScrollView>
 
       <View style={styles.bottom}>
-        <PrimaryActionButton label="완료" onPress={() => setShowResult(true)} />
+        <PrimaryActionButton
+          label={isSubmitting ? '생성 중…' : '완료'}
+          onPress={handleSubmitComplete}
+          disabled={isSubmitting}
+        />
+        {isSubmitting ? (
+          <View style={styles.loaderWrap}>
+            <ActivityIndicator size="small" color={colors.primary} />
+          </View>
+        ) : null}
       </View>
 
       <TimePickerModal
@@ -343,6 +408,7 @@ function CreateStudyGroupScreen({ onClose, onComplete }: CreateStudyGroupScreenP
           endDate={endDate}
           days={days}
           imageUri={thumbnailUri}
+          createdGroupId={createdGroupId}
         />
       </Modal>
 
@@ -361,6 +427,10 @@ const styles = StyleSheet.create({
   bottom: {
     paddingHorizontal: 28,
     paddingBottom: 26,
+  },
+  loaderWrap: {
+    marginTop: 8,
+    alignItems: 'center',
   },
   profileRow: {
     flexDirection: 'row',

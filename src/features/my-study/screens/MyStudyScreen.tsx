@@ -1,5 +1,6 @@
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
+  ActivityIndicator,
   Image,
   Modal,
   Pressable,
@@ -16,7 +17,6 @@ import MyStudyItem from '../../study-board/components/MyStudyItem';
 import { colors } from '../../../styles/colors';
 import CreateStudyGroupScreen from './CreateStudyGroupScreen';
 import {
-  categoryOptions,
   formatCategory,
   formatMembers,
   formatMethods,
@@ -24,10 +24,14 @@ import {
   formatPeriod,
   formatAuthTimes,
   formatAuthDays,
-  getMyStudyGroups,
   getStudyGroups,
-  methodOptions,
 } from '../../../mocks/studyGroups';
+import {
+  categoryOptions,
+  methodOptions,
+  mapCardToStudyItem,
+} from '../../../api/studyGroupCard';
+import { fetchMyStudyGroups } from '../../../api/studyGroups';
 import { type HomeStackParamList, type SearchStackParamList } from '../../../navigation/types';
 import { type StudyPreview } from '../../search/types';
 import { type StudyDetail } from '../../study-detail/screens/StudyDetailScreen';
@@ -42,6 +46,8 @@ const mascotTwo = require('../../../assets/character/ch_2.png');
 const mascotThree = require('../../../assets/character/ch_3.png');
 const mascotFour = require('../../../assets/character/ch_4.png');
 const filterIcon = require('../../../assets/icon/filter_icon.png');
+const MASCOTS = [mascotOne, mascotTwo, mascotThree, mascotFour];
+
 type StudyItem = {
   id: string;
   image: number;
@@ -63,22 +69,57 @@ function MyStudyScreen({ onClose, mode = 'my' }: MyStudyScreenProps) {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedMethods, setSelectedMethods] = useState<string[]>([]);
   const [data, setData] = useState<StudyItem[]>(() => {
-    const items = mode === 'search' ? getStudyGroups() : getMyStudyGroups();
-    const mascots = [mascotOne, mascotTwo, mascotThree, mascotFour];
-    return items.map((item, index) => ({
-      id: String(item.group_id),
-      image: mascots[index % mascots.length],
-      tag: formatCategory(item.category),
-      title: item.title,
-      members: formatMembers(item.member_count, item.max_members),
-      time: formatPrimaryAuthTime(item.verify_methods, item.auth_times),
-      methods: formatMethods(item.verify_methods),
-      description: '안녕하세요, 스터디입니다.',
-      period: formatPeriod(item.period),
-      authTimes: formatAuthTimes(item.verify_methods, item.auth_times),
-      authDays: formatAuthDays(item.auth_days),
-    }));
+    if (mode === 'search') {
+      const items = getStudyGroups();
+      return items.map((item, index) => ({
+        id: String(item.group_id),
+        image: MASCOTS[index % MASCOTS.length],
+        tag: formatCategory(item.category),
+        title: item.title,
+        members: formatMembers(item.member_count, item.max_members),
+        time: formatPrimaryAuthTime(item.verify_methods, item.auth_times),
+        methods: formatMethods(item.verify_methods),
+        description: '안녕하세요, 스터디입니다.',
+        period: formatPeriod(item.period),
+        authTimes: formatAuthTimes(item.verify_methods, item.auth_times),
+        authDays: formatAuthDays(item.auth_days),
+      }));
+    }
+    return [];
   });
+  const [loadingMy, setLoadingMy] = useState(mode === 'my');
+  const [errorMy, setErrorMy] = useState<string | null>(null);
+
+  const loadMyStudyGroups = useCallback(async () => {
+    if (mode !== 'my') return;
+    setLoadingMy(true);
+    setErrorMy(null);
+    try {
+      const { data: res } = await fetchMyStudyGroups();
+      const ok =
+        res &&
+        ((res as { success?: boolean; isSuccess?: boolean }).success === true || res.isSuccess === true);
+      if (ok && Array.isArray(res.data)) {
+        const list = res.data.map((card, i) =>
+          mapCardToStudyItem(card, i, MASCOTS),
+        ) as StudyItem[];
+        setData(list);
+      } else {
+        setData([]);
+      }
+    } catch {
+      setErrorMy('목록을 불러오지 못했어요.');
+      setData([]);
+    } finally {
+      setLoadingMy(false);
+    }
+  }, [mode]);
+
+  useEffect(() => {
+    if (mode === 'my') {
+      loadMyStudyGroups();
+    }
+  }, [mode, loadMyStudyGroups]);
 
   const filteredData = useMemo(() => {
     return data.filter((item) => {
@@ -154,46 +195,59 @@ function MyStudyScreen({ onClose, mode = 'my' }: MyStudyScreenProps) {
   };
 
   return (
-    <>
+    <View style={styles.wrapper}>
       <SafeAreaView style={styles.root}>
-        <DraggableFlatList
-          data={filteredData}
-          keyExtractor={(item) => item.id}
-          onDragEnd={({ data: next }) => setData(next)}
-          contentContainerStyle={styles.scrollContent}
-          ListHeaderComponent={
-            <View>
-              <MyStudyHeader onClose={onClose} />
-              <View style={styles.createSection}>
-                <Pressable style={styles.createButton} onPress={() => setShowCreateStudy(true)}>
-                  <Text style={styles.createText}>스터디 만들기</Text>
-                  <Text style={styles.createPlusText}>+</Text>
-                </Pressable>
+        {mode === 'my' && loadingMy ? (
+          <View style={styles.loadingRoot}>
+            <MyStudyHeader onClose={onClose} />
+            <ActivityIndicator size="large" color={colors.primary} style={styles.loader} />
+            <Text style={styles.loadingText}>내 스터디를 불러오는 중…</Text>
+          </View>
+        ) : (
+          <DraggableFlatList
+            data={filteredData}
+            keyExtractor={(item) => item.id}
+            onDragEnd={({ data: next }) => setData(next)}
+            contentContainerStyle={styles.scrollContent}
+            ListHeaderComponent={
+              <View>
+                <MyStudyHeader onClose={onClose} />
+                {mode === 'my' && errorMy ? (
+                  <View style={styles.errorWrap}>
+                    <Text style={styles.errorText}>{errorMy}</Text>
+                  </View>
+                ) : null}
+                <View style={styles.createSection}>
+                  <Pressable style={styles.createButton} onPress={() => setShowCreateStudy(true)}>
+                    <Text style={styles.createText}>스터디 만들기</Text>
+                    <Text style={styles.createPlusText}>+</Text>
+                  </Pressable>
+                </View>
+                <View style={styles.filterRow}>
+                  <Pressable style={styles.filterChip} onPress={() => setShowFilter(true)}>
+                    <Text style={styles.filterText}>필터</Text>
+                    <Image source={filterIcon} style={styles.filterIcon} />
+                  </Pressable>
+                </View>
+                <View style={styles.divider} />
               </View>
-              <View style={styles.filterRow}>
-                <Pressable style={styles.filterChip} onPress={() => setShowFilter(true)}>
-                  <Text style={styles.filterText}>필터</Text>
-                  <Image source={filterIcon} style={styles.filterIcon} />
-                </Pressable>
-              </View>
-              <View style={styles.divider} />
-            </View>
-          }
-          renderItem={({ item, drag }: RenderItemParams<StudyItem>) => (
-            <MyStudyItem
-              image={item.image}
-              tag={item.tag}
-              title={item.title}
-              members={item.members}
-              time={item.time}
-              methods={item.methods}
-              authTimes={item.authTimes}
-              authDays={item.authDays}
-              onDrag={drag}
-              onPress={() => handlePressStudy(item)}
-            />
-          )}
-        />
+            }
+            renderItem={({ item, drag }: RenderItemParams<StudyItem>) => (
+              <MyStudyItem
+                image={item.image}
+                tag={item.tag}
+                title={item.title}
+                members={item.members}
+                time={item.time}
+                methods={item.methods}
+                authTimes={item.authTimes}
+                authDays={item.authDays}
+                onDrag={drag}
+                onPress={() => handlePressStudy(item)}
+              />
+            )}
+          />
+        )}
       </SafeAreaView>
       <Modal
         visible={showCreateStudy}
@@ -207,6 +261,7 @@ function MyStudyScreen({ onClose, mode = 'my' }: MyStudyScreenProps) {
           }}
           onComplete={() => {
             setShowCreateStudy(false);
+            if (mode === 'my') loadMyStudyGroups();
             setTimeout(() => {
               onClose();
             }, 300);
@@ -270,14 +325,39 @@ function MyStudyScreen({ onClose, mode = 'my' }: MyStudyScreenProps) {
           </View>
         </View>
       </Modal>
-    </>
+    </View>
   );
 }
 
+
 const styles = StyleSheet.create({
+  wrapper: {
+    flex: 1,
+  },
   root: {
     flex: 1,
     backgroundColor: colors.background,
+  },
+  loadingRoot: {
+    flex: 1,
+    paddingTop: 8,
+  },
+  loader: {
+    marginTop: 24,
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 14,
+    color: colors.textSecondary,
+    textAlign: 'center',
+  },
+  errorWrap: {
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+  },
+  errorText: {
+    fontSize: 13,
+    color: colors.textSecondary,
   },
   scrollContent: {
     paddingBottom: 32,

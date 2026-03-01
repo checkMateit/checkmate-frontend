@@ -1,5 +1,6 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
+  ActivityIndicator,
   Dimensions,
   Image,
   ImageBackground,
@@ -9,7 +10,7 @@ import {
   StyleSheet,
   Text,
   View,
-  Pressable
+  Pressable,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -24,17 +25,8 @@ import NotificationScreen from '../../notification/screens/NotificationScreen';
 import MyStudyScreen from '../../my-study/screens/MyStudyScreen';
 import { type StudyDetail } from '../../study-detail/screens/StudyDetailScreen';
 import { type StudyPreview } from '../../search/types';
-import {
-  formatCategory,
-  formatMembers,
-  formatMethods,
-  formatPrimaryAuthTime,
-  formatPeriod,
-  formatAuthTimes,
-  formatAuthDays,
-  getMyStudyGroups,
-  getStudyGroups,
-} from '../../../mocks/studyGroups';
+import { fetchMyStudyGroups, fetchRecommendedStudyGroups } from '../../../api/studyGroups';
+import { mapCardToStudyDetail } from '../../../api/studyGroupCard';
 const rightIcon = require('../../../assets/icon/right_arrow.png');
 const backgroundSource = require('../../../assets/image/background.png');
 const emptyCardBg = require('../../../assets/image/linear_bg.png');
@@ -45,6 +37,7 @@ const studyMascotTwo = require('../../../assets/character/ch_2.png');
 const studyMascotThree = require('../../../assets/character/ch_3.png');
 const studyMascotFour = require('../../../assets/character/ch_4.png');
 const emptyHeroMascot = require('../../../assets/character/ch_3.png');
+const MASCOTS = [studyMascotOne, studyMascotTwo, studyMascotThree, studyMascotFour];
 const { width: bgWidth, height: bgHeight } = Image.resolveAssetSource(backgroundSource);
 const HEADER_HEIGHT = 40;
 const HERO_TEXT_TOP = 12;
@@ -62,55 +55,84 @@ function HomeScreen() {
   const [headerWidth, setHeaderWidth] = useState(0);
   const [helpIconLayout, setHelpIconLayout] = useState({ x: 0, width: 0 });
   const [helpBubbleWidth, setHelpBubbleWidth] = useState(0);
+  const [myStudies, setMyStudies] = useState<StudyDetail[]>([]);
+  const [loadingMyStudies, setLoadingMyStudies] = useState(true);
+  const [errorMyStudies, setErrorMyStudies] = useState<string | null>(null);
+  const [recommendedStudies, setRecommendedStudies] = useState<StudyDetail[]>([]);
+  const [loadingRecommended, setLoadingRecommended] = useState(true);
   const { notifications } = useNotificationCenter();
 
-  const recommendStudies = useMemo(() => {
-    const items = getStudyGroups();
-    const mascots = [studyMascotOne, studyMascotTwo, studyMascotThree, studyMascotFour];
-    return items.slice(0, 3).map((item, index) => ({
-      id: String(item.group_id),
-      tag: formatCategory(item.category),
-      members: formatMembers(item.member_count, item.max_members),
-      title: item.title,
-      time: formatPrimaryAuthTime(item.verify_methods, item.auth_times),
-      method: formatMethods(item.verify_methods).join(', '),
-      authTimes: formatAuthTimes(item.verify_methods, item.auth_times),
-      authDays: formatAuthDays(item.auth_days),
-      image: mascots[index % mascots.length],
-    }));
+  const loadMyStudyGroups = useCallback(async () => {
+    setLoadingMyStudies(true);
+    setErrorMyStudies(null);
+    try {
+      const { data } = await fetchMyStudyGroups();
+      const ok = data && ((data as { success?: boolean; isSuccess?: boolean }).success === true || data.isSuccess === true);
+      if (ok && Array.isArray(data.data)) {
+        const list = data.data.map((card, i) => mapCardToStudyDetail(card, i, MASCOTS));
+        setMyStudies(list);
+      } else {
+        setMyStudies([]);
+      }
+    } catch (err) {
+      setMyStudies([]);
+      let msg = '목록을 불러오지 못했어요';
+      if (err && typeof err === 'object' && 'response' in err) {
+        const res = (err as { response?: { status?: number; data?: { message?: string } } }).response;
+        if (res?.status === 401) msg = '로그인 정보가 없거나 만료됐어요. (X-User-Id 확인)';
+        else if (res?.data?.message) msg = res.data.message;
+      } else if (err && typeof err === 'object' && 'message' in err) {
+        msg = String((err as Error).message);
+      }
+      setErrorMyStudies(msg);
+    } finally {
+      setLoadingMyStudies(false);
+    }
   }, []);
 
-  const toStudyDetail = (item: typeof recommendStudies[number]): StudyDetail => ({
-    id: item.id,
-    tag: item.tag,
-    title: item.title,
-    members: item.members,
-    description: '스터디 설명',
-    schedule: item.time,
-    count: '0회 인증',
-    methods: item.method.split(',').map((value) => value.trim()),
-    authTimes: item.authTimes,
-    authDays: item.authDays,
-    period: formatPeriod('2026-02-04~2026-03-04'),
-    image: item.image,
-    statusText: '인증 미완료',
-    statusVariant: 'neutral',
-    statusIcons: [],
-    mascotSource: item.image,
-  });
+  useEffect(() => {
+    loadMyStudyGroups();
+  }, [loadMyStudyGroups]);
 
-  const toStudyPreview = (item: typeof recommendStudies[number]): StudyPreview => ({
-    id: item.id,
-    tag: item.tag,
-    title: item.title,
-    members: item.members,
-    description: '안녕하세요, 스터디입니다.',
-    schedule: item.time,
-    period: formatPeriod('2026-02-04~2026-03-04'),
-    methods: item.method.split(',').map((value) => value.trim()),
-    authTimes: item.authTimes,
-    authDays: item.authDays,
-    image: item.image,
+  const loadRecommendedStudyGroups = useCallback(async () => {
+    setLoadingRecommended(true);
+    try {
+      const { data } = await fetchRecommendedStudyGroups({ size: 10 });
+      const ok =
+        data &&
+        ((data as { isSuccess?: boolean; success?: boolean }).isSuccess === true ||
+          (data as { isSuccess?: boolean; success?: boolean }).success === true);
+      if (ok && Array.isArray(data?.data)) {
+        const list = data.data.map((card, i) =>
+          mapCardToStudyDetail(card, i, MASCOTS),
+        );
+        setRecommendedStudies(list);
+      } else {
+        setRecommendedStudies([]);
+      }
+    } catch {
+      setRecommendedStudies([]);
+    } finally {
+      setLoadingRecommended(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadRecommendedStudyGroups();
+  }, [loadRecommendedStudyGroups]);
+
+  const studyDetailToPreview = (study: StudyDetail): StudyPreview => ({
+    id: study.id,
+    tag: study.tag,
+    title: study.title,
+    members: study.members,
+    description: study.description ?? '',
+    schedule: study.schedule,
+    period: study.period ?? '',
+    methods: study.methods,
+    authTimes: study.authTimes ?? [],
+    authDays: study.authDays,
+    image: study.image,
   });
 
   const bubbleLeft = headerWidth && helpBubbleWidth ? (headerWidth - helpBubbleWidth) / 2 : 0;
@@ -133,62 +155,15 @@ function HomeScreen() {
 
     return unsubscribe;
   }, [navigation]);
-  const studies = useMemo<StudyDetail[]>(() => {
-    const items = getMyStudyGroups();
-    const mascots = [studyMascotOne, studyMascotTwo, studyMascotThree, studyMascotFour];
-    return items.map((item, index) => ({
-      id: String(item.group_id),
-      tag: formatCategory(item.category),
-      title: item.title,
-      members: formatMembers(item.member_count, item.max_members),
-      description: '안녕하세요, 스터디입니다',
-      schedule: formatPrimaryAuthTime(item.verify_methods, item.auth_times),
-      count: '5회 인증',
-      methods: formatMethods(item.verify_methods),
-      authTimes: formatAuthTimes(item.verify_methods, item.auth_times),
-      authDays: formatAuthDays(item.auth_days),
-      period: formatPeriod(item.period),
-      image: mascots[index % mascots.length],
-      statusText: (() => {
-        const icons =
-          item.verify_methods.length > 1
-            ? index % 3 === 0
-              ? ['danger', 'danger']
-              : index % 3 === 1
-                ? ['success', 'danger']
-                : ['success', 'success']
-            : index % 2 === 0
-              ? ['danger']
-              : ['success'];
-        const hasSuccess = icons.includes('success');
-        const hasDanger = icons.includes('danger');
-        if (hasSuccess && hasDanger) return '인증 진행중';
-        if (hasSuccess) return '인증 완료';
-        return '인증 미완료';
-      })(),
-      statusVariant: index % 2 === 0 ? ('danger' as const) : ('success' as const),
-      statusIcons:
-        item.verify_methods.length > 1
-          ? index % 3 === 0
-            ? ['danger', 'danger']
-            : index % 3 === 1
-              ? ['success', 'danger']
-              : ['success', 'success']
-          : [index % 2 === 0 ? 'danger' : 'success'],
-      mascotSource: mascots[index % mascots.length],
-    }));
-  }, []);
-
-
 
   const studyPages = useMemo(() => {
-    const pages = [];
-    for (let i = 0; i < studies.length; i += 2) {
-      pages.push(studies.slice(i, i + 2));
+    const pages: StudyDetail[][] = [];
+    for (let i = 0; i < myStudies.length; i += 2) {
+      pages.push(myStudies.slice(i, i + 2));
     }
     return pages;
-  }, [studies]);
-  const hasStudies = studies.length > 0;
+  }, [myStudies]);
+  const hasStudies = myStudies.length > 0;
   const heroHeightEmpty = heroHeight;
   const activeHeroHeight = hasStudies ? heroHeight : heroHeightEmpty;
 
@@ -241,10 +216,15 @@ function HomeScreen() {
             ]}
           >
             <View style={styles.heroTextBlock}>
-              {hasStudies ? (
+              {loadingMyStudies ? (
                 <>
                   <Text style={styles.heroLine}>승연 메이트님</Text>
-                  <Text style={styles.heroLine}>오늘은 스터디 2개가 있어요!</Text>
+                  <Text style={styles.heroLine}>스터디를 불러오는 중…</Text>
+                </>
+              ) : hasStudies ? (
+                <>
+                  <Text style={styles.heroLine}>승연 메이트님</Text>
+                  <Text style={styles.heroLine}>오늘은 스터디 {myStudies.length}개가 있어요!</Text>
                 </>
               ) : (
                 <>
@@ -254,14 +234,18 @@ function HomeScreen() {
               )}
             </View>
 
-            {hasStudies ? (
+            {!loadingMyStudies && hasStudies ? (
               <Pressable style={styles.heroCtaRow} onPress={() => setShowMyStudies(true)}>
                 <Text style={styles.heroCta}>스터디 전체 보기</Text>
                 <Image source={rightIcon} style={styles.heroCtaIcon} />
               </Pressable>
             ) : null}
 
-            {!hasStudies ? (
+            {errorMyStudies ? (
+              <Text style={styles.heroError} numberOfLines={2}>{errorMyStudies}</Text>
+            ) : null}
+
+            {!hasStudies && !loadingMyStudies ? (
               <>
                 <View style={styles.emptyDots}>
                   {[0, 1, 2].map((dotIndex) => (
@@ -274,7 +258,13 @@ function HomeScreen() {
           </View>
         </View>
 
-        {hasStudies ? (
+        {loadingMyStudies ? (
+          <View style={styles.heroCardsWrap}>
+            <View style={styles.loadingWrap}>
+              <ActivityIndicator size="large" color={colors.primary} />
+            </View>
+          </View>
+        ) : hasStudies ? (
           <>
             <View style={styles.heroCardsWrap}>
               <ScrollView
@@ -391,28 +381,41 @@ function HomeScreen() {
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.recommendRow}
           >
-            {recommendStudies.map((item) => (
-              <RecommendStudyCard
-                key={item.id}
-                tag={item.tag}
-                members={item.members}
-                title={item.title}
-                time={item.time}
-                method={item.method}
-                authTimes={item.authTimes}
-                onPress={() => {
-                  const parent = navigation.getParent<BottomTabNavigationProp<BottomTabParamList>>();
-                  if (parent) {
-                    parent.navigate('Search', {
-                      screen: 'StudyJoin',
-                      params: { study: toStudyPreview(item) },
-                    });
-                  } else {
-                    navigation.navigate('StudyDetail', { study: toStudyDetail(item) });
-                  }
-                }}
-              />
-            ))}
+            {loadingRecommended ? (
+              <View style={styles.recommendLoadingWrap}>
+                <ActivityIndicator size="small" color={colors.primary} />
+                <Text style={styles.recommendLoadingText}>추천 스터디 불러오는 중...</Text>
+              </View>
+            ) : recommendedStudies.length === 0 ? (
+              <View style={styles.recommendEmptyWrap}>
+                <Text style={styles.recommendEmptyText}>
+                  로그인하면 나에게 맞는 추천 스터디를 볼 수 있어요
+                </Text>
+              </View>
+            ) : (
+              recommendedStudies.map((study) => (
+                <RecommendStudyCard
+                  key={study.id}
+                  tag={study.tag}
+                  members={study.members}
+                  title={study.title}
+                  time={study.schedule}
+                  method={study.methods.join(', ')}
+                  authTimes={study.authTimes}
+                  onPress={() => {
+                    const parent = navigation.getParent<BottomTabNavigationProp<BottomTabParamList>>();
+                    if (parent) {
+                      parent.navigate('Search', {
+                        screen: 'StudyJoin',
+                        params: { study: studyDetailToPreview(study) },
+                      });
+                    } else {
+                      navigation.navigate('StudyDetail', { study });
+                    }
+                  }}
+                />
+              ))
+            )}
           </ScrollView>
         </View>
 
@@ -434,7 +437,12 @@ function HomeScreen() {
         animationType="slide"
         onRequestClose={() => setShowMyStudies(false)}
       >
-        <MyStudyScreen onClose={() => setShowMyStudies(false)} />
+        <MyStudyScreen
+          onClose={() => {
+            setShowMyStudies(false);
+            loadMyStudyGroups();
+          }}
+        />
       </Modal>
 
     </SafeAreaView>
@@ -547,6 +555,17 @@ const styles = StyleSheet.create({
     marginTop: -400,
     paddingHorizontal: 0,
   },
+  loadingWrap: {
+    paddingVertical: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  heroError: {
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.95)',
+    marginTop: 6,
+    paddingHorizontal: 4,
+  },
   emptyStudyWrap: {
     marginTop: -330,
     marginBottom: 20,
@@ -654,6 +673,26 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     gap: 12,
     paddingBottom: 7,
+  },
+  recommendLoadingWrap: {
+    paddingVertical: 32,
+    paddingHorizontal: 24,
+    alignItems: 'center',
+    gap: 10,
+  },
+  recommendLoadingText: {
+    fontSize: 14,
+    color: colors.textSecondary,
+  },
+  recommendEmptyWrap: {
+    paddingVertical: 32,
+    paddingHorizontal: 24,
+    alignItems: 'center',
+  },
+  recommendEmptyText: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    textAlign: 'center',
   },
   ad: {
     marginTop: 16,
