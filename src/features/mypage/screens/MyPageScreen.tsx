@@ -18,6 +18,9 @@ import CategorySettingsScreen from './CategorySettingScreen';
 import { getMyInfo } from '../../../api/users';
 import { UserResponse } from '../../../types/users';
 import { getPointBalance } from '../../../api/point';
+import NoticeScreen from '../../notice/screens/NoticeScreen';
+import AdminNoticeScreen from '../../notice/screens/AdminNoticeScreen';
+import { apiClient } from '../../../api';
 
 function MyPageScreen() {
   const [showSettings, setShowSettings] = useState(false);
@@ -28,12 +31,24 @@ function MyPageScreen() {
   const [showInquiryWrite, setShowInquiryWrite] = useState(false);
   const [showCategorySettings, setShowCategorySettings] = useState(false);
   const [showSocialSettings, setShowSocialSettings] = useState(false);
+  const [showNotice, setShowNotice] = useState(false);
   
   const [userInfo, setUserInfo] = useState<UserResponse | null>(null);
   const [balance, setBalance] = useState<number>(0);
   const [loading, setLoading] = useState(true);
 
+  const [role, setRole] = useState<string | null>(null);
+  const [isReady, setIsReady] = useState(false);
+
   useEffect(() => {
+    try {
+      const userRole = (apiClient.defaults.headers['X-User-Role'] || 
+                        apiClient.defaults.headers.common['X-User-Role']) as string;
+      setRole(userRole || 'USER');
+    } catch (e) {
+      setRole('USER');
+    }
+
     const fetchAllData = async () => {
       try {
         setLoading(true);
@@ -53,12 +68,13 @@ function MyPageScreen() {
         console.error('데이터 로드 실패:', error);
       } finally {
         setLoading(false);
+        setIsReady(true);
       }
     };
     fetchAllData();
   }, []);
 
-    if (loading) {
+  if (loading || !isReady) {
     return (
       <SafeAreaView style={[styles.container, styles.center]}>
         <ActivityIndicator size="large" color={colors.primary} />
@@ -70,7 +86,7 @@ function MyPageScreen() {
   if (showPointsHistory) return <PointsHistoryScreen onClose={() => setShowPointsHistory(false)} />;
   if (showPointsShop) return <PointsShopScreen onClose={() => setShowPointsShop(false)} />;
   if (showPointsExchange) return <PointsExchangeScreen onClose={() => setShowPointsExchange(false)} />;
-  if (showCategorySettings) {return <CategorySettingsScreen onClose={() => setShowCategorySettings(false)} />;}
+  if (showCategorySettings) return <CategorySettingsScreen onClose={() => setShowCategorySettings(false)} />;
   if (showSocialSettings) return <SocialAccountSettingScreen onClose={() => setShowSocialSettings(false)} />;
   
   if (showInquiryWrite) {
@@ -91,7 +107,11 @@ function MyPageScreen() {
     );
   }
 
-
+  if (showNotice) {
+    return role === 'ADMIN' 
+      ? <AdminNoticeScreen onClose={() => setShowNotice(false)} />
+      : <NoticeScreen onClose={() => setShowNotice(false)} />;
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -121,7 +141,19 @@ function MyPageScreen() {
               }
             ]} 
           />
-          <MyPageSection title="고객지원" rows={[{ left: '공지사항', right: '이용안내' }, { left: '문의하기', onPress: () => setShowInquiryList(true) }]} />
+          </View>
+          <View style={styles.sectionGroup}>
+          <MyPageSection 
+            title="고객지원" 
+            rows={[
+              { 
+                left: '공지사항', 
+                right: '이용안내', 
+                onPress: () => setShowNotice(true) 
+              }, 
+              { left: '문의하기', onPress: () => setShowInquiryList(true) }
+            ]} 
+          />
         </View>
       </ScrollView>
     </SafeAreaView>

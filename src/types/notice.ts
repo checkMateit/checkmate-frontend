@@ -2,6 +2,7 @@ export interface NoticeListItem {
   notice_id: number;
   title: string;
   view_count: number;
+  created_at: string;
 }
 
 export interface PageInfo {
@@ -21,4 +22,15 @@ export interface NoticeDetail {
   title: string;
   content: string;
   view_count: number;
+  created_at: string;
+}
+
+export interface NoticeCreateReq {
+  title: string;
+  content: string;
+}
+
+export interface NoticeUpdateReq {
+  title?: string;
+  content?: string;
 }
