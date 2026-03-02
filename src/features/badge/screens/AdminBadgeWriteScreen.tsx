@@ -6,7 +6,6 @@ import { createBadge, updateBadge } from '../../../api/badges';
 const AdminBadgeWriteScreen = ({ editData, onClose }: any) => {
   const [name, setName] = useState(editData?.name || '');
   const [description, setDescription] = useState(editData?.description || '');
-  // DB의 imageUrl 필드에 'badge_1' 같은 키값을 저장함
   const [selectedKey, setSelectedKey] = useState(editData?.imageUrl || 'badge_1');
 
   const handleSubmit = async () => {
@@ -17,7 +16,7 @@ const AdminBadgeWriteScreen = ({ editData, onClose }: any) => {
       } else {
         await createBadge(payload);
       }
-      onClose(true); // 성공 시 리스트 새로고침
+      onClose(true);
     } catch (e) {
       Alert.alert('오류', '저장 실패');
     }

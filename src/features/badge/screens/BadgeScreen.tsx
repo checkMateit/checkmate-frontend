@@ -16,7 +16,6 @@ const BadgeScreen = ({ onClose }: { onClose: () => void }) => {
       setLoading(true);
       const res = await getMyBadges();
       if (res.data?.data?.badges) {
-        // ✅ 1. 데이터 정렬: 장착된 뱃지(isEquipped)를 맨 앞으로
         const sortedData = [...res.data.data.badges].sort((a, b) => {
           const aEquipped = a.isEquipped || (a as any).equipped;
           const bEquipped = b.isEquipped || (b as any).equipped;
@@ -38,7 +37,7 @@ const BadgeScreen = ({ onClose }: { onClose: () => void }) => {
     try {
       await equipBadge(badgeUserId); //
       Alert.alert('성공', '뱃지가 장착되었습니다.');
-      fetchBadges(); // 장착 후 리스트 새로고침 및 재정렬
+      fetchBadges();
     } catch (error) {
       console.error('장착 에러 상세:', error);
       Alert.alert('오류', '뱃지 장착에 실패했습니다.');
@@ -46,18 +45,15 @@ const BadgeScreen = ({ onClose }: { onClose: () => void }) => {
   };
 
   const renderBadge = ({ item }: { item: MyBadgeItem }) => {
-    // ✅ 2. 변수명 안전하게 처리 (서버 응답에 맞춰 체크)
     const isEquipped = item.isEquipped || (item as any).equipped;
 
     return (
       <Pressable 
-        // ✅ 3. 장착 시에만 equippedCard 스타일 적용 (흰 배경 + 그림자)
         style={[styles.badgeCard, isEquipped && styles.equippedCard]}
         onPress={() => {
           if (item.badgeUserId) {
             handleEquip(item.badgeUserId, isEquipped);
           } else {
-            // 데이터 정합성 문제 발생 시 로그 확인용
             console.log("ID 누락 데이터:", item);
             Alert.alert('오류', '뱃지 정보가 올바르지 않습니다.');
           }
@@ -66,7 +62,6 @@ const BadgeScreen = ({ onClose }: { onClose: () => void }) => {
         <View style={styles.imageContainer}>
           <Image 
             source={BADGE_IMAGE_MAP[item.imageUrl] || BADGE_IMAGE_MAP['default']} 
-            // ✅ 4. 미장착 시에만 lockedBadge 스타일 (흐리게) 적용
             style={[styles.badgeImage, !isEquipped && styles.lockedBadge]} 
           />
           {isEquipped && <View style={styles.equipTag} />}
@@ -113,7 +108,7 @@ const styles = StyleSheet.create({
 
   listContent: { 
     paddingBottom: 30,
-    backgroundColor: '#F8FBF9', // 약간의 배경색을 주어 흰색 카드와 대비시킴
+    backgroundColor: '#F8FBF9',
     borderRadius: 16,
     padding: 10,
   },
@@ -125,8 +120,6 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
     borderRadius: 12,
   },
-  
-  // ✅ 장착된 뱃지 카드: 배경을 흰색으로 하고 테두리와 그림자로 밝게 강조
   equippedCard: { 
     backgroundColor: '#FFFFFF', 
     borderWidth: 1,
@@ -148,7 +141,6 @@ const styles = StyleSheet.create({
   },
   badgeImage: { width: '100%', height: '100%', resizeMode: 'contain' },
   
-  // ✅ 미장착 뱃지 이미지: grayscale 에러 방지를 위해 opacity만 사용
   lockedBadge: { 
     opacity: 0.3, 
   },
