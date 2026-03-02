@@ -25,6 +25,37 @@ export type VerificationPhotoSubmitRes = {
   filePaths: string[];
 };
 
+/** 멤버별 사진 인증 기록 (업로드한 사진 제목 = 상황) */
+export type PhotoVerificationRecordRes = {
+  userId: string;
+  nickname: string | null;
+  verificationDate: string;
+  submittedAt: string | null;
+  filePaths: string[];
+  /** 사진별 제목(상황). 없으면 filePaths에서 파일명(확장자 제외)으로 표시 */
+  titles?: string[];
+};
+
+/** GET .../photo/records — 해당 날짜 멤버별 사진 인증 목록 (현황 탭용) */
+export const getPhotoVerificationRecords = (
+  groupId: string | number,
+  slot: number,
+  verificationDate?: string,
+) =>
+  apiClient.get<ApiResponse<PhotoVerificationRecordRes[]>>(
+    `${verificationPath(groupId, slot)}/photo/records`,
+    {
+      params: verificationDate ? { verificationDate } : undefined,
+    },
+  );
+
+/** 파일 경로/이름에서 상황명 추출 (확장자 제외). 업로드한 사진 제목 = 상황 */
+export function situationFromFilePath(filePath: string): string {
+  const name = typeof filePath === 'string' ? filePath.split('/').pop() ?? filePath : '';
+  const base = name.replace(/\.[^.]+$/, '').trim();
+  return base || '사진';
+}
+
 /** POST .../photo — multipart/form-data, param "files" */
 export const submitPhotoVerification = (
   groupId: string | number,

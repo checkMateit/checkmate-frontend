@@ -54,17 +54,25 @@ export type StudyGroupDetailRes = {
   endDate: string | null;
   durationWeeks: number | null;
   isIndefinite: boolean;
-  verificationRules: Array<{
-    slot: number;
-    endTime: string;
-    checkEndTime: string | null;
-    daysOfWeek: string[];
-    timezone: string;
-    frequency: { unit: string; requiredCnt: number };
-    exemption: unknown;
-    methodCode: string;
-  }>;
+  verificationRules: VerificationRuleRes[];
   hashtags: string[];
+};
+
+/** 상세 규칙용 규칙 한 건 (methodDetails는 백엔드가 반환 시 포함) */
+export type VerificationRuleRes = {
+  slot: number;
+  endTime: string;
+  checkEndTime: string | null;
+  daysOfWeek: string[];
+  timezone: string;
+  frequency: { unit: string; requiredCnt: number };
+  exemption: unknown;
+  methodCode: string;
+  methodDetails?: {
+    photo?: { min_files?: number; max_files?: number; max_size?: number; allowed_extensions?: string[] };
+    gps?: { radius_mode?: string; locations?: Array<{ name?: string; latitude?: number; longitude?: number }> };
+    github?: { repo_url?: string; branch?: string };
+  };
 };
 
 /** GET /study-groups/{groupId}/members 응답 한 건 */
@@ -92,6 +100,16 @@ export const fetchRecommendedStudyGroups = (params?: { size?: number }) =>
 /** GET /study-groups/{groupId} — 스터디 그룹 상세 */
 export const fetchStudyGroupDetail = (groupId: string | number) =>
   apiClient.get<ApiResponse<StudyGroupDetailRes>>(`${ENDPOINTS.studyGroups}/${groupId}`);
+
+/** GET /study-groups/{groupId} — 상세 규칙용 verificationRules만 반환 (상세 규칙 뷰용) */
+export const fetchVerificationRules = (groupId: string | number) =>
+  fetchStudyGroupDetail(groupId).then((res) => ({
+    ...res,
+    data: {
+      ...res.data,
+      data: res.data?.data?.verificationRules ?? [],
+    },
+  }));
 
 /** POST /study-groups. 응답은 ApiResponse<StudyGroupCreateRes> (data.groupId, data.createdAt) */
 export const createStudyGroup = (payload: Record<string, unknown>) =>
