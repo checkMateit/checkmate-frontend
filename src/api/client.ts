@@ -11,7 +11,7 @@ export const apiClient = axios.create({
     Accept: 'application/json',
     'Content-Type': 'application/json',
     Authorization:
-      'Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJmYmQxYTkyMS00ZGZmLTRkYzYtODQxZi1hNzUwMTcwYmVhOWMiLCJyb2xlIjoiQURNSU4iLCJpYXQiOjE3NzI0MTk1MDEsImV4cCI6MTc3MjQyMzEwMX0.TvrWv3tazbpR6HxlXyz42kSRaw-4b-8rtLX9YAPB8mEodt2bcwIOd0jV0_6I842URtL2-Rcu6t-8swxwiLTbqA',
+      'Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJmYmQxYTkyMS00ZGZmLTRkYzYtODQxZi1hNzUwMTcwYmVhOWMiLCJyb2xlIjoiQURNSU4iLCJpYXQiOjE3NzI0MzY3MTgsImV4cCI6MTc3MjQ0MDMxOH0.NO0RxDaIiJf-1P-ISiw2agR_r_2j5qyKdlRYz-WJvG5GDg3SyeEtYY7wh04Z_B3JHb-AjDZMLcsCD67hU8qmhw',
     'X-User-Id': DEFAULT_USER_ID,
     'X-User-Role': 'ADMIN',
   },

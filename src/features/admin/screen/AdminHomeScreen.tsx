@@ -16,6 +16,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { apiClient } from '../../../api';
 import AdminBadgeScreen from '../../badge/screens/AdminBadgeScreen';
+import AdminStoreScreen from '../../points/screens/AdminStoreScreen'; // 1. 경로에 맞춰 import 추가
 
 const cartIcon = require('../../../assets/icon/shop_icon.png');
 const badgeIcon = require('../../../assets/badge/badge_2.png');
@@ -25,7 +26,8 @@ const arrowDown = require('../../../assets/icon/right_arrow.png');
 function AdminHomeScreen() {
   const insets = useSafeAreaInsets();
   
-  const [currentView, setCurrentView] = useState<'HOME' | 'BADGE'>('HOME');
+  // 2. 'STORE' 타입을 추가하여 뷰 상태 관리
+  const [currentView, setCurrentView] = useState<'HOME' | 'BADGE' | 'STORE'>('HOME');
   const [inquiries, setInquiries] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -98,110 +100,120 @@ function AdminHomeScreen() {
     }
   };
 
+  // 3. 조건부 렌더링 로직 (BADGE와 STORE 추가)
+  if (currentView === 'BADGE') {
+    return <AdminBadgeScreen onClose={() => setCurrentView('HOME')} />;
+  }
+
+  if (currentView === 'STORE') {
+    return <AdminStoreScreen onClose={() => setCurrentView('HOME')} />;
+  }
+
   return (
     <View style={{ flex: 1 }}>
-      {currentView === 'BADGE' ? (
-        <AdminBadgeScreen onClose={() => setCurrentView('HOME')} />
-      ) : (
-        <View style={[styles.root, { paddingTop: insets.top }]}>
-          <View style={styles.topSection}>
-            <View style={styles.header}>
-              <Text style={styles.logo}>Checkmate Admin</Text>
-              <View style={styles.headerIcons}>
-                <Pressable hitSlop={10} style={styles.iconButton}>
-                  <Image source={cartIcon} style={styles.topIcon} />
-                  <Text style={styles.iconLabel}>상품 관리</Text>
-                </Pressable>
-                <Pressable 
-                  hitSlop={10} 
-                  style={styles.iconButton}
-                  onPress={() => setCurrentView('BADGE')} 
-                >
-                  <Image source={badgeIcon} style={styles.topIcon} />
-                  <Text style={styles.iconLabel}>뱃지 관리</Text>
-                </Pressable>
-              </View>
-            </View>
-            <View style={styles.welcomeRow}>
-              <Text style={styles.welcomeText}>안녕하세요,{"\n"}관리자 모드입니다</Text>
-              <Image source={adminChar} style={styles.charImage} />
-            </View>
-          </View>
-
-          <View style={styles.bottomSection}>
-            <Text style={styles.sectionTitle}>사용자 문의 관리</Text>
-            {loading ? (
-              <ActivityIndicator size="large" color="#77E48C" style={{ marginTop: 50 }} />
-            ) : (
-              <ScrollView 
-                contentContainerStyle={styles.scrollPadding}
-                refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#77E48C" />}
+      <View style={[styles.root, { paddingTop: insets.top }]}>
+        <View style={styles.topSection}>
+          <View style={styles.header}>
+            <Text style={styles.logo}>Checkmate Admin</Text>
+            <View style={styles.headerIcons}>
+              {/* 4. 상품 관리 클릭 시 STORE 뷰로 전환 */}
+              <Pressable 
+                hitSlop={10} 
+                style={styles.iconButton}
+                onPress={() => setCurrentView('STORE')}
               >
-                {inquiries.map((item) => (
-                  <Pressable 
-                    key={item.inquiry_id} 
-                    style={styles.inquiryCard} 
-                    onPress={() => handlePressInquiry(item.inquiry_id)}
-                  >
-                    <View style={{ flex: 1 }}>
-                      <Text style={styles.userId}>NO. {item.inquiry_id}</Text>
-                      <Text style={styles.inquiryTitle} numberOfLines={1}>{item.title}</Text>
-                    </View>
-                    <View style={styles.rightContent}>
-                      <View style={[
-                        styles.statusBadge, 
-                        item.status === 'ANSWERED' ? styles.statusDone : styles.statusWait
-                      ]}>
-                        <Text style={styles.statusText}>
-                          {item.status === 'ANSWERED' ? '답변 완료' : '대기중'}
-                        </Text>
-                      </View>
-                      <Image source={arrowDown} style={styles.arrowIcon} />
-                    </View>
-                  </Pressable>
-                ))}
-              </ScrollView>
-            )}
-          </View>
-
-          <Modal visible={isDetailModalVisible} animationType="slide">
-            <SafeAreaView style={styles.modalRoot}>
-              <View style={styles.modalHeader}>
-                <Pressable onPress={() => setIsDetailModalVisible(false)}>
-                  <Text style={styles.closeText}>취소</Text>
-                </Pressable>
-                <Text style={styles.modalTitle}>문의 답변</Text>
-                <View style={{ width: 40 }} />
-              </View>
-              <ScrollView style={styles.modalContent}>
-                {selectedInquiry && (
-                  <>
-                    <View style={styles.userQuestionBox}>
-                      <Text style={styles.questionTitle}>{selectedInquiry.title}</Text>
-                      <Text style={styles.questionContent}>{selectedInquiry.content}</Text>
-                    </View>
-                    {selectedInquiry.comments?.map((c: any, i: number) => (
-                      <View key={i} style={c.author_type === 'ADMIN' ? styles.adminReply : styles.userAdditional}>
-                        <Text style={styles.commentText}>{c.content}</Text>
-                      </View>
-                    ))}
-                    <TextInput
-                      style={styles.answerInput}
-                      multiline
-                      placeholder="답변 입력..."
-                      value={replyText}
-                      onChangeText={setReplyText}
-                    />
-                  </>
-                )}
-              </ScrollView>
-              <Pressable style={styles.submitButton} onPress={submitAnswer} disabled={isSubmitting}>
-                <Text style={styles.submitButtonText}>답변 저장하기</Text>
+                <Image source={cartIcon} style={styles.topIcon} />
+                <Text style={styles.iconLabel}>상품 관리</Text>
               </Pressable>
-            </SafeAreaView>
-          </Modal>
+              <Pressable 
+                hitSlop={10} 
+                style={styles.iconButton}
+                onPress={() => setCurrentView('BADGE')} 
+              >
+                <Image source={badgeIcon} style={styles.topIcon} />
+                <Text style={styles.iconLabel}>뱃지 관리</Text>
+              </Pressable>
+            </View>
+          </View>
+          <View style={styles.welcomeRow}>
+            <Text style={styles.welcomeText}>안녕하세요,{"\n"}관리자 모드입니다</Text>
+            <Image source={adminChar} style={styles.charImage} />
+          </View>
         </View>
-      )}
+
+        <View style={styles.bottomSection}>
+          <Text style={styles.sectionTitle}>사용자 문의 관리</Text>
+          {loading ? (
+            <ActivityIndicator size="large" color="#77E48C" style={{ marginTop: 50 }} />
+          ) : (
+            <ScrollView 
+              contentContainerStyle={styles.scrollPadding}
+              refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#77E48C" />}
+            >
+              {inquiries.map((item) => (
+                <Pressable 
+                  key={item.inquiry_id} 
+                  style={styles.inquiryCard} 
+                  onPress={() => handlePressInquiry(item.inquiry_id)}
+                >
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.userId}>NO. {item.inquiry_id}</Text>
+                    <Text style={styles.inquiryTitle} numberOfLines={1}>{item.title}</Text>
+                  </View>
+                  <View style={styles.rightContent}>
+                    <View style={[
+                      styles.statusBadge, 
+                      item.status === 'ANSWERED' ? styles.statusDone : styles.statusWait
+                    ]}>
+                      <Text style={styles.statusText}>
+                        {item.status === 'ANSWERED' ? '답변 완료' : '대기중'}
+                      </Text>
+                    </View>
+                    <Image source={arrowDown} style={styles.arrowIcon} />
+                  </View>
+                </Pressable>
+              ))}
+            </ScrollView>
+          )}
+        </View>
+
+        <Modal visible={isDetailModalVisible} animationType="slide">
+          <SafeAreaView style={styles.modalRoot}>
+            <View style={styles.modalHeader}>
+              <Pressable onPress={() => setIsDetailModalVisible(false)}>
+                <Text style={styles.closeText}>취소</Text>
+              </Pressable>
+              <Text style={styles.modalTitle}>문의 답변</Text>
+              <View style={{ width: 40 }} />
+            </View>
+            <ScrollView style={styles.modalContent}>
+              {selectedInquiry && (
+                <>
+                  <View style={styles.userQuestionBox}>
+                    <Text style={styles.questionTitle}>{selectedInquiry.title}</Text>
+                    <Text style={styles.questionContent}>{selectedInquiry.content}</Text>
+                  </View>
+                  {selectedInquiry.comments?.map((c: any, i: number) => (
+                    <View key={i} style={c.author_type === 'ADMIN' ? styles.adminReply : styles.userAdditional}>
+                      <Text style={styles.commentText}>{c.content}</Text>
+                    </View>
+                  ))}
+                  <TextInput
+                    style={styles.answerInput}
+                    multiline
+                    placeholder="답변 입력..."
+                    value={replyText}
+                    onChangeText={setReplyText}
+                  />
+                </>
+              )}
+            </ScrollView>
+            <Pressable style={styles.submitButton} onPress={submitAnswer} disabled={isSubmitting}>
+              <Text style={styles.submitButtonText}>답변 저장하기</Text>
+            </Pressable>
+          </SafeAreaView>
+        </Modal>
+      </View>
     </View>
   );
 }
