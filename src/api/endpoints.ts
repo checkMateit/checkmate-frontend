@@ -4,4 +4,6 @@ export const ENDPOINTS = {
   studies: '/studies',
   inquiries: '/inquiries',
   notices: '/notices',
+  badges: '/badges',
+  stores: '/products',
 } as const;
