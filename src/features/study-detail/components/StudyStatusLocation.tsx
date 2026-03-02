@@ -27,7 +27,18 @@ const locationIcon = require('../../../assets/icon/gps_icon.png');
 /** 현재 위치 조회. 실제 앱에서는 @react-native-community/geolocation 등으로 대체 */
 function getCurrentPosition(): Promise<{ latitude: number; longitude: number }> {
   return new Promise((resolve, reject) => {
-    const geo = (global as unknown as { navigator?: { geolocation?: { getCurrentPosition: (onOk: (p: { coords: { latitude: number; longitude: number } }) => void, onErr: (e: unknown) => void) => void } } }).navigator?.geolocation;
+    const geo = (
+      globalThis as typeof globalThis & {
+        navigator?: {
+          geolocation?: {
+            getCurrentPosition: (
+              onOk: (p: { coords: { latitude: number; longitude: number } }) => void,
+              onErr: (e: unknown) => void,
+            ) => void;
+          };
+        };
+      }
+    ).navigator?.geolocation;
     if (geo?.getCurrentPosition) {
       geo.getCurrentPosition(
         (p) => resolve({ latitude: p.coords.latitude, longitude: p.coords.longitude }),
@@ -283,6 +294,10 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#7D7D7D',
     fontWeight: '600',
+  },
+  statusIcon: {
+    width: 14,
+    height: 14,
   },
   statusFail: {
     color: '#7D7D7D',

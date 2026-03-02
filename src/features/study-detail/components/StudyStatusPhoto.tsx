@@ -199,6 +199,10 @@ const styles = StyleSheet.create({
     color: '#7D7D7D',
     fontWeight: '600',
   },
+  statusIcon: {
+    width: 14,
+    height: 14,
+  },
   statusFail: {
     color: '#7D7D7D',
   },
