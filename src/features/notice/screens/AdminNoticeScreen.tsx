@@ -232,7 +232,7 @@ const AdminNoticeScreen = ({ onClose }: Props) => {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F8F9FA' },
-  adminHeader: { paddingTop: 20, paddingBottom: 25, paddingHorizontal: 20, backgroundColor: '#77E48C', borderBottomLeftRadius: 24, borderBottomRightRadius: 24 },
+  adminHeader: { paddingTop: 20, paddingBottom: 25, paddingHorizontal: 20, backgroundColor: '#2FE377', borderBottomLeftRadius: 24, borderBottomRightRadius: 24 },
   headerTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   backButton: { padding: 5 },
   backButtonText: { color: '#FFF', fontWeight: 'bold', fontSize: 16 },
@@ -240,15 +240,15 @@ const styles = StyleSheet.create({
   headerSub: { fontSize: 13, color: '#EFFFF4', marginTop: 12, textAlign: 'center' },
   filterBar: { flexDirection: 'row', paddingHorizontal: 20, paddingVertical: 15, gap: 10 },
   chip: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, backgroundColor: '#FFF', borderWidth: 1, borderColor: '#EEE' },
-  activeChip: { backgroundColor: '#77E48C', borderColor: '#77E48C' },
+  activeChip: { backgroundColor: '#2FE377', borderColor: '#2FE377' },
   chipText: { fontSize: 13, color: '#999', fontWeight: '600' },
   activeChipText: { color: '#FFF' },
   listContainer: { paddingHorizontal: 16, paddingBottom: 100 },
   adminCard: { backgroundColor: '#FFF', marginBottom: 12, borderRadius: 16, elevation: 2, overflow: 'hidden' },
-  expandedCard: { borderColor: '#77E48C', borderWidth: 1.5 },
+  expandedCard: { borderColor: '#2FE377', borderWidth: 1.5 },
   cardHeader: { flexDirection: 'row', padding: 18, alignItems: 'center' },
   titleRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 6 },
-  categoryTag: { fontSize: 13, fontWeight: 'bold', color: '#77E48C', marginRight: 6 },
+  categoryTag: { fontSize: 13, fontWeight: 'bold', color: '#2FE377', marginRight: 6 },
   adminTitle: { fontSize: 15, fontWeight: '700', color: '#333', flex: 1 },
   adminSub: { fontSize: 12, color: '#BBB' },
   expandIcon: { fontSize: 12, color: '#DDD', marginLeft: 8 },
@@ -259,7 +259,7 @@ const styles = StyleSheet.create({
   editBtn: { backgroundColor: '#F0F0F0', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8 },
   delBtn: { backgroundColor: '#FFEBEB', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8 },
   btnText: { fontSize: 13, fontWeight: '700', color: '#666' },
-  fab: { position: 'absolute', right: 20, bottom: 30, width: 60, height: 60, borderRadius: 30, backgroundColor: '#77E48C', justifyContent: 'center', alignItems: 'center', elevation: 8 },
+  fab: { position: 'absolute', right: 20, bottom: 30, width: 60, height: 60, borderRadius: 30, backgroundColor: '#2FE377', justifyContent: 'center', alignItems: 'center', elevation: 8 },
   fabText: { fontSize: 32, color: '#FFF', fontWeight: '300', marginTop: -2 },
 });
 
