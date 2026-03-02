@@ -1,17 +1,30 @@
 import { apiClient } from './client';
 import { ENDPOINTS } from './endpoints';
+import { ApiResponse } from '../types/api';
+import { UserResponse, UserUpdateReq, FavoriteCategoryRes, FavoriteCategoryReq, SocialAccountRes } from '../types/users';
 
-export const fetchUsers = <T = unknown>(params?: Record<string, unknown>) =>
-  apiClient.get<T>(ENDPOINTS.users, { params });
+export const getMyInfo = () => 
+apiClient.get<ApiResponse<UserResponse>>(`${ENDPOINTS.users}/me`);
 
-export const fetchUserById = <T = unknown>(userId: string | number) =>
-  apiClient.get<T>(`${ENDPOINTS.users}/${userId}`);
+export const updateMyInfo = (payload: UserUpdateReq) =>
+apiClient.patch<ApiResponse<UserResponse>>(`${ENDPOINTS.users}/me`, payload);
 
-export const createUser = <T = unknown, P = unknown>(payload: P) =>
-  apiClient.post<T>(ENDPOINTS.users, payload);
+export const checkNickname = (nickname: string) =>
+apiClient.get<ApiResponse<{isAvailable: boolean}>>(`${ENDPOINTS.users}/check-nickname`, {
+  params: { nickname }
+});
 
-export const updateUser = <T = unknown, P = unknown>(userId: string | number, payload: P) =>
-  apiClient.patch<T>(`${ENDPOINTS.users}/${userId}`, payload);
+export const withdrawAccount = () =>
+apiClient.patch<ApiResponse<void>>(`${ENDPOINTS.users}/me/withdraw`);
 
-export const deleteUser = <T = unknown>(userId: string | number) =>
-  apiClient.delete<T>(`${ENDPOINTS.users}/${userId}`);
+export const getFavoriteCategories = () =>
+  apiClient.get<ApiResponse<FavoriteCategoryRes>>(`${ENDPOINTS.users}/me/favorite-categories`);
+
+export const updateFavoriteCategories = (data: FavoriteCategoryReq) =>
+  apiClient.patch<ApiResponse<FavoriteCategoryRes>>(`${ENDPOINTS.users}/me/favorite-categories`, data);
+
+export const getSocialAccounts = () =>
+  apiClient.get<ApiResponse<SocialAccountRes[]>>(`${ENDPOINTS.users}/me/social`);
+
+export const unlinkSocialAccount = (provider: string) =>
+  apiClient.patch<ApiResponse<void>>(`${ENDPOINTS.users}/me/social/${provider}/unlink`);

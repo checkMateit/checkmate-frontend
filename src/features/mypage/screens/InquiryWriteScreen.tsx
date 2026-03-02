@@ -6,8 +6,11 @@ import {
   Text,
   TextInput,
   View,
+  Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { colors } from '../../../styles/colors';
+import { createInquiry } from '../../../api';
 
 type InquiryWriteScreenProps = {
   onClose: () => void;
@@ -17,6 +20,26 @@ type InquiryWriteScreenProps = {
 function InquiryWriteScreen({ onClose, onBack }: InquiryWriteScreenProps) {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async () => {
+    if (!title.trim() || !content.trim()) {
+      Alert.alert('알림', '제목과 내용을 모두 입력해주세요.');
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      await createInquiry({ title, content });
+      Alert.alert('성공', '문의가 등록되었습니다.', [
+        { text: '확인', onPress: onBack } // 등록 후 목록으로 이동
+      ]);
+    } catch (error) {
+      Alert.alert('오류', '문의 등록에 실패했습니다.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <SafeAreaView style={styles.root}>
@@ -47,8 +70,16 @@ function InquiryWriteScreen({ onClose, onBack }: InquiryWriteScreenProps) {
         />
       </View>
       <View style={styles.bottom}>
-        <Pressable style={styles.submitButton} onPress={onClose}>
-          <Text style={styles.submitText}>등록</Text>
+        <Pressable 
+          style={[styles.submitButton, isSubmitting && { opacity: 0.7 }]} 
+          onPress={handleSubmit}
+          disabled={isSubmitting}
+        >
+          {isSubmitting ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.submitText}>등록</Text>
+          )}
         </Pressable>
       </View>
     </SafeAreaView>

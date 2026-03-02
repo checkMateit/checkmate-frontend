@@ -15,7 +15,7 @@ const SCREEN_WIDTH = Dimensions.get('window').width;
 const RANKING_BG_WIDTH = SCREEN_WIDTH - 40;
 
 function RankingSummaryCard({ title, description, percent, points }: RankingSummaryCardProps) {
-  const percentLabel = `${percent}%`;
+  const percentLabel = `${Number(percent).toFixed(1)}%`;
   const pointsLabel = `${points}P`;
   const percentIndex = description.indexOf(percentLabel);
   const hasPercentInDescription = percentIndex !== -1;
@@ -55,7 +55,7 @@ function RankingSummaryCard({ title, description, percent, points }: RankingSumm
             <View style={styles.progressTrack}>
               <View style={[styles.progressFill, { width: `${percent}%` }]} />
             </View>
-            <Text style={styles.progressLabel}>{percent}%</Text>
+            <Text style={styles.progressLabel}>{percentLabel}</Text>
           </View>
         </View>
       </ImageBackground>

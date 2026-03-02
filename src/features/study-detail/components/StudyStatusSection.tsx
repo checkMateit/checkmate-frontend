@@ -8,10 +8,30 @@ import StudyStatusPhoto from './StudyStatusPhoto';
 import StudyStatusGithub from './StudyStatusGithub';
 import StudyStatusLocation from './StudyStatusLocation';
 
+export type VerificationRule = {
+  slot: number;
+  methodCode: string;
+  endTime?: string;
+  checkEndTime?: string | null;
+  daysOfWeek?: string[];
+  timezone?: string;
+  frequency?: { unit: string; requiredCnt: number };
+};
+
 type StudyStatusSectionProps = {
   resetKey: number;
+  groupId: string;
+  verificationRules: VerificationRule[];
   methods: string[];
 };
+
+function getSlotForMethod(
+  rules: VerificationRule[],
+  methodCode: string,
+): number | null {
+  const r = rules.find((x) => x.methodCode === methodCode);
+  return r?.slot ?? null;
+}
 
 const getAvailableTabs = (methods: string[]) => {
   const normalized = methods.map((method) => method.toLowerCase());
@@ -32,11 +52,19 @@ const getAvailableTabs = (methods: string[]) => {
   ] as Array<'summary' | 'todo' | 'photo' | 'github' | 'location'>;
 };
 
-function StudyStatusSection({ resetKey, methods }: StudyStatusSectionProps) {
+function StudyStatusSection({
+  resetKey,
+  groupId,
+  verificationRules,
+  methods,
+}: StudyStatusSectionProps) {
   const [activeTab, setActiveTab] = useState<
     'summary' | 'todo' | 'photo' | 'github' | 'location'
   >('summary');
   const availableTabs = useMemo(() => getAvailableTabs(methods), [methods]);
+  const slotChecklist = getSlotForMethod(verificationRules, 'CHECKLIST');
+  const slotPhoto = getSlotForMethod(verificationRules, 'PHOTO');
+  const slotGps = getSlotForMethod(verificationRules, 'GPS');
 
   useEffect(() => {
     setActiveTab(availableTabs[0] ?? 'summary');
@@ -51,10 +79,31 @@ function StudyStatusSection({ resetKey, methods }: StudyStatusSectionProps) {
         <StudyStatusTabs activeTab={activeTab} onChange={setActiveTab} methods={methods} />
       </View>
       {activeTab === 'summary' && <StudyStatusSummary methods={methods} />}
-      {activeTab === 'todo' && <StudyStatusTodo />}
-      {activeTab === 'photo' && <StudyStatusPhoto />}
+      {activeTab === 'todo' &&
+        (slotChecklist != null ? (
+          <StudyStatusTodo groupId={groupId} slot={slotChecklist} />
+        ) : (
+          <View style={styles.placeholder}>
+            <Text style={styles.placeholderText}>체크리스트 인증 규칙을 불러오는 중이에요.</Text>
+          </View>
+        ))}
+      {activeTab === 'photo' &&
+        (slotPhoto != null ? (
+          <StudyStatusPhoto groupId={groupId} slot={slotPhoto} />
+        ) : (
+          <View style={styles.placeholder}>
+            <Text style={styles.placeholderText}>사진 인증 규칙을 불러오는 중이에요.</Text>
+          </View>
+        ))}
       {activeTab === 'github' && <StudyStatusGithub />}
-      {activeTab === 'location' && <StudyStatusLocation />}
+      {activeTab === 'location' &&
+        (slotGps != null ? (
+          <StudyStatusLocation groupId={groupId} slot={slotGps} />
+        ) : (
+          <View style={styles.placeholder}>
+            <Text style={styles.placeholderText}>위치 인증 규칙을 불러오는 중이에요.</Text>
+          </View>
+        ))}
     </View>
   );
 }
@@ -72,6 +121,14 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '800',
     color: colors.textPrimary,
+  },
+  placeholder: {
+    paddingVertical: 24,
+    paddingHorizontal: 20,
+  },
+  placeholderText: {
+    fontSize: 13,
+    color: '#666',
   },
 });
 

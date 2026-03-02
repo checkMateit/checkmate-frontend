@@ -4,13 +4,18 @@ import { colors } from '../../../styles/colors';
 
 type PrimaryActionButtonProps = {
   label: string;
-  onPress: () => void;
+  onPress: () => void | Promise<void>;
+  disabled?: boolean;
 };
 
-function PrimaryActionButton({ label, onPress }: PrimaryActionButtonProps) {
+function PrimaryActionButton({ label, onPress, disabled }: PrimaryActionButtonProps) {
   return (
-    <Pressable style={styles.button} onPress={onPress}>
-      <Text style={styles.text}>{label}</Text>
+    <Pressable
+      style={[styles.button, disabled && styles.buttonDisabled]}
+      onPress={onPress}
+      disabled={disabled}
+    >
+      <Text style={[styles.text, disabled && styles.textDisabled]}>{label}</Text>
     </Pressable>
   );
 }
@@ -26,6 +31,12 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '800',
+  },
+  buttonDisabled: {
+    opacity: 0.6,
+  },
+  textDisabled: {
+    color: 'rgba(255,255,255,0.8)',
   },
 });
 

@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Image,
   Modal,
@@ -9,19 +9,12 @@ import {
   Text,
   TextInput,
   View,
+  ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { colors } from '../../../styles/colors';
-
-type InquiryItem = {
-  id: string;
-  title: string;
-  date: string;
-  status: 'pending' | 'done';
-  content: string;
-  answerTitle: string;
-  answer: string;
-  userReplies: Array<{ title: string; content: string }>;
-};
+import { getMyInquiries, getInquiryDetail, addInquiryComment } from '../../../api/inquiries';
+import { InquiryListItem, InquiryDetail } from '../../../types/inquiry';
 
 type InquiryListScreenProps = {
   onClose: () => void;
@@ -31,106 +24,90 @@ type InquiryListScreenProps = {
 const backIcon = require('../../../assets/icon/right_arrow.png');
 
 function InquiryListScreen({ onClose, onPressWrite }: InquiryListScreenProps) {
-  const [openIds, setOpenIds] = useState<string[]>([]);
+  const [items, setItems] = useState<InquiryListItem[]>([]);
+  const [details, setDetails] = useState<Record<number, InquiryDetail>>({});
+  const [openIds, setOpenIds] = useState<number[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showReply, setShowReply] = useState(false);
-  const [activeReplyId, setActiveReplyId] = useState<string | null>(null);
-  const [replyTitle, setReplyTitle] = useState('');
+  const [activeInquiryId, setActiveInquiryId] = useState<number | null>(null);
   const [replyContent, setReplyContent] = useState('');
-  const [items, setItems] = useState<InquiryItem[]>([
-    {
-      id: 'inquiry-1',
-      title: '머시기에 관한 문의',
-      date: '2026. 02. 04.',
-      status: 'done',
-      content: '안녕하세요 머시기에 대해 궁금해요. 머시기를 머시기 할 수 있을까요?',
-      answerTitle: '안녕하세요, 체크메이트입니다.',
-      answer:
-        '안녕하세요, 체크메이트입니다.\n머시기는 현재 머시기할 수 없습니다 :(\n\n머시기 대신 저시기는 있는데 저시기는 어떠신지요?',
-      userReplies: [],
-    },
-    {
-      id: 'inquiry-2',
-      title: '머시기에 관한 문의',
-      date: '2026. 02. 04.',
-      status: 'pending',
-      content: '안녕하세요 머시기에 대해 궁금해요. 머시기를 머시기 할 수 있을까요?',
-      answerTitle: '안녕하세요, 체크메이트입니다.',
-      answer:
-        '안녕하세요, 체크메이트입니다.\n머시기는 현재 머시기할 수 없습니다 :(\n\n머시기 대신 저시기는 있는데 저시기는 어떠신지요?',
-      userReplies: [],
-    },
-    {
-      id: 'inquiry-3',
-      title: '머시기에 관한 문의',
-      date: '2026. 02. 04.',
-      status: 'done',
-      content: '안녕하세요 머시기에 대해 궁금해요. 머시기를 머시기 할 수 있을까요?',
-      answerTitle: '안녕하세요, 체크메이트입니다.',
-      answer:
-        '안녕하세요, 체크메이트입니다.\n머시기는 현재 머시기할 수 없습니다 :(\n\n머시기 대신 저시기는 있는데 저시기는 어떠신지요?',
-      userReplies: [],
-    },
-  ]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const toggleOpen = (id: string) => {
-    setOpenIds((prev) => (prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]));
+  const fetchInquiries = async () => {
+    try {
+      setLoading(true);
+      const res = await getMyInquiries();
+      if (res.data?.data) {
+        setItems(res.data.data.inquiries);
+      }
+    } catch (error) {
+      console.error('목록 로드 실패:', error);
+      Alert.alert('오류', '문의 목록을 가져오는데 실패했습니다.');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleResolve = (id: string) => {
-    setItems((prev) =>
-      prev.map((item) =>
-        item.id === id
-          ? { ...item, status: item.status === 'done' ? 'pending' : 'done' }
-          : item,
-      ),
+  useEffect(() => {
+    fetchInquiries();
+  }, []);
+
+  const toggleOpen = async (id: number) => {
+    const isOpen = openIds.includes(id);
+
+    if (!isOpen && !details[id]) {
+      try {
+        const res = await getInquiryDetail(id);
+        if (res.data?.data) {
+          setDetails((prev) => ({ ...prev, [id]: res.data.data }));
+        }
+      } catch (error) {
+        Alert.alert('오류', '상세 내용을 불러올 수 없습니다.');
+        return;
+      }
+    }
+
+    setOpenIds((prev) =>
+      isOpen ? prev.filter((openId) => openId !== id) : [...prev, id]
     );
   };
 
-  const openReply = (item: InquiryItem) => {
-    setActiveReplyId(item.id);
-    setReplyTitle('');
+  const openReplyModal = (id: number) => {
+    setActiveInquiryId(id);
     setReplyContent('');
     setShowReply(true);
   };
 
-  const closeReply = () => {
-    setShowReply(false);
-  };
+  const submitReply = async () => {
+    if (!activeInquiryId || !replyContent.trim()) return;
 
-  const submitReply = () => {
-    if (!activeReplyId) {
+    try {
+      setIsSubmitting(true);
+      await addInquiryComment(activeInquiryId, replyContent.trim());
+      
+      const res = await getInquiryDetail(activeInquiryId);
+      if (res.data?.data) {
+        setDetails((prev) => ({ ...prev, [activeInquiryId]: res.data.data }));
+      }
+      
       setShowReply(false);
-      return;
+      Alert.alert('알림', '추가 문의가 등록되었습니다.');
+    } catch (error) {
+      Alert.alert('오류', '등록에 실패했습니다.');
+    } finally {
+      setIsSubmitting(false);
     }
-    setItems((prev) =>
-      prev.map((item) =>
-        item.id === activeReplyId
-          ? {
-              ...item,
-              userReplies: [
-                ...item.userReplies,
-                {
-                  title: replyTitle.trim() || '추가 문의',
-                  content: replyContent.trim() || '',
-                },
-              ],
-            }
-          : item,
-      ),
-    );
-    setShowReply(false);
   };
 
-  const rows = useMemo(
-    () =>
-      items.map((item) => ({
-        ...item,
-        open: openIds.includes(item.id),
-      })),
-    [items, openIds],
-  );
+  if (loading) {
+    return (
+      <View style={styles.center}>
+        <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    );
+  }
 
-  return (
+return (
     <SafeAreaView style={styles.root}>
       <View style={styles.header}>
         <Pressable onPress={onClose} hitSlop={10} style={styles.backButton}>
@@ -138,131 +115,104 @@ function InquiryListScreen({ onClose, onPressWrite }: InquiryListScreenProps) {
         </Pressable>
         <Text style={styles.headerTitle}>1:1 문의</Text>
       </View>
-      <ScrollView contentContainerStyle={styles.content}>
-        <View style={styles.titleRow}>
-          <Text style={styles.sectionTitle}>내 문의</Text>
-          <Pressable style={styles.writeButton} onPress={onPressWrite}>
-            <Text style={styles.writeButtonText}>문의 쓰기</Text>
-          </Pressable>
+
+      {/* 로딩 표시를 전체 리턴이 아닌 내용 부분에만 적용 (Hook 에러 방지 최적화) */}
+      {loading ? (
+        <View style={styles.center}>
+          <ActivityIndicator size="large" color={colors.primary} />
         </View>
-        {rows.map((item) => (
-          <View key={item.id} style={styles.card}>
-            <Pressable style={styles.cardTop} onPress={() => toggleOpen(item.id)}>
-              <View>
-                <Text style={styles.cardTitle}>{item.title}</Text>
-                <Text style={styles.cardDate}>{item.date}</Text>
-              </View>
-              <View style={styles.cardRight}>
-                <View
-                  style={[
-                    styles.statusChip,
-                    item.status === 'done' ? styles.statusDone : styles.statusPending,
-                  ]}
-                >
-                  <Text
-                    style={[
-                      styles.statusText,
-                      item.status === 'done' ? styles.statusTextDone : styles.statusTextPending,
-                    ]}
-                  >
-                    {item.status === 'done' ? '답변 완료' : '진행중'}
-                  </Text>
-                </View>
-                <Image
-                  source={backIcon}
-                  style={[styles.arrowIcon, item.open && styles.arrowIconOpen]}
-                />
-              </View>
+      ) : (
+        <ScrollView contentContainerStyle={styles.content}>
+          <View style={styles.titleRow}>
+            <Text style={styles.sectionTitle}>내 문의</Text>
+            <Pressable style={styles.writeButton} onPress={onPressWrite}>
+              <Text style={styles.writeButtonText}>문의 쓰기</Text>
             </Pressable>
-            {item.open ? (
-              <View style={styles.cardBody}>
-                <View style={styles.qaRow}>
-                  <Text style={styles.qaLabel}>Q</Text>
-                  <View style={styles.qaContent}>
-                    <Text style={styles.qaTitle}>{item.title}</Text>
-                    <Text style={styles.qaText}>{item.content}</Text>
-                  </View>
-                </View>
-                <View style={styles.divider} />
-                <View style={styles.qaRow}>
-                  <Text style={styles.qaLabelAnswer}>A</Text>
-                  <View style={styles.qaContent}>
-                    <Text style={styles.qaTitle}>{item.answerTitle}</Text>
-                    <Text style={styles.qaText}>{item.answer}</Text>
-                  </View>
-                </View>
-                {item.userReplies.length > 0 ? (
-                  <View style={styles.replyThread}>
-                    {item.userReplies.map((reply, index) => (
-                      <View key={`${reply.title}-${index}`} style={styles.replyBlock}>
-                        <View style={styles.replyDivider} />
-                        <View style={styles.qaRow}>
-                          <Text style={styles.qaLabel}>Q</Text>
+          </View>
+
+          {items.length === 0 ? (
+            <View style={styles.emptyBox}>
+              <Text style={styles.emptyText}>문의 내역이 없습니다.</Text>
+            </View>
+          ) : (
+            items.map((item) => {
+              const isOpen = openIds.includes(item.inquiry_id);
+              const detail = details[item.inquiry_id];
+              const isDone = item.status === 'ANSWERED';
+
+              return (
+                <View key={item.inquiry_id} style={styles.card}>
+                  <Pressable style={styles.cardTop} onPress={() => toggleOpen(item.inquiry_id)}>
+                    <View>
+                      <Text style={styles.cardTitle}>{item.title}</Text>
+                      <Text style={styles.cardDate}>상태: {isDone ? '답변 완료' : '진행중'}</Text>
+                    </View>
+                    <View style={styles.cardRight}>
+                      <View style={[styles.statusChip, isDone ? styles.statusDone : styles.statusPending]}>
+                        <Text style={[styles.statusText, isDone ? styles.statusTextDone : styles.statusTextPending]}>
+                          {isDone ? '답변 완료' : '진행중'}
+                        </Text>
+                      </View>
+                      <Image source={backIcon} style={[styles.arrowIcon, isOpen && styles.arrowIconOpen]} />
+                    </View>
+                  </Pressable>
+
+                  {isOpen && detail && (
+                    <View style={styles.cardBody}>
+                      <View style={styles.qaRow}>
+                        <Text style={styles.qaLabel}>Q</Text>
                         <View style={styles.qaContent}>
-                          <Text style={styles.qaTitle}>{reply.title}</Text>
-                          <Text style={styles.qaText}>{reply.content}</Text>
-                        </View>
+                          <Text style={styles.qaTitle}>{detail.title}</Text>
+                          <Text style={styles.qaText}>{detail.content}</Text>
                         </View>
                       </View>
-                    ))}
-                  </View>
-                ) : null}
-                <View style={styles.actionRow}>
-                  <Pressable
-                    style={styles.actionButton}
-                    onPress={() => openReply(item)}
-                  >
-                    <Text style={styles.actionText}>답변 달기</Text>
-                  </Pressable>
-                  <Pressable
-                    style={[
-                      styles.actionButton,
-                      item.status === 'done' && styles.actionButtonDone,
-                    ]}
-                    onPress={() => handleResolve(item.id)}
-                  >
-                    <Text
-                      style={[
-                        styles.actionText,
-                        item.status === 'done' && styles.actionTextDone,
-                      ]}
-                    >
-                      해결 완료
-                    </Text>
-                  </Pressable>
-                </View>
-              </View>
-            ) : null}
-          </View>
-        ))}
-      </ScrollView>
 
-      <Modal
-        visible={showReply}
-        animationType="slide"
-        onRequestClose={closeReply}
-      >
+                      {detail.comments.map((comment) => (
+                        <View key={comment.comment_id}>
+                          <View style={styles.divider} />
+                          <View style={styles.qaRow}>
+                            <Text style={comment.author_type === 'ADMIN' ? styles.qaLabelAnswer : styles.qaLabel}>
+                              {comment.author_type === 'ADMIN' ? 'A' : 'Q'}
+                            </Text>
+                            <View style={styles.qaContent}>
+                              <Text style={styles.qaTitle}>
+                                {comment.author_type === 'ADMIN' ? '체크메이트 답변' : '추가 문의'}
+                              </Text>
+                              <Text style={styles.qaText}>{comment.content}</Text>
+                            </View>
+                          </View>
+                        </View>
+                      ))}
+
+                      <View style={styles.actionRow}>
+                        <Pressable style={styles.actionButton} onPress={() => openReplyModal(item.inquiry_id)}>
+                          <Text style={styles.actionText}>추가 문의하기</Text>
+                        </Pressable>
+                      </View>
+                    </View>
+                  )}
+                </View>
+              );
+            })
+          )}
+        </ScrollView>
+      )}
+
+      {/* 추가 문의 모달 */}
+      <Modal visible={showReply} animationType="slide" onRequestClose={() => setShowReply(false)}>
         <SafeAreaView style={styles.replyRoot}>
           <View style={styles.replyHeader}>
-            <Pressable onPress={closeReply} hitSlop={10} style={styles.backButton}>
+            <Pressable onPress={() => setShowReply(false)} hitSlop={10} style={styles.backButton}>
               <Image source={backIcon} style={styles.backIcon} />
             </Pressable>
-            <Text style={styles.headerTitle}>답변 달기</Text>
+            <Text style={styles.headerTitle}>추가 문의</Text>
           </View>
           <View style={styles.replyContent}>
-            <Text style={styles.replyLabel}>제목</Text>
-            <TextInput
-              value={replyTitle}
-              onChangeText={setReplyTitle}
-              placeholder="제목을 작성해주세요."
-              placeholderTextColor="#C9C9C9"
-              style={styles.replyInput}
-            />
             <Text style={styles.replyLabel}>내용</Text>
             <TextInput
               value={replyContent}
               onChangeText={setReplyContent}
-              placeholder="내용을 작성해주세요."
+              placeholder="궁금하신 내용을 입력해주세요."
               placeholderTextColor="#C9C9C9"
               style={styles.replyTextarea}
               multiline
@@ -270,8 +220,12 @@ function InquiryListScreen({ onClose, onPressWrite }: InquiryListScreenProps) {
             />
           </View>
           <View style={styles.replyBottom}>
-            <Pressable style={styles.replySubmitButton} onPress={submitReply}>
-              <Text style={styles.replySubmitText}>등록</Text>
+            <Pressable 
+              style={[styles.replySubmitButton, isSubmitting && { opacity: 0.6 }]} 
+              onPress={submitReply}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? <ActivityIndicator color="#fff" /> : <Text style={styles.replySubmitText}>등록</Text>}
             </Pressable>
           </View>
         </SafeAreaView>
@@ -281,251 +235,51 @@ function InquiryListScreen({ onClose, onPressWrite }: InquiryListScreenProps) {
 }
 
 const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingTop: 12,
-    paddingBottom: 8,
-  },
-  backButton: {
-    marginRight: 10,
-  },
-  backIcon: {
-    width: 10,
-    height: 14,
-    tintColor: '#9A9A9A',
-    transform: [{ scaleX: -1 }],
-  },
-  headerTitle: {
-    fontSize: 22,
-    fontWeight: '800',
-    color: colors.textPrimary,
-  },
-  content: {
-    paddingBottom: 32,
-  },
-  titleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingTop: 18,
-    paddingBottom: 10,
-  },
-  sectionTitle: {
-    fontSize: 22,
-    fontWeight: '800',
-    color: colors.textPrimary,
-  },
-  writeButton: {
-    borderWidth: 1,
-    borderColor: '#D7D7D7',
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    borderRadius: 18,
-  },
-  writeButtonText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: colors.textSecondary,
-  },
-  card: {
-    borderTopWidth: 1,
-    borderTopColor: '#E5E5E5',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-  },
-  cardTop: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  cardTitle: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: colors.textPrimary,
-    marginBottom: 6,
-  },
-  cardDate: {
-    fontSize: 14,
-    color: '#B2B2B2',
-  },
-  cardRight: {
-    alignItems: 'flex-end',
-    gap: 10,
-  },
-  statusChip: {
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-    borderRadius: 16,
-    borderWidth: 1,
-  },
-  statusDone: {
-    borderColor: colors.primary,
-    backgroundColor: colors.primary,
-  },
-  statusPending: {
-    borderColor: '#FF6B6B',
-    backgroundColor: '#FFECEC',
-  },
-  statusText: {
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  statusTextDone: {
-    color: '#FFFFFF',
-  },
-  statusTextPending: {
-    color: '#FF6B6B',
-  },
-  arrowIcon: {
-    marginRight: 20,
-    width: 8,
-    height: 20,
-    tintColor: '#C2C2C2',
-    transform: [{ rotate: '90deg' }],
-  },
-  arrowIconOpen: {
-    transform: [{ rotate: '270deg' }],
-  },
-  cardBody: {
-    marginTop: 16,
-    borderTopWidth: 1,
-    borderTopColor: '#E5E5E5',
-    paddingTop: 16,
-    gap: 12,
-  },
-  qaRow: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  qaLabel: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: colors.textPrimary,
-    width: 24,
-  },
-  qaLabelAnswer: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: colors.primary,
-    width: 24,
-  },
-  qaContent: {
-    flex: 1,
-    gap: 6,
-  },
-  qaTitle: {
-    fontSize: 14,
-    fontWeight: '800',
-    color: colors.textPrimary,
-  },
-  qaText: {
-    fontSize: 14,
-    color: colors.textSecondary,
-    lineHeight: 20,
-  },
-  replyThread: {
-    marginTop: 12,
-    gap: 10,
-  },
-  replyBlock: {
-    gap: 10,
-  },
-  replyDivider: {
-    height: 1,
-    backgroundColor: '#E5E5E5',
-  },
-  divider: {
-    height: 1,
-    backgroundColor: '#E5E5E5',
-  },
-  actionRow: {
-    flexDirection: 'row',
-    gap: 12,
-    paddingTop: 6,
-  },
-  actionButton: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: '#D7D7D7',
-    borderRadius: 8,
-    paddingVertical: 12,
-    alignItems: 'center',
-  },
-  actionButtonDone: {
-    backgroundColor: '#3D3D3D',
-    borderColor: '#3D3D3D',
-  },
-  actionText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#3D3D3D',
-  },
-  actionTextDone: {
-    color: '#FFFFFF',
-  },
-  replyRoot: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-  },
-  replyHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingTop: 12,
-    paddingBottom: 8,
-  },
-  replyContent: {
-    paddingHorizontal: 20,
-    paddingTop: 12,
-    gap: 12,
-  },
-  replyLabel: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: colors.textPrimary,
-  },
-  replyInput: {
-    borderWidth: 1,
-    borderColor: '#E2E2E2',
-    borderRadius: 8,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 14,
-    color: colors.textPrimary,
-  },
-  replyTextarea: {
-    borderWidth: 1,
-    borderColor: '#E2E2E2',
-    borderRadius: 8,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    minHeight: 220,
-    fontSize: 14,
-    color: colors.textPrimary,
-  },
-  replyBottom: {
-    marginTop: 'auto',
-    paddingHorizontal: 20,
-    paddingBottom: 26,
-  },
-  replySubmitButton: {
-    backgroundColor: colors.primary,
-    paddingVertical: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-  },
-  replySubmitText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '800',
-  },
+  root: { flex: 1, backgroundColor: '#FFFFFF' },
+  header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingTop: 12, paddingBottom: 8 },
+  backButton: { marginRight: 10 },
+  backIcon: { width: 10, height: 14, tintColor: '#9A9A9A', transform: [{ scaleX: -1 }] },
+  headerTitle: { fontSize: 22, fontWeight: '800', color: colors.textPrimary },
+  content: { paddingBottom: 32 },
+  titleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 18, paddingBottom: 10 },
+  sectionTitle: { fontSize: 22, fontWeight: '800', color: colors.textPrimary },
+  writeButton: { borderWidth: 1, borderColor: '#D7D7D7', paddingHorizontal: 14, paddingVertical: 6, borderRadius: 18 },
+  writeButtonText: { fontSize: 12, fontWeight: '700', color: colors.textSecondary },
+  card: { borderTopWidth: 1, borderTopColor: '#E5E5E5', paddingHorizontal: 20, paddingVertical: 16 },
+  cardTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  cardTitle: { fontSize: 18, fontWeight: '800', color: colors.textPrimary, marginBottom: 6 },
+  cardDate: { fontSize: 14, color: '#B2B2B2' },
+  cardRight: { alignItems: 'flex-end', gap: 10 },
+  statusChip: { paddingHorizontal: 12, paddingVertical: 5, borderRadius: 16, borderWidth: 1 },
+  statusDone: { borderColor: colors.primary, backgroundColor: colors.primary },
+  statusPending: { borderColor: '#FF6B6B', backgroundColor: '#FFECEC' },
+  statusText: { fontSize: 12, fontWeight: '700' },
+  statusTextDone: { color: '#FFFFFF' },
+  statusTextPending: { color: '#FF6B6B' },
+  arrowIcon: { marginRight: 20, width: 8, height: 20, tintColor: '#C2C2C2', transform: [{ rotate: '90deg' }] },
+  arrowIconOpen: { transform: [{ rotate: '270deg' }] },
+  cardBody: { marginTop: 16, borderTopWidth: 1, borderTopColor: '#E5E5E5', paddingTop: 16, gap: 12 },
+  qaRow: { flexDirection: 'row', gap: 12 },
+  qaLabel: { fontSize: 18, fontWeight: '800', color: colors.textPrimary, width: 24 },
+  qaLabelAnswer: { fontSize: 18, fontWeight: '800', color: colors.primary, width: 24 },
+  qaContent: { flex: 1, gap: 6 },
+  qaTitle: { fontSize: 14, fontWeight: '800', color: colors.textPrimary },
+  qaText: { fontSize: 14, color: colors.textSecondary, lineHeight: 20 },
+  divider: { height: 1, backgroundColor: '#F0F0F0', marginVertical: 4 },
+  actionRow: { flexDirection: 'row', gap: 12, paddingTop: 6 },
+  actionButton: { flex: 1, borderWidth: 1, borderColor: '#D7D7D7', borderRadius: 8, paddingVertical: 12, alignItems: 'center' },
+  actionText: { fontSize: 14, fontWeight: '700', color: '#3D3D3D' },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  emptyBox: { padding: 40, alignItems: 'center' },
+  emptyText: { color: '#999', fontSize: 16 },
+  replyRoot: { flex: 1, backgroundColor: '#FFFFFF' },
+  replyHeader: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingTop: 12, paddingBottom: 8 },
+  replyContent: { paddingHorizontal: 20, paddingTop: 12, gap: 12 },
+  replyLabel: { fontSize: 14, fontWeight: '700', color: colors.textPrimary },
+  replyTextarea: { borderWidth: 1, borderColor: '#E2E2E2', borderRadius: 8, paddingHorizontal: 14, paddingVertical: 12, minHeight: 220, fontSize: 14, color: colors.textPrimary },
+  replyBottom: { marginTop: 'auto', paddingHorizontal: 20, paddingBottom: 26 },
+  replySubmitButton: { backgroundColor: colors.primary, paddingVertical: 16, borderRadius: 12, alignItems: 'center' },
+  replySubmitText: { color: '#FFFFFF', fontSize: 16, fontWeight: '800' },
 });
 
 export default InquiryListScreen;

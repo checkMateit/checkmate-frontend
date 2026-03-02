@@ -1,6 +1,9 @@
 import axios from 'axios';
 import { API_BASE_URL, API_TIMEOUT_MS } from './config';
 
+/** client 기본 헤더에 박아둔 사용자 UUID (담당 팀원 방식) */
+const DEFAULT_USER_ID = '51c19566-90d2-4495-91d0-4cd498124822';
+
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
   timeout: API_TIMEOUT_MS,
@@ -11,6 +14,7 @@ export const apiClient = axios.create({
     'Authorization': 'Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiI2YmM2MDlkMC1iYjJhLTRmOTAtOTIyZi00YjU3NmI0MjllMGIiLCJyb2xlIjoiVVNFUiIsImlhdCI6MTc3MjM2NjQ1MCwiZXhwIjoxNzcyMzcwMDUwfQ.WRLUKDIwgJ3eaMZH31xSlyk0rCORelcdzmPXeox9KcaeLl4C7dYDVt7Nv-8CxWsJqyuDMC6jYFY_kZvd2viWOg',
     'X-User-Id': '6bc609d0-bb2a-4f90-922f-4b576b429e0b',
     'X-User-Role': 'USER',
+
 
   },
 });
@@ -23,13 +27,17 @@ export const setAuthToken = (token?: string) => {
   }
 };
 
+
 export const setUserId = (userId?: string) => {
+
+
   if (userId) {
     apiClient.defaults.headers.common['X-User-Id'] = userId;
   } else {
     delete apiClient.defaults.headers.common['X-User-Id'];
   }
 };
+
 
 export const setUserRole = (role?: string) => {
   if (role) {
