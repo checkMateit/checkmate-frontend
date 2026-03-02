@@ -6,7 +6,6 @@ import StudyStatusSummary from './StudyStatusSummary';
 import StudyStatusTodo from './StudyStatusTodo';
 import StudyStatusPhoto from './StudyStatusPhoto';
 import StudyStatusGithub from './StudyStatusGithub';
-import StudyStatusLocation from './StudyStatusLocation';
 
 export type VerificationRule = {
   slot: number;
@@ -40,16 +39,12 @@ const getAvailableTabs = (methods: string[]) => {
     (method) => method.includes('사진') || method.includes('photo'),
   );
   const hasGithub = normalized.some((method) => method.includes('github'));
-  const hasLocation = normalized.some(
-    (method) => method.includes('gps') || method.includes('위치'),
-  );
   return [
     'summary',
     ...(hasTodo ? ['todo'] : []),
     ...(hasPhoto ? ['photo'] : []),
     ...(hasGithub ? ['github'] : []),
-    ...(hasLocation ? ['location'] : []),
-  ] as Array<'summary' | 'todo' | 'photo' | 'github' | 'location'>;
+  ] as Array<'summary' | 'todo' | 'photo' | 'github'>;
 };
 
 function StudyStatusSection({
@@ -59,12 +54,11 @@ function StudyStatusSection({
   methods,
 }: StudyStatusSectionProps) {
   const [activeTab, setActiveTab] = useState<
-    'summary' | 'todo' | 'photo' | 'github' | 'location'
+    'summary' | 'todo' | 'photo' | 'github'
   >('summary');
   const availableTabs = useMemo(() => getAvailableTabs(methods), [methods]);
   const slotChecklist = getSlotForMethod(verificationRules, 'CHECKLIST');
   const slotPhoto = getSlotForMethod(verificationRules, 'PHOTO');
-  const slotGps = getSlotForMethod(verificationRules, 'GPS');
 
   useEffect(() => {
     setActiveTab(availableTabs[0] ?? 'summary');
@@ -96,14 +90,6 @@ function StudyStatusSection({
           </View>
         ))}
       {activeTab === 'github' && <StudyStatusGithub />}
-      {activeTab === 'location' &&
-        (slotGps != null ? (
-          <StudyStatusLocation groupId={groupId} slot={slotGps} />
-        ) : (
-          <View style={styles.placeholder}>
-            <Text style={styles.placeholderText}>위치 인증 규칙을 불러오는 중이에요.</Text>
-          </View>
-        ))}
     </View>
   );
 }
