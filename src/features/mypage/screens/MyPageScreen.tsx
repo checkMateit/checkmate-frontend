@@ -22,10 +22,11 @@ import AdminNoticeScreen from '../../notice/screens/AdminNoticeScreen';
 import BadgeScreen from '../../badge/screens/BadgeScreen';
 import AdminBadgeScreen from '../../badge/screens/AdminBadgeScreen';
 import MyInventoryScreen from '../../points/screens/MyInventoryScreen';
+import MyStudyScreen from '../../my-study/screens/MyStudyScreen'; 
 import { apiClient } from '../../../api';
 
 function MyPageScreen() {
-  // 1. 모든 Hook(상태)은 반드시 최상단에 선언
+  // 1. 모든 Hook(상태)은 반드시 최상단에 선언 (에러 방지 핵심)
   const [showSettings, setShowSettings] = useState(false);
   const [showPointsHistory, setShowPointsHistory] = useState(false);
   const [showPointsShop, setShowPointsShop] = useState(false);
@@ -37,6 +38,7 @@ function MyPageScreen() {
   const [showNotice, setShowNotice] = useState(false);
   const [showBadge, setShowBadge] = useState(false);
   const [showInventory, setShowInventory] = useState(false);
+  const [showMyStudies, setShowMyStudies] = useState(false);
   
   const [userInfo, setUserInfo] = useState<UserResponse | null>(null);
   const [balance, setBalance] = useState<number>(0);
@@ -48,7 +50,6 @@ function MyPageScreen() {
     const fetchAllData = async () => {
       try {
         setLoading(true);
-        // 권한 확인
         const userRole = (apiClient.defaults.headers['X-User-Role'] || 
                           apiClient.defaults.headers.common['X-User-Role']) as string;
         setRole(userRole || 'USER');
@@ -70,7 +71,7 @@ function MyPageScreen() {
     fetchAllData();
   }, []);
 
-  // 2. 로딩 및 서브 화면 렌더링 처리
+  // 2. 화면 분기 처리 (Hook 선언부 아래에 위치해야 함)
   if (loading || !isReady) {
     return (
       <SafeAreaView style={[styles.container, styles.center]}>
@@ -79,6 +80,7 @@ function MyPageScreen() {
     );
   }
 
+  // 서브 화면 렌더링 (각 화면 호출 시 onClose 전달)
   if (showSettings) return <AccountSettingsScreen onClose={() => setShowSettings(false)} />;
   if (showPointsHistory) return <PointsHistoryScreen onClose={() => setShowPointsHistory(false)} />;
   if (showPointsShop) return <PointsShopScreen onClose={() => setShowPointsShop(false)} />;
@@ -86,6 +88,7 @@ function MyPageScreen() {
   if (showCategorySettings) return <CategorySettingsScreen onClose={() => setShowCategorySettings(false)} />;
   if (showSocialSettings) return <SocialAccountSettingScreen onClose={() => setShowSocialSettings(false)} />;
   if (showInventory) return <MyInventoryScreen onClose={() => setShowInventory(false)} />;
+  if (showMyStudies) return <MyStudyScreen onClose={() => setShowMyStudies(false)} />;
   
   if (showInquiryWrite) {
     return (
@@ -117,7 +120,7 @@ function MyPageScreen() {
       : <BadgeScreen onClose={() => setShowBadge(false)} />;
   }
 
-  // 3. 메인 레이아웃 렌더링
+  // 3. 메인 마이페이지 레이아웃
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -142,7 +145,7 @@ function MyPageScreen() {
             rows={[
               { 
                 left: '스터디', 
-                onPressLeft: () => console.log('스터디 클릭'),
+                onPressLeft: () => setShowMyStudies(true), // 스터디 전체보기 연결
                 right: '연동계정', 
                 onPressRight: () => setShowSocialSettings(true) 
               }, 
