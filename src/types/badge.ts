@@ -22,12 +22,13 @@ export interface BadgeDeleteRes {
 }
 
 export interface MyBadgeItem {
+  badgeUserId: number; 
   badgeId: number;
   name: string;
   description: string;
   imageUrl: string;
-  isEquipped: boolean;
   acquiredAt: string;
+  isEquipped: boolean;
 }
 
 export interface MyBadgeListResponse {

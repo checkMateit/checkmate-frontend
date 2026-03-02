@@ -1,7 +1,7 @@
 import { apiClient } from './client';
 import { ENDPOINTS } from './endpoints';
 import { ApiResponse } from '../types/api';
-import { MyBadgeListResponse, MyBadgeItem } from '../types/badge';
+import { MyBadgeListResponse, MyBadgeItem,BadgeAdminReq,BadgeAdminRes, BadgeDeleteRes } from '../types/badge';
 
 export const getMyBadges = () => 
   apiClient.get<ApiResponse<MyBadgeListResponse>>(`${ENDPOINTS.badges}/my-badges`);

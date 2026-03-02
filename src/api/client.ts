@@ -2,7 +2,7 @@ import axios from 'axios';
 import { API_BASE_URL, API_TIMEOUT_MS } from './config';
 
 /** client 기본 헤더에 박아둔 사용자 UUID (담당 팀원 방식) */
-const DEFAULT_USER_ID = 'fbd1a921-4dff-4dc6-841f-a750170bea9c';
+const DEFAULT_USER_ID = '3fa14730-51a4-4676-80f5-fffccd085ce7';
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
@@ -11,9 +11,9 @@ export const apiClient = axios.create({
     Accept: 'application/json',
     'Content-Type': 'application/json',
     Authorization:
-      'Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJmYmQxYTkyMS00ZGZmLTRkYzYtODQxZi1hNzUwMTcwYmVhOWMiLCJyb2xlIjoiQURNSU4iLCJpYXQiOjE3NzI0MTM4NzAsImV4cCI6MTc3MjQxNzQ3MH0.QtCZHYeomGulMa6fIC1SYcXgh--I1mHibK0z5PS0l2uDajzzjoyc0Fy-MDbWJyNm-439Vpm4cHIxZGe-8KT1uA',
+      'Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiIzZmExNDczMC01MWE0LTQ2NzYtODBmNS1mZmZjY2QwODVjZTciLCJyb2xlIjoiVVNFUiIsImlhdCI6MTc3MjQxNTQ4NywiZXhwIjoxNzcyNDE5MDg3fQ.tVNCabAE9--UaI17guoMqke4dn1V5V8lWIEQB352NXekb4x9Zr_cViZR4M3O7pHKhy07pPsyLgyriKyUo-LG8A',
     'X-User-Id': DEFAULT_USER_ID,
-    'X-User-Role': 'ADMIN',
+    'X-User-Role': 'USER',
   },
 });
 
