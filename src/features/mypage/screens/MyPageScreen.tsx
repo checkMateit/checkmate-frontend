@@ -20,6 +20,8 @@ import { UserResponse } from '../../../types/users';
 import { getPointBalance } from '../../../api/point';
 import NoticeScreen from '../../notice/screens/NoticeScreen';
 import AdminNoticeScreen from '../../notice/screens/AdminNoticeScreen';
+import BadgeScreen from '../../badge/screens/BadgeScreen';
+import AdminBadgeScreen from '../../badge/screens/AdminBadgeScreen';
 import { apiClient } from '../../../api';
 
 function MyPageScreen() {
@@ -32,6 +34,7 @@ function MyPageScreen() {
   const [showCategorySettings, setShowCategorySettings] = useState(false);
   const [showSocialSettings, setShowSocialSettings] = useState(false);
   const [showNotice, setShowNotice] = useState(false);
+  const [showBadge, setShowBadge] = useState(false);
   
   const [userInfo, setUserInfo] = useState<UserResponse | null>(null);
   const [balance, setBalance] = useState<number>(0);
@@ -113,6 +116,12 @@ function MyPageScreen() {
       : <NoticeScreen onClose={() => setShowNotice(false)} />;
   }
 
+  if (showBadge) {
+    return role === 'ADMIN'
+      ? <AdminBadgeScreen onClose={() => setShowBadge(false)} />
+      : <BadgeScreen onClose={() => setShowBadge(false)} />;
+  }
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -134,11 +143,8 @@ function MyPageScreen() {
             title="관리" 
             rows={[
               { left: '스터디', right: '연동계정', onPress: () => setShowSocialSettings(true) }, 
-              { left: '아이템', right: '뱃지' }, 
-              { 
-                left: '추천 스터디 카테고리', 
-                onPress: () => setShowCategorySettings(true) 
-              }
+              { left: '아이템', right: '뱃지', onPress: () => setShowBadge(true)},
+              { left: '추천 스터디 카테고리', onPress: () => setShowCategorySettings(true) }
             ]} 
           />
           </View>
