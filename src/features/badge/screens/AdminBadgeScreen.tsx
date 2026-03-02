@@ -127,7 +127,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F8F9FA' },
   header: { 
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    padding: 20, backgroundColor: '#77E48C' 
+    padding: 20, backgroundColor: '#2FE377' 
   },
   backBtn: { padding: 5 },
   backText: { color: '#FFF', fontWeight: 'bold' },
@@ -153,7 +153,7 @@ const styles = StyleSheet.create({
   badgeDesc: { fontSize: 10, color: '#999', textAlign: 'center' },
   fab: { 
     position: 'absolute', right: 20, bottom: 30, width: 60, height: 60, 
-    borderRadius: 30, backgroundColor: '#77E48C', justifyContent: 'center', 
+    borderRadius: 30, backgroundColor: '#2FE377', justifyContent: 'center', 
     alignItems: 'center', elevation: 5 
   },
   fabText: { fontSize: 30, color: '#FFF' }

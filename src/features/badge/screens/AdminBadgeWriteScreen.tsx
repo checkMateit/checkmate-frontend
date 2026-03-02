@@ -118,11 +118,11 @@ const styles = StyleSheet.create({
   
   imageGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginTop: 10 },
   imageItem: { width: '30%', padding: 10, borderWidth: 2, borderColor: '#F5F5F5', borderRadius: 12, alignItems: 'center' },
-  selectedItem: { borderColor: '#77E48C', backgroundColor: '#F0FFF4' },
+  selectedItem: { borderColor: '#2FE377', backgroundColor: '#F0FFF4' },
   previewImage: { width: 45, height: 45, marginBottom: 5, resizeMode: 'contain' },
   imageText: { fontSize: 10, color: '#999', fontWeight: '600' },
   
-  saveBtn: { backgroundColor: '#77E48C', padding: 16, borderRadius: 12, marginTop: 40, alignItems: 'center', elevation: 2 },
+  saveBtn: { backgroundColor: '#2FE377', padding: 16, borderRadius: 12, marginTop: 40, alignItems: 'center', elevation: 2 },
   saveBtnText: { color: '#FFF', fontSize: 16, fontWeight: '800' },
   cancelLink: { marginTop: 20, alignItems: 'center' },
   cancelLinkText: { color: '#AAA', fontSize: 14 },

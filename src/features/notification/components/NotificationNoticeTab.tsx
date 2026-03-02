@@ -1,221 +1,147 @@
-import React, { useState } from 'react';
-import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Image, Pressable, StyleSheet, Text, View, ActivityIndicator, Alert, ScrollView } from 'react-native';
 import { colors } from '../../../styles/colors';
 import NotificationEmptyState from './NotificationEmptyState';
+import { notificationApi } from '../../../api/notification';
+import { Notification, NotificationType } from '../../../types/notification';
+import { apiClient } from '../../../api';
+// 정확한 경로 확인 필수: getCurrentUserId를 가져옵니다
+import { getCurrentUserId } from '../../../api/client'; 
 
 const badgeOne = require('../../../assets/badge/badge_1.png');
 
-type NoticeItem = {
-  id: number;
-  title: string;
-  description: string;
-  badge: number;
-  category: '이벤트' | '공지';
-};
-
 type NoticeSectionProps = {
   title: string;
-  notices: NoticeItem[];
+  notices: Notification[];
   onClear: () => void;
+  onRead: (id: string | number) => void;
   showFilters?: boolean;
-  activeFilter?: '전체' | NoticeItem['category'];
-  onChangeFilter?: (filter: '전체' | NoticeItem['category']) => void;
+  activeFilter?: 'ALL' | NotificationType;
+  onChangeFilter?: (filter: 'ALL' | NotificationType) => void;
 };
 
-function NoticeSection({
-  title,
-  notices,
-  onClear,
-  showFilters = false,
-  activeFilter = '전체',
-  onChangeFilter,
-}: NoticeSectionProps) {
+function NoticeSection({ title, notices, onClear, onRead, showFilters, activeFilter, onChangeFilter }: NoticeSectionProps) {
   return (
     <View style={styles.sectionBlock}>
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionTitle}>{title}</Text>
-        <Pressable onPress={onClear} accessibilityRole="button">
-          <Text style={styles.clearText}>전체삭제</Text>
-        </Pressable>
+        <Pressable onPress={onClear}><Text style={styles.clearText}>전체삭제</Text></Pressable>
       </View>
-
       {showFilters && (
         <View style={styles.filterRow}>
-          {(['전체', '이벤트', '공지'] as const).map((filter) => {
-            const isActive = activeFilter === filter;
-            return (
-              <Pressable
-                key={filter}
-                style={[styles.filterChip, isActive && styles.filterChipActive]}
-                onPress={() => onChangeFilter?.(filter)}
-              >
-                <Text style={[styles.filterText, isActive && styles.filterTextActive]}>
-                  {filter}
-                </Text>
-              </Pressable>
-            );
-          })}
+          {(['ALL', 'NOTICE', 'EVENT', 'COMMUNITY', 'RANKING'] as const).map((f) => (
+            <Pressable key={f} style={[styles.filterChip, activeFilter === f && styles.filterChipActive]} onPress={() => onChangeFilter?.(f)}>
+              <Text style={[styles.filterText, activeFilter === f && styles.filterTextActive]}>{f === 'ALL' ? '전체' : f}</Text>
+            </Pressable>
+          ))}
         </View>
       )}
-
       {notices.map((notice) => (
-        <View key={notice.id} style={styles.noticeCard}>
+        <Pressable key={notice.id} style={[styles.noticeCard, notice.isRead && styles.readCard]} onPress={() => onRead(notice.id)}>
           <View style={styles.noticeText}>
             <Text style={styles.noticeTitle}>{notice.title}</Text>
-            <Text style={styles.noticeDesc}>{notice.description}</Text>
+            <Text style={styles.noticeDesc}>{notice.content}</Text>
           </View>
-          <Image source={notice.badge} style={styles.noticeBadge} />
-        </View>
+          <Image source={badgeOne} style={styles.noticeBadge} />
+        </Pressable>
       ))}
     </View>
   );
 }
 
 function NotificationNoticeTab() {
-  const [todayNotices, setTodayNotices] = useState<NoticeItem[]>([
-    {
-      id: 1,
-      title: '승연님 이번주 ○○스터디룸 랭킹 1위 달성!',
-      description: '이번주 수고한 승연님께 드리는 1등 뱃지 도착',
-      badge: badgeOne,
-      category: '이벤트',
-    },
-  ]);
-  const [previousNotices, setPreviousNotices] = useState<NoticeItem[]>([
-    {
-      id: 2,
-      title: '○○스터디룸 오늘 인증 완료!',
-      description: '오늘의 인증이 기록되었어요.',
-      badge: badgeOne,
-      category: '공지',
-    },
-    {
-      id: 3,
-      title: '주간 랭킹이 업데이트되었어요!',
-      description: '이번 주 랭킹을 확인해보세요.',
-      badge: badgeOne,
-      category: '이벤트',
-    },
-  ]);
-  const [previousFilter, setPreviousFilter] = useState<'전체' | NoticeItem['category']>(
-    '전체',
-  );
+  const [loading, setLoading] = useState(true);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [filter, setFilter] = useState<'ALL' | NotificationType>('ALL');
 
-  const filteredPreviousNotices =
-    previousFilter === '전체'
-      ? previousNotices
-      : previousNotices.filter((notice) => notice.category === previousFilter);
+  const loadData = useCallback(async () => {
+    try {
+      setLoading(true);
+      const userId = getCurrentUserId(); // UUID 문자열 가져오기
 
-  const hasToday = todayNotices.length > 0;
-  const hasPrevious = filteredPreviousNotices.length > 0;
-  const hasAnyNotice = hasToday || hasPrevious;
+      if (!userId) {
+        console.error('사용자 ID(UUID)를 찾을 수 없습니다.');
+        setLoading(false);
+        return;
+      }
 
-  if (!hasAnyNotice) {
-    return (
-      <NotificationEmptyState
-        title="알림이 아직 없어요"
-        description={`새로운 소식이 생기면\n바로 알려드릴게요.`}
-      />
-    );
+      const res = await notificationApi.getAllNotifications(userId);
+      if (res.data) {
+        setNotifications(res.data);
+      }
+    } catch (e) {
+      console.error('알림 로드 실패:', e);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  const handleRead = async (id: string | number) => {
+    try {
+      await notificationApi.markAsRead(id);
+      setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n));
+    } catch (e) { console.log('읽음 처리 실패'); }
+  };
+
+  const handleClearAll = () => {
+    const rawId = getCurrentUserId(); // UUID 직접 사용
+    if (!rawId) return;
+
+    Alert.alert("알림 삭제", "모든 알림을 삭제하시겠습니까?", [
+      { text: "취소", style: "cancel" },
+      { 
+        text: "삭제", style: "destructive",
+        onPress: async () => {
+          try {
+            // Number() 변환 없이 UUID 문자열 그대로 전달
+            await notificationApi.clearAllNotifications(rawId); 
+            setNotifications([]);
+          } catch (e) { console.log('삭제 실패'); }
+        }
+      }
+    ]);
+  };
+
+  const filtered = notifications.filter(n => filter === 'ALL' || n.type === filter);
+  const todayStr = new Date().toISOString().split('T')[0];
+  const todayNotices = filtered.filter(n => n.createdAt?.startsWith(todayStr));
+  const previousNotices = filtered.filter(n => !n.createdAt?.startsWith(todayStr));
+
+  if (loading) return <ActivityIndicator style={{marginTop: 40}} color={colors.primary} />;
+  
+  if (notifications.length === 0) {
+    return <NotificationEmptyState title="알림이 아직 없어요" description={`새로운 소식이 생기면\n바로 알려드릴게요.`} />;
   }
 
   return (
-    <View style={styles.container}>
-      {hasToday && (
-        <NoticeSection
-          title="오늘"
-          notices={todayNotices}
-          onClear={() => setTodayNotices([])}
-        />
-      )}
-      {hasPrevious && (
-        <NoticeSection
-          title="이전 알림"
-          notices={filteredPreviousNotices}
-          onClear={() => setPreviousNotices([])}
-          showFilters
-          activeFilter={previousFilter}
-          onChangeFilter={setPreviousFilter}
-        />
-      )}
-    </View>
+    <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
+      {todayNotices.length > 0 && <NoticeSection title="오늘" notices={todayNotices} onRead={handleRead} onClear={handleClearAll} />}
+      {previousNotices.length > 0 && <NoticeSection title="이전 알림" notices={previousNotices} onRead={handleRead} onClear={handleClearAll} showFilters activeFilter={filter} onChangeFilter={setFilter} />}
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 32,
-  },
-  sectionBlock: {
-    marginBottom: 12,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 10,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: colors.textPrimary,
-  },
-  clearText: {
-    fontSize: 12,
-    color: '#9A9A9A',
-  },
-  noticeCard: {
-    backgroundColor: '#F7F7F7',
-    borderRadius: 12,
-    padding: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 14,
-  },
-  noticeText: {
-    flex: 1,
-    paddingRight: 12,
-  },
-  noticeTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: colors.textPrimary,
-    marginBottom: 6,
-  },
-  noticeDesc: {
-    fontSize: 12,
-    color: colors.textSecondary,
-  },
-  noticeBadge: {
-    width: 42,
-    height: 54,
-  },
-  filterRow: {
-    flexDirection: 'row',
-    gap: 8,
-    marginBottom: 10,
-  },
-  filterChip: {
-    borderWidth: 1,
-    borderColor: colors.primary,
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-  },
-  filterChipActive: {
-    backgroundColor: colors.primary,
-  },
-  filterText: {
-    fontSize: 12,
-    color: '#373737',
-    fontWeight: '700',
-  },
-  filterTextActive: {
-    color: '#373737',
-  },
+  container: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 32 },
+  sectionBlock: { marginBottom: 24 },
+  sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
+  sectionTitle: { fontSize: 18, fontWeight: '800', color: '#1A1A1A' },
+  clearText: { fontSize: 12, color: '#9A9A9A' },
+  noticeCard: { backgroundColor: '#F7F7F7', borderRadius: 12, padding: 16, flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
+  readCard: { opacity: 0.5 },
+  noticeText: { flex: 1, paddingRight: 10 },
+  noticeTitle: { fontSize: 14, fontWeight: '700', color: '#1A1A1A', marginBottom: 4 },
+  noticeDesc: { fontSize: 12, color: '#666' },
+  noticeBadge: { width: 40, height: 50 },
+  filterRow: { flexDirection: 'row', gap: 8, marginBottom: 16, flexWrap: 'wrap' },
+  filterChip: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, borderWidth: 1, borderColor: colors.primary },
+  filterChipActive: { backgroundColor: colors.primary },
+  filterText: { fontSize: 12, color: colors.primary, fontWeight: '700' },
+  filterTextActive: { color: '#FFF' },
 });
 
 export default NotificationNoticeTab;
