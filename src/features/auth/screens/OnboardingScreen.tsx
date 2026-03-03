@@ -205,6 +205,8 @@ const styles = StyleSheet.create({
     gap: 32,
   },
   textBlock: {
+    marginTop: 20,
+    paddingLeft: 10,
     gap: 28,
   },
   title: {
@@ -237,6 +239,7 @@ const styles = StyleSheet.create({
     minHeight: 220,
   },
   mascot: {
+    marginLeft: 140,
     width: 150,
     height: 150,
   },

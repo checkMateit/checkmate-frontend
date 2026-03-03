@@ -69,16 +69,16 @@ function HomeScreen() {
   const [loadingRecommended, setLoadingRecommended] = useState(true);
   const { notifications } = useNotificationCenter();
   
-  useEffect(() => {
-    try {
-      const userRole = apiClient.defaults.headers['X-User-Role'] as string;
-      setRole(userRole || 'USER');
-    } catch (e) {
-      setRole('USER');
-    } finally {
-      setIsReady(true);
-    }
-  }, []);
+useEffect(() => {
+  // ✅ apiClient 바구니(headers.common)에서 role을 꺼냅니다.
+  // 직접 접근해도 되고, 만들어두신 getCurrentUserRole()을 써도 됩니다.
+  const userRole = apiClient.defaults.headers.common['X-User-Role'] as string;
+  
+  console.log('홈에서 확인한 유저 권한:', userRole);
+  
+  setRole(userRole || 'USER'); // 상태에 저장
+  setIsReady(true);            // 렌더링 준비 완료
+}, []);
 
   const loadMyStudyGroups = useCallback(async () => {
     setLoadingMyStudies(true);
