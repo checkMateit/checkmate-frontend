@@ -106,7 +106,18 @@ function StudyStatusSection({
         ))}
       {activeTab === 'photo' &&
         (slotPhoto != null ? (
-          <StudyStatusPhoto groupId={groupId} slot={slotPhoto} />
+          <StudyStatusPhoto
+            groupId={groupId}
+            slot={slotPhoto}
+            schedule={
+              verificationRules.find((r) => r.slot === slotPhoto)
+                ? {
+                    endTime:
+                      verificationRules.find((r) => r.slot === slotPhoto)?.endTime ?? '23:59',
+                  }
+                : undefined
+            }
+          />
         ) : (
           <View style={styles.placeholder}>
             <Text style={styles.placeholderText}>사진 인증 규칙을 불러오는 중이에요.</Text>

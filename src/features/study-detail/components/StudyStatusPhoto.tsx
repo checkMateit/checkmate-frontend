@@ -8,6 +8,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TouchableOpacity,
   View,
 } from 'react-native';
 import { launchImageLibrary } from 'react-native-image-picker';
@@ -17,11 +18,13 @@ import {
   getVerificationDateToday,
   getPhotoVerificationRecords,
   situationFromFilePath,
+  getVerificationPhotoUrl,
   type PhotoVerificationRecordRes,
 } from '../../../api/verification';
 import { getCurrentUserDisplayName, getCurrentUserId } from '../../../api/client';
 import { fetchStudyGroupMembers } from '../../../api/studyGroups';
 import type { StudyGroupMemberRes } from '../../../api/studyGroups';
+import { isAfterTimeInKST } from '../../../utils/timeKST';
 
 const profileImage = require('../../../assets/icon/profile_1.png');
 const checkIcon = require('../../../assets/icon/check_icon.png');
@@ -42,16 +45,21 @@ function getSituations(record: PhotoVerificationRecordRes): string[] {
   return (record.filePaths ?? []).map(situationFromFilePath);
 }
 
+type PhotoSchedule = { endTime?: string };
+
 type StudyStatusPhotoProps = {
   groupId: string;
   slot: number;
+  schedule?: PhotoSchedule;
 };
 
-function StudyStatusPhoto({ groupId, slot }: StudyStatusPhotoProps) {
+function StudyStatusPhoto({ groupId, slot, schedule }: StudyStatusPhotoProps) {
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [previewVisible, setPreviewVisible] = useState(false);
   const [previewUri, setPreviewUri] = useState<string | null>(null);
+  /** 업로드 직후 썸네일용 로컬 URI (새로고침 전까지 사용) */
+  const [localThumbUri, setLocalThumbUri] = useState<string | null>(null);
   const [members, setMembers] = useState<StudyGroupMemberRes[]>([]);
   const [records, setRecords] = useState<PhotoVerificationRecordRes[]>([]);
   const [loading, setLoading] = useState(true);
@@ -59,6 +67,11 @@ function StudyStatusPhoto({ groupId, slot }: StudyStatusPhotoProps) {
   const date = getVerificationDateToday();
   const currentUserId = getCurrentUserId();
   const myDisplayName = getCurrentUserDisplayName();
+  // endTime이 없거나 "00:00"이면 당일 마감 없는 것으로 보고, 23:59로 두어 인증 버튼 활성화 유지
+  const rawEnd = schedule?.endTime?.trim();
+  const effectiveEnd =
+    !rawEnd || rawEnd === '00:00' || rawEnd === '0:00' ? '23:59' : rawEnd;
+  const deadlinePassed = isAfterTimeInKST(effectiveEnd);
 
   const refresh = useCallback(() => {
     setLoading(true);
@@ -91,52 +104,91 @@ function StudyStatusPhoto({ groupId, slot }: StudyStatusPhotoProps) {
   const openPreview = () => setPreviewVisible(true);
   const closePreview = () => setPreviewVisible(false);
 
-  const handleVerify = () => {
-    launchImageLibrary(
-      {
+  const openGalleryAndSubmit = async () => {
+    if (submitting) return;
+    try {
+      const res = await launchImageLibrary({
         mediaType: 'photo',
         selectionLimit: 10,
-      },
-      (res) => {
-        if (res.didCancel || !res.assets?.length) return;
-        const files = res.assets
-          .map((a) => ({
-            uri: a.uri ?? '',
-            name: a.fileName ?? undefined,
-            type: a.type ?? 'image/jpeg',
-          }))
-          .filter((f) => f.uri);
-        if (files.length === 0) {
-          Alert.alert('사진을 선택해 주세요.');
-          return;
+        quality: 0.8,
+      });
+      if (res.didCancel || !res.assets?.length) return;
+      const files = res.assets
+        .map((a) => ({
+          uri: a.uri ?? '',
+          name: a.fileName ?? undefined,
+          type: a.type ?? 'image/jpeg',
+        }))
+        .filter((f) => f.uri);
+      if (files.length === 0) {
+        Alert.alert('사진을 선택해 주세요.');
+        return;
+      }
+      setSubmitting(true);
+      try {
+        await submitPhotoVerification(groupId, slot, files, date);
+        setSubmitted(true);
+        if (files[0]?.uri) {
+          setPreviewUri(files[0].uri);
+          setLocalThumbUri(files[0].uri);
         }
-        setSubmitting(true);
-        submitPhotoVerification(groupId, slot, files, date)
-          .then(() => {
-            setSubmitted(true);
-            if (files[0]?.uri) setPreviewUri(files[0].uri);
-            refresh();
-          })
-          .catch((err) => {
-            const msg =
-              err?.response?.status === 400
-                ? err?.response?.data?.message ?? '제출 시간이 지났거나 이미 제출했어요.'
-                : '사진 인증 제출에 실패했어요.';
-            Alert.alert('인증 실패', msg);
-          })
-          .finally(() => setSubmitting(false));
-      },
-    );
+        refresh();
+      } catch (err: unknown) {
+        const res = (err as { response?: { status?: number; data?: { message?: string } } })?.response;
+        const status = res?.status;
+        const serverMsg = res?.data?.message;
+        const msg =
+          status === 400
+            ? serverMsg ?? '제출 시간이 지났거나 이미 제출했어요.'
+            : serverMsg
+              ? `(${status ?? '오류'}) ${serverMsg}`
+              : status === 404
+                ? '사진 인증 규칙을 찾을 수 없어요. (404)'
+                : status === 403
+                  ? '권한이 없어요. (403)'
+                  : status != null
+                    ? `서버 오류 (${status}). ${serverMsg ?? ''}`.trim()
+                    : '사진 인증 제출에 실패했어요. (네트워크 또는 서버 확인)';
+        Alert.alert('인증 실패', msg);
+      } finally {
+        setSubmitting(false);
+      }
+    } catch (_err) {
+      Alert.alert('오류', '사진첩을 열 수 없습니다. 권한을 확인해 주세요.');
+    }
+  };
+
+  const handleVerify = () => {
+    if (deadlinePassed) {
+      Alert.alert(
+        '마감됨',
+        '인증 마감 시각이 지나 업로드할 수 없습니다.',
+        [{ text: '확인' }],
+      );
+      return;
+    }
+    if (submitting) return;
+    Alert.alert('사진 인증', '사진을 선택해 주세요.', [
+      { text: '취소', style: 'cancel' },
+      { text: '갤러리에서 선택', onPress: openGalleryAndSubmit },
+    ]);
   };
 
   const myRecord = records.find((r) => r.userId === currentUserId);
   const isDone = submitted || Boolean(myRecord);
-  const myTime = myRecord?.submittedAt
-    ? new Date(myRecord.submittedAt).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: true })
-    : isDone
-      ? '제출 완료'
+  const myTime =
+    myRecord?.submittedAt != null
+      ? new Date(myRecord.submittedAt).toLocaleTimeString('ko-KR', {
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: true,
+        })
       : '--:--';
   const mySituations = myRecord ? getSituations(myRecord) : [];
+  /** 내 썸네일 표시용 URI: 로컬 업로드 직후 → 서버 filePaths 첫 번째 */
+  const myThumbnailUri =
+    localThumbUri ||
+    (myRecord?.filePaths?.[0] ? getVerificationPhotoUrl(myRecord.filePaths[0]) : null);
 
   if (loading) {
     return (
@@ -151,7 +203,11 @@ function StudyStatusPhoto({ groupId, slot }: StudyStatusPhotoProps) {
 
   return (
     <View style={styles.container}>
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        nestedScrollEnabled
+      >
         {/* 나의 사진 인증 카드 */}
         <View style={[styles.row, styles.myCard]}>
           <Image source={profileImage} style={styles.avatar} />
@@ -162,10 +218,13 @@ function StudyStatusPhoto({ groupId, slot }: StudyStatusPhotoProps) {
             <View style={styles.metaRow}>
               <Text style={styles.time}>{myTime}</Text>
               <View style={styles.statusWrap}>
-                <Text style={[styles.statusText, !isDone && styles.statusFail]}>
+                <Text style={[styles.statusText, isDone ? styles.statusPass : styles.statusFail]}>
                   {isDone ? '완료' : '미인증'}
                 </Text>
-                <Image source={isDone ? checkIcon : cancelIcon} style={styles.statusIcon} />
+                <Image
+                  source={isDone ? checkIcon : cancelIcon}
+                  style={[styles.statusIcon, !isDone && styles.statusIconFail]}
+                />
               </View>
             </View>
             {mySituations.length > 0 && (
@@ -175,22 +234,52 @@ function StudyStatusPhoto({ groupId, slot }: StudyStatusPhotoProps) {
             )}
           </View>
           {!isDone ? (
-            <Pressable
-              style={[styles.verifyButton, submitting && styles.verifyButtonDisabled]}
-              onPress={handleVerify}
-              disabled={submitting}
-            >
-              <Text style={styles.verifyText}>
-                {submitting ? '제출 중…' : '인증하기'}
-              </Text>
-            </Pressable>
+            deadlinePassed ? (
+              <TouchableOpacity
+                onPress={() =>
+                  Alert.alert(
+                    '마감됨',
+                    '인증 마감 시각이 지나 업로드할 수 없습니다.',
+                    [{ text: '확인' }],
+                  )
+                }
+                activeOpacity={0.7}
+              >
+                <Text style={styles.deadlineText}>마감됨</Text>
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity
+                style={[styles.verifyButton, submitting && styles.verifyButtonDisabled]}
+                onPress={handleVerify}
+                disabled={submitting}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.verifyText}>
+                  {submitting ? '제출 중…' : '인증하기'}
+                </Text>
+              </TouchableOpacity>
+            )
           ) : (
-            <View style={styles.photoBox}>
-              <Text style={styles.photoText}>사진</Text>
-              <Pressable onPress={openPreview} hitSlop={6} style={styles.photoIconButton}>
-                <Image source={vectorIcon} style={styles.photoIcon} />
-              </Pressable>
-            </View>
+            <Pressable
+              onPress={() => {
+                if (myThumbnailUri) setPreviewUri(myThumbnailUri);
+                openPreview();
+              }}
+              style={styles.thumbnailWrap}
+            >
+              {myThumbnailUri ? (
+                <Image
+                  source={{ uri: myThumbnailUri }}
+                  style={styles.thumbnail}
+                  resizeMode="cover"
+                />
+              ) : (
+                <View style={styles.photoBox}>
+                  <Text style={styles.photoText}>사진</Text>
+                  <Image source={vectorIcon} style={styles.photoIcon} />
+                </View>
+              )}
+            </Pressable>
           )}
         </View>
 
@@ -216,10 +305,13 @@ function StudyStatusPhoto({ groupId, slot }: StudyStatusPhotoProps) {
                   <View style={styles.metaRow}>
                     <Text style={styles.time}>{time}</Text>
                     <View style={styles.statusWrap}>
-                      <Text style={[styles.statusText, !done && styles.statusFail]}>
+                      <Text style={[styles.statusText, done ? styles.statusPass : styles.statusFail]}>
                         {done ? '완료' : '미인증'}
                       </Text>
-                      <Image source={done ? checkIcon : cancelIcon} style={styles.statusIcon} />
+                      <Image
+                        source={done ? checkIcon : cancelIcon}
+                        style={[styles.statusIcon, !done && styles.statusIconFail]}
+                      />
                     </View>
                   </View>
                   {situations.length > 0 && (
@@ -245,9 +337,9 @@ function StudyStatusPhoto({ groupId, slot }: StudyStatusPhotoProps) {
               <Image source={closeIcon} style={styles.closeIcon} />
             </Pressable>
             <View style={styles.modalImage}>
-              {previewUri ? (
+              {(previewUri || myThumbnailUri) ? (
                 <Image
-                  source={{ uri: previewUri }}
+                  source={{ uri: (previewUri || myThumbnailUri) ?? '' }}
                   style={styles.modalImageImg}
                   resizeMode="contain"
                 />
@@ -328,11 +420,29 @@ const styles = StyleSheet.create({
   },
   statusText: {
     fontSize: 12,
-    color: '#7D7D7D',
     fontWeight: '600',
   },
+  statusPass: {
+    color: colors.primary,
+  },
   statusFail: {
-    color: '#7D7D7D',
+    color: '#E53935',
+  },
+  deadlineText: {
+    fontSize: 12,
+    color: '#999',
+    fontWeight: '600',
+  },
+  thumbnailWrap: {
+    width: 62,
+    height: 62,
+    borderRadius: 12,
+    overflow: 'hidden',
+    backgroundColor: '#F0F0F0',
+  },
+  thumbnail: {
+    width: '100%',
+    height: '100%',
   },
   situationLabel: {
     fontSize: 11,
@@ -343,6 +453,9 @@ const styles = StyleSheet.create({
     width: 11,
     height: 11,
   },
+  statusIconFail: {
+    tintColor: '#E53935',
+  },
   verifyButton: {
     paddingHorizontal: 12,
     paddingVertical: 8,
@@ -350,6 +463,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E4E4E4',
     backgroundColor: '#F6F6F6',
+    flexShrink: 0,
+    minWidth: 72,
   },
   verifyButtonDisabled: {
     opacity: 0.6,
@@ -366,21 +481,16 @@ const styles = StyleSheet.create({
     backgroundColor: '#F0F0F0',
     alignItems: 'center',
     justifyContent: 'center',
-    position: 'relative',
   },
   photoText: {
     fontSize: 12,
     color: '#8B8B8B',
   },
-  photoIconButton: {
-    position: 'absolute',
-    bottom: 6,
-    right: 6,
-  },
   photoIcon: {
     width: 8,
     height: 8,
     tintColor: '#969696',
+    marginTop: 2,
   },
   modalBackdrop: {
     flex: 1,

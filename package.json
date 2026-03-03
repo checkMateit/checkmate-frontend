@@ -5,7 +5,6 @@
   "scripts": {
     "android": "react-native run-android",
     "android:clean": "node scripts/clean-android-build.js",
-    "android:8083": "react-native run-android --port 8083",
     "android:reset": "react-native start --reset-cache",
     "ios": "react-native run-ios",
     "lint": "eslint .",

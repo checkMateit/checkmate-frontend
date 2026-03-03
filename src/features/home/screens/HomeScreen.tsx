@@ -28,6 +28,7 @@ import { type StudyPreview } from '../../search/types';
 import AdminHomeScreen from '../../admin/screen/AdminHomeScreen';
 import { apiClient } from '../../../api';
 import { getCurrentUserId } from '../../../api/client';
+import { getMyInfo } from '../../../api/users';
 import {
   fetchMyStudyGroups,
   fetchRecommendedStudyGroups,
@@ -74,7 +75,17 @@ function HomeScreen() {
   const [errorMyStudies, setErrorMyStudies] = useState<string | null>(null);
   const [recommendedStudies, setRecommendedStudies] = useState<StudyDetail[]>([]);
   const [loadingRecommended, setLoadingRecommended] = useState(true);
+  const [userNickname, setUserNickname] = useState<string>('회원');
   const { notifications } = useNotificationCenter();
+
+  useEffect(() => {
+    getMyInfo()
+      .then((res) => {
+        const nickname = res.data?.data?.nickname?.trim();
+        if (nickname) setUserNickname(nickname);
+      })
+      .catch(() => {});
+  }, []);
   
   useEffect(() => {
     try {
@@ -312,20 +323,17 @@ function HomeScreen() {
           >
             <View style={styles.heroTextBlock}>
               {loadingMyStudies ? (
-                <>
-                  <Text style={styles.heroLine}>승연 메이트님</Text>
-                  <Text style={styles.heroLine}>스터디를 불러오는 중…</Text>
-                </>
+                <Text style={styles.heroLine}>
+                  {userNickname} 메이트님{'\n'}스터디를 불러오는 중…
+                </Text>
               ) : hasStudies ? (
-                <>
-                  <Text style={styles.heroLine}>승연 메이트님</Text>
-                  <Text style={styles.heroLine}>오늘은 스터디 {myStudies.length}개가 있어요!</Text>
-                </>
+                <Text style={styles.heroLine}>
+                  {userNickname} 메이트님{'\n'}오늘은 스터디 {myStudies.length}개가 있어요!
+                </Text>
               ) : (
-                <>
-                  <Text style={styles.heroLine}>승연 메이트님 반가워요!</Text>
-                  <Text style={styles.heroLine}>참여중인 스터디가 없네요.</Text>
-                </>
+                <Text style={styles.heroLine}>
+                  {userNickname} 메이트님 반가워요!{'\n'}참여중인 스터디가 없네요.
+                </Text>
               )}
             </View>
 
@@ -610,9 +618,8 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   heroTextBlock: {
-    paddingHorizontal:10,
+    paddingHorizontal: 10,
     marginBottom: 50,
-    marginTop: -50,
   },
   heroMascot: {
     position: 'absolute',
