@@ -1,10 +1,13 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   Image,
+  Modal,
   Pressable,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
@@ -17,6 +20,11 @@ import type {
   StudyGroupMemberRes,
   VerificationRuleRes,
 } from '../../../api/studyGroups';
+import {
+  getGpsLocations,
+  addGpsLocation,
+  type GpsLocationRes,
+} from '../../../api/verification';
 
 const backIcon = require('../../../assets/icon/left_arrow.png');
 const editIcon = require('../../../assets/icon/modify_icon.png');
@@ -113,6 +121,83 @@ function VerificationLocationMap({ locations }: { locations: LocationPoint[] }) 
   );
 }
 
+const DEFAULT_REGION = {
+  latitude: 37.5665,
+  longitude: 126.978,
+  latitudeDelta: 0.01,
+  longitudeDelta: 0.01,
+};
+
+function AddLocationMap({
+  latitude,
+  longitude,
+  onCoordsChange,
+}: {
+  latitude: number | null;
+  longitude: number | null;
+  onCoordsChange: (lat: number, lng: number) => void;
+}) {
+  const mapRef = useRef<MapView>(null);
+  const center =
+    latitude != null && longitude != null
+      ? { latitude, longitude }
+      : { latitude: DEFAULT_REGION.latitude, longitude: DEFAULT_REGION.longitude };
+
+  const handleZoomIn = () => {
+    mapRef.current?.getCamera().then((camera: { zoom?: number; center?: { latitude: number; longitude: number } }) => {
+      const nextZoom = Math.min((camera.zoom ?? 15) + 1, 21);
+      mapRef.current?.animateCamera({
+        center: camera.center ?? center,
+        zoom: nextZoom,
+      });
+    }).catch(() => {});
+  };
+
+  const handleZoomOut = () => {
+    mapRef.current?.getCamera().then((camera: { zoom?: number; center?: { latitude: number; longitude: number } }) => {
+      const nextZoom = Math.max((camera.zoom ?? 15) - 1, 3);
+      mapRef.current?.animateCamera({
+        center: camera.center ?? center,
+        zoom: nextZoom,
+      });
+    }).catch(() => {});
+  };
+
+  return (
+    <View style={styles.modalMapWrap}>
+      <MapView
+        ref={mapRef}
+        style={styles.modalMap}
+        initialRegion={
+          latitude != null && longitude != null
+            ? { latitude, longitude, latitudeDelta: 0.005, longitudeDelta: 0.005 }
+            : DEFAULT_REGION
+        }
+        onPress={(e) => {
+          const { latitude: lat, longitude: lng } = e.nativeEvent.coordinate;
+          onCoordsChange(lat, lng);
+        }}
+        scrollEnabled
+        zoomEnabled
+        pitchEnabled={false}
+        rotateEnabled={false}
+      >
+        {latitude != null && longitude != null ? (
+          <Marker coordinate={{ latitude, longitude }} title="인증 위치" />
+        ) : null}
+      </MapView>
+      <View style={[styles.zoomButtons, { right: 10, bottom: 10 }]} pointerEvents="box-none">
+        <Pressable style={[styles.zoomButton, styles.zoomButtonFirst]} onPress={handleZoomIn}>
+          <Text style={styles.zoomButtonText}>+</Text>
+        </Pressable>
+        <Pressable style={[styles.zoomButton, styles.zoomButtonBottom]} onPress={handleZoomOut}>
+          <Text style={styles.zoomButtonText}>−</Text>
+        </Pressable>
+      </View>
+    </View>
+  );
+}
+
 type StudyDetailRulesViewProps = {
   groupId: string;
   currentUserId: string | null;
@@ -130,6 +215,25 @@ function StudyDetailRulesView({
   const [members, setMembers] = useState<StudyGroupMemberRes[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [myGpsLocationsBySlot, setMyGpsLocationsBySlot] = useState<Record<number, GpsLocationRes[]>>({});
+  const [addLocationSlot, setAddLocationSlot] = useState<number | null>(null);
+  const [addLocationName, setAddLocationName] = useState('');
+  const [addLocationLat, setAddLocationLat] = useState<number | null>(null);
+  const [addLocationLng, setAddLocationLng] = useState<number | null>(null);
+  const [addLocationSubmitting, setAddLocationSubmitting] = useState(false);
+
+  const loadMyGpsLocationsForSlot = useCallback(
+    async (slot: number) => {
+      try {
+        const res = await getGpsLocations(groupId, slot);
+        const list = res.data?.data ?? [];
+        setMyGpsLocationsBySlot((prev) => ({ ...prev, [slot]: list }));
+      } catch {
+        setMyGpsLocationsBySlot((prev) => ({ ...prev, [slot]: [] }));
+      }
+    },
+    [groupId],
+  );
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -144,7 +248,25 @@ function StudyDetailRulesView({
         (rulesRes.data.isSuccess === true ||
           (rulesRes.data as { success?: boolean }).success === true);
       if (rulesOk && Array.isArray(rulesRes.data?.data)) {
-        setRules(rulesRes.data.data);
+        const rulesList = rulesRes.data.data as VerificationRuleRes[];
+        setRules(rulesList);
+        const perLocationSlots = rulesList
+          .filter(
+            (r) =>
+              r.methodCode === 'GPS' &&
+              (r.methodDetails?.gps?.radius_mode?.toUpperCase() === 'PER_LOCATION'),
+          )
+          .map((r) => r.slot);
+        const nextBySlot: Record<number, GpsLocationRes[]> = {};
+        for (const slot of perLocationSlots) {
+          try {
+            const locRes = await getGpsLocations(groupId, slot);
+            nextBySlot[slot] = locRes.data?.data ?? [];
+          } catch {
+            nextBySlot[slot] = [];
+          }
+        }
+        setMyGpsLocationsBySlot((prev) => ({ ...prev, ...nextBySlot }));
       } else {
         setRules([]);
       }
@@ -268,10 +390,49 @@ function StudyDetailRulesView({
     if (methodCode === 'GPS') {
       const gps = details.gps ?? {};
       const locations = Array.isArray(gps.locations) ? gps.locations : [];
-      const isCommon = locations.length <= 1;
+      const radiusMode = (gps as { radius_mode?: string }).radius_mode?.toUpperCase();
+      const isCommon = radiusMode === 'COMMON' || (radiusMode !== 'PER_LOCATION' && locations.length > 0);
       const subLabel = isCommon ? '위치 - 공통 위치' : '위치 - 개인 위치';
-      const loc = locations[0];
-      const locationName = loc?.name ?? '-';
+      const myLocations = myGpsLocationsBySlot[rule.slot] ?? [];
+
+      if (isCommon) {
+        const loc = locations[0];
+        const locationName = loc?.name ?? '-';
+        return (
+          <View key={`slot-${rule.slot}`} style={styles.ruleBlock}>
+            <Text style={styles.ruleBlockTitle}>{rule.slot}. {subLabel}</Text>
+            <View style={styles.ruleRows}>
+              <View style={styles.ruleRow}>
+                <Text style={styles.ruleLabel}>마감 시각</Text>
+                <Text style={styles.ruleValue}>{endTime || '-'}</Text>
+              </View>
+              <View style={[styles.ruleRow, styles.ruleRowLast]}>
+                <Text style={styles.ruleLabel}>공통 위치</Text>
+                <Text style={styles.ruleValue}>{locationName}</Text>
+              </View>
+            </View>
+            <VerificationLocationMap locations={locations} />
+          </View>
+        );
+      }
+
+      const openAddLocationModal = () => {
+        setAddLocationSlot(rule.slot);
+        setAddLocationName('');
+        setAddLocationLat(null);
+        setAddLocationLng(null);
+      };
+
+      const locationNameDisplay =
+        myLocations.length === 0
+          ? null
+          : myLocations.map((l) => l.name || '이름 없음').join(', ');
+      const myLocationsAsPoints: LocationPoint[] = myLocations.map((l) => ({
+        name: l.name,
+        latitude: l.latitude,
+        longitude: l.longitude,
+      }));
+
       return (
         <View key={`slot-${rule.slot}`} style={styles.ruleBlock}>
           <Text style={styles.ruleBlockTitle}>{rule.slot}. {subLabel}</Text>
@@ -281,13 +442,21 @@ function StudyDetailRulesView({
               <Text style={styles.ruleValue}>{endTime || '-'}</Text>
             </View>
             <View style={[styles.ruleRow, styles.ruleRowLast]}>
-              <Text style={styles.ruleLabel}>
-                {isCommon ? '공통 위치' : '개인 위치'}
-              </Text>
-              <Text style={styles.ruleValue}>{locationName}</Text>
+              <Text style={styles.ruleLabel}>개인 위치</Text>
+              <View style={styles.ruleValueWrap}>
+                {myLocations.length === 0 ? (
+                  <Pressable style={styles.addLocationButton} onPress={openAddLocationModal}>
+                    <Text style={styles.addLocationButtonText}>내 위치 등록</Text>
+                  </Pressable>
+                ) : (
+                  <Text style={styles.ruleValue}>{locationNameDisplay}</Text>
+                )}
+              </View>
             </View>
           </View>
-          <VerificationLocationMap locations={locations} />
+          {myLocations.length > 0 ? (
+            <VerificationLocationMap locations={myLocationsAsPoints} />
+          ) : null}
         </View>
       );
     }
@@ -361,6 +530,86 @@ function StudyDetailRulesView({
           </View>
         )}
       </View>
+
+      <Modal
+        visible={addLocationSlot != null}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setAddLocationSlot(null)}
+      >
+        <Pressable
+          style={styles.modalBackdrop}
+          onPress={() => setAddLocationSlot(null)}
+        >
+          <Pressable style={styles.modalBox} onPress={(e) => e.stopPropagation()}>
+            <Text style={styles.modalTitle}>내 위치 등록</Text>
+            <View style={styles.modalField}>
+              <Text style={styles.modalLabel}>위치 이름</Text>
+              <TextInput
+                style={styles.modalInput}
+                value={addLocationName}
+                onChangeText={setAddLocationName}
+                placeholder="예) 집, 도서관"
+                placeholderTextColor="#B0B0B0"
+              />
+            </View>
+            <View style={styles.modalField}>
+              <Text style={styles.modalLabel}>지도를 탭하여 위치를 지정하세요</Text>
+              <AddLocationMap
+                latitude={addLocationLat}
+                longitude={addLocationLng}
+                onCoordsChange={(lat, lng) => {
+                  setAddLocationLat(lat);
+                  setAddLocationLng(lng);
+                }}
+              />
+            </View>
+            <View style={styles.modalActions}>
+              <Pressable
+                style={[styles.modalButton, styles.modalButtonSecondary]}
+                onPress={() => setAddLocationSlot(null)}
+              >
+                <Text style={styles.modalButtonText}>취소</Text>
+              </Pressable>
+              <Pressable
+                style={[styles.modalButton, styles.modalButtonPrimary]}
+                disabled={
+                  !addLocationName.trim() ||
+                  addLocationLat == null ||
+                  addLocationLng == null ||
+                  addLocationSubmitting
+                }
+                onPress={async () => {
+                  if (addLocationSlot == null || addLocationLat == null || addLocationLng == null) return;
+                  const name = addLocationName.trim();
+                  if (!name) return;
+                  setAddLocationSubmitting(true);
+                  try {
+                    await addGpsLocation(groupId, addLocationSlot, {
+                      name,
+                      latitude: addLocationLat,
+                      longitude: addLocationLng,
+                    });
+                    await loadMyGpsLocationsForSlot(addLocationSlot);
+                    setAddLocationSlot(null);
+                    setAddLocationName('');
+                    setAddLocationLat(null);
+                    setAddLocationLng(null);
+                  } catch {
+                    Alert.alert('등록 실패', '위치 등록에 실패했어요.');
+                  } finally {
+                    setAddLocationSubmitting(false);
+                  }
+                }}
+              >
+                <Text style={[styles.modalButtonText, styles.modalButtonTextPrimary]}>
+                  {addLocationSubmitting ? '등록 중…' : '등록'}
+                </Text>
+              </Pressable>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </View>
   );
 }
@@ -544,6 +793,91 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: colors.textPrimary,
     lineHeight: 22,
+  },
+  addLocationButton: {
+    alignSelf: 'flex-start',
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    backgroundColor: colors.primary,
+    borderRadius: 18,
+  },
+  addLocationButtonText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    padding: 20,
+  },
+  modalBox: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 20,
+    maxHeight: '85%',
+  },
+  modalTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.textPrimary,
+    marginBottom: 16,
+  },
+  modalField: {
+    marginBottom: 12,
+  },
+  modalLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.textSecondary,
+    marginBottom: 4,
+  },
+  modalInput: {
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 14,
+    color: colors.textPrimary,
+  },
+  modalMapWrap: {
+    height: 180,
+    borderRadius: 12,
+    overflow: 'hidden',
+    backgroundColor: '#F0F0F0',
+    marginTop: 8,
+    position: 'relative',
+  },
+  modalMap: {
+    width: '100%',
+    height: '100%',
+  },
+  modalActions: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 20,
+  },
+  modalButton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  modalButtonPrimary: {
+    backgroundColor: colors.primary,
+  },
+  modalButtonSecondary: {
+    backgroundColor: '#EFEFEF',
+  },
+  modalButtonText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: colors.textPrimary,
+  },
+  modalButtonTextPrimary: {
+    color: '#FFFFFF',
   },
 });
 
