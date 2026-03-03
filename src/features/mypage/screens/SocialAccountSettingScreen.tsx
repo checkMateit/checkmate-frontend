@@ -10,6 +10,7 @@ import {
   Alert,
   ScrollView,
   Linking,
+  Platform,
 } from 'react-native';
 import { colors } from '../../../styles/colors';
 import { getSocialAccounts, unlinkSocialAccount } from '../../../api/users';
@@ -85,16 +86,22 @@ function SocialAccountSettingScreen({ onClose }: SocialAccountSettingScreenProps
   }, [isFocused]);
 
   const handleLink = async (provider: 'google' | 'github') => {
-    const url = `http://localhost:8085/oauth2/authorization/${provider}`;
+    // Android 에뮬레이터는 localhost가 호스트 PC를 가리키지 않음. 10.0.2.2 = 호스트 루프백.
+    const oauthHost = Platform.OS === 'android' ? 'http://10.0.2.2:8085' : 'http://localhost:8085';
+    const url = `${oauthHost}/oauth2/authorization/${provider}`;
     try {
+      // Android에서는 canOpenURL이 http(s)에 대해 false를 반환하는 경우가 있어, 직접 openURL 시도.
       const supported = await Linking.canOpenURL(url);
       if (supported) {
+        await Linking.openURL(url);
+      } else if (url.startsWith('http://') || url.startsWith('https://')) {
         await Linking.openURL(url);
       } else {
         Alert.alert('오류', '인증 페이지를 열 수 없습니다.');
       }
     } catch (error) {
       console.error('Linking Error:', error);
+      Alert.alert('오류', '인증 페이지를 열 수 없습니다.');
     }
   };
 
