@@ -11,9 +11,13 @@ function PointsShopBalanceBar({ pointsLabel, onPressExchange }: PointsShopBalanc
   return (
     <View style={styles.container}>
       <View style={styles.pill}>
+        {/* 수정: 내 포인트를 보여주는 부분임을 명시적으로 알 수 있게 스타일 유지 */}
         <Text style={styles.pillText}>{pointsLabel}</Text>
       </View>
-      <Pressable onPress={onPressExchange}>
+      <Pressable 
+        onPress={onPressExchange}
+        style={({ pressed }) => [{ opacity: pressed ? 0.6 : 1 }]} // 추가: 클릭 피드백
+      >
         <Text style={styles.exchangeText}>포인트 환전하기</Text>
       </Pressable>
     </View>

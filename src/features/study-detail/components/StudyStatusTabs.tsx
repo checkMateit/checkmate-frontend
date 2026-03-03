@@ -2,7 +2,7 @@ import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { colors } from '../../../styles/colors';
 
-type StatusTab = 'summary' | 'todo' | 'photo' | 'github' | 'location';
+type StatusTab = 'summary' | 'todo' | 'photo' | 'github';
 
 type StudyStatusTabsProps = {
   activeTab: StatusTab;
@@ -17,16 +17,12 @@ const buildTabs = (methods: string[]) => {
     (method) => method.includes('사진') || method.includes('photo'),
   );
   const hasGithub = normalized.some((method) => method.includes('github'));
-  const hasLocation = normalized.some(
-    (method) => method.includes('gps') || method.includes('위치'),
-  );
 
   return [
     { key: 'summary' as const, label: '요약' },
     ...(hasTodo ? [{ key: 'todo' as const, label: 'TODO' }] : []),
     ...(hasPhoto ? [{ key: 'photo' as const, label: '사진' }] : []),
     ...(hasGithub ? [{ key: 'github' as const, label: 'GitHub' }] : []),
-    ...(hasLocation ? [{ key: 'location' as const, label: '위치' }] : []),
   ];
 };
 

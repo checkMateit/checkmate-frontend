@@ -8,16 +8,19 @@ import {
   ScrollView,
   ActivityIndicator,
   RefreshControl,
-  Alert,
   Modal,
   TextInput,
   SafeAreaView,
+  Alert,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { apiClient } from '../../../api';
+import AdminBadgeScreen from '../../badge/screens/AdminBadgeScreen';
+import AdminStoreScreen from '../../points/screens/AdminStoreScreen';
 
-const cartIcon = require('../../../assets/icon/shop_icon.png');
-const badgeIcon = require('../../../assets/badge/badge_2.png');
+// 에셋 경로 (프로젝트 구조에 맞게 확인 필요)
+const cartIcon = require('../../../assets/icon/white_cart_icon.png');
+const badgeIcon = require('../../../assets/icon/white_badge_icon.png');
 const adminChar = require('../../../assets/character/ch_5.png');
 const arrowDown = require('../../../assets/icon/right_arrow.png');
 const brandLogoSource = require('../../../assets/checkmate_logo2.png');
@@ -26,7 +29,8 @@ function AdminHomeScreen() {
   const insets = useSafeAreaInsets();
   
   // 상태 관리
-  const [inquiries, setInquiries] = useState([]);
+  const [currentView, setCurrentView] = useState<'HOME' | 'BADGE' | 'STORE'>('HOME');
+  const [inquiries, setInquiries] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [selectedInquiry, setSelectedInquiry] = useState<any>(null);
@@ -34,61 +38,28 @@ function AdminHomeScreen() {
   const [replyText, setReplyText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // 1. [목록 조회] 관리자 권한으로 전체 문의 리스트 가져오기
+  // 문의 목록 데이터 페칭
   const fetchAdminInquiries = async () => {
     try {
+      setLoading(true);
       const response = await apiClient.get('/inquiries', {
         params: { page: 0, size: 20 }
       });
       if (response.data && response.data.data) {
-        setInquiries(response.data.data.inquiries);
+        // 답변 대기 중인 항목을 위로 정렬
+        const rawData = response.data.data.inquiries;
+        const sortedData = [...rawData].sort((a, b) => {
+          if (a.status !== 'ANSWERED' && b.status === 'ANSWERED') return -1;
+          if (a.status === 'ANSWERED' && b.status !== 'ANSWERED') return 1;
+          return 0;
+        });
+        setInquiries(sortedData);
       }
     } catch (error: any) {
-      console.error('목록 로드 실패:', error.response?.data || error.message);
+      console.error('목록 로드 실패:', error.message);
     } finally {
       setLoading(false);
       setRefreshing(false);
-    }
-  };
-
-  // 2. [상세 조회] 특정 문의 클릭 시 상세 내용과 댓글 가져오기
-  const handlePressInquiry = async (inquiryId: number) => {
-    try {
-      // 서버 로그 확인 결과 inquiry_id 필드가 확실하므로 해당 ID로 호출
-      const res = await apiClient.get(`/inquiries/${inquiryId}`);
-      if (res.data?.data) {
-        setSelectedInquiry(res.data.data);
-        setIsDetailModalVisible(true);
-      }
-    } catch (error: any) {
-      console.error('상세 조회 실패:', error.response?.data);
-      Alert.alert('에러', '상세 내용을 불러올 수 없습니다. ID가 올바른지 확인하세요.');
-    }
-  };
-
-  // 3. [답변 등록] 관리자 답변 달기
-  const submitAnswer = async () => {
-    if (!replyText.trim() || !selectedInquiry) {
-      Alert.alert('알림', '답변 내용을 입력해주세요.');
-      return;
-    }
-
-    try {
-      setIsSubmitting(true);
-      // 백엔드: @PostMapping("/{inquiryId}/comments")
-      await apiClient.post(`/inquiries/${selectedInquiry.inquiry_id}/comments`, {
-        author_type: 'ADMIN',
-        content: replyText.trim()
-      });
-
-      Alert.alert('완료', '답변이 성공적으로 등록되었습니다.');
-      setIsDetailModalVisible(false);
-      setReplyText('');
-      fetchAdminInquiries(); // 목록 새로고침 (상태 변경 확인)
-    } catch (error: any) {
-      Alert.alert('실패', '답변 등록 중 오류가 발생했습니다.');
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -101,82 +72,125 @@ function AdminHomeScreen() {
     fetchAdminInquiries();
   };
 
+  // 상세 보기 핸들러
+  const handlePressInquiry = async (inquiryId: number) => {
+    try {
+      const res = await apiClient.get(`/inquiries/${inquiryId}`);
+      if (res.data?.data) {
+        setSelectedInquiry(res.data.data);
+        setIsDetailModalVisible(true);
+      }
+    } catch (error) {
+      Alert.alert('에러', '상세 내용을 불러올 수 없습니다.');
+    }
+  };
+
+  // 답변 등록 핸들러
+  const submitAnswer = async () => {
+    if (!replyText.trim() || !selectedInquiry) return;
+    try {
+      setIsSubmitting(true);
+      await apiClient.post(`/inquiries/${selectedInquiry.inquiry_id}/comments`, {
+        author_type: 'ADMIN',
+        content: replyText.trim()
+      });
+      Alert.alert('완료', '답변이 등록되었습니다.');
+      setIsDetailModalVisible(false);
+      setReplyText('');
+      fetchAdminInquiries();
+    } catch (error) {
+      Alert.alert('실패', '등록 중 오류가 발생했습니다.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // 조건부 렌더링 (배지 관리 / 상품 관리)
+  if (currentView === 'BADGE') {
+    return <AdminBadgeScreen onClose={() => setCurrentView('HOME')} />;
+  }
+
+  if (currentView === 'STORE') {
+    return <AdminStoreScreen onClose={() => setCurrentView('HOME')} />;
+  }
+
   return (
-    <View style={[styles.root, { paddingTop: insets.top }]}>
-      {/* 관리자 홈 헤더 */}
-      <View style={styles.topSection}>
+    <View style={styles.container}>
+      {/* --- 상단 그린 섹션 (Wave 디자인) --- */}
+      <View style={[styles.topSection, { paddingTop: insets.top + 10 }]}>
         <View style={styles.header}>
+
           <Image source={brandLogoSource} style={styles.logo} resizeMode="contain" />
+
           <View style={styles.headerIcons}>
-            <Pressable hitSlop={10} style={styles.iconButton}>
+            <Pressable hitSlop={10} onPress={() => setCurrentView('STORE')}>
               <Image source={cartIcon} style={styles.topIcon} />
-              <Text style={styles.iconLabel}>상품 관리</Text>
             </Pressable>
-            <Pressable hitSlop={10} style={styles.iconButton}>
+            <Pressable hitSlop={10} onPress={() => setCurrentView('BADGE')}>
               <Image source={badgeIcon} style={styles.topIcon} />
-              <Text style={styles.iconLabel}>뱃지 관리</Text>
             </Pressable>
           </View>
         </View>
+        
         <View style={styles.welcomeRow}>
-          <Text style={styles.welcomeText}>안녕하세요,{"\n"}관리자 모드입니다</Text>
-          <Image source={adminChar} style={styles.charImage} />
+          <Text style={styles.welcomeText}>안녕하세요,{"\n"}관리자님</Text>
+          <View style={styles.charContainer}>
+            <Image source={adminChar} style={styles.charImage} />
+          </View>
         </View>
       </View>
 
-      {/* 문의 리스트 섹션 */}
+      {/* --- 하단 화이트 리스트 섹션 --- */}
       <View style={styles.bottomSection}>
-        <Text style={styles.sectionTitle}>사용자 문의 관리</Text>
-        {loading ? (
-          <ActivityIndicator size="large" color="#77E48C" style={{ marginTop: 50 }} />
+        <Text style={styles.sectionTitle}>전체 문의</Text>
+        {loading && !refreshing ? (
+          <ActivityIndicator size="large" color="#2FE377" style={{ marginTop: 50 }} />
         ) : (
           <ScrollView 
-            showsVerticalScrollIndicator={false} 
+            showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.scrollPadding}
-            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#77E48C" />}
+            refreshControl={
+              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#2FE377" />
+            }
           >
-            {inquiries.length === 0 ? (
-              <Text style={styles.emptyText}>도착한 문의가 없습니다.</Text>
-            ) : (
-              inquiries.map((item: any) => (
-                <Pressable 
-                  key={item.inquiry_id} 
-                  style={styles.inquiryCard} 
-                  onPress={() => handlePressInquiry(item.inquiry_id)}
-                >
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.userId}>NO. {item.inquiry_id}</Text>
-                    <Text style={styles.inquiryTitle} numberOfLines={1}>{item.title}</Text>
+            {inquiries.map((item) => (
+              <Pressable 
+                key={item.inquiry_id} 
+                style={styles.inquiryCard} 
+                onPress={() => handlePressInquiry(item.inquiry_id)}
+              >
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.userId}>유저 {item.member_id || '익명'}</Text>
+                  <Text style={styles.inquiryTitle} numberOfLines={1}>{item.title}</Text>
+                  <Text style={styles.dateText}>2026. 02. 04.</Text>
+                </View>
+                <View style={styles.rightContent}>
+                  <View style={[
+                    styles.statusBadge, 
+                    item.status === 'ANSWERED' ? styles.statusDone : styles.statusWait
+                  ]}>
+                    <Text style={styles.statusText}>
+                      {item.status === 'ANSWERED' ? '답변 완료' : '대기중'}
+                    </Text>
                   </View>
-                  <View style={styles.rightContent}>
-                    <View style={[
-                      styles.statusBadge, 
-                      item.status === 'ANSWERED' ? styles.statusDone : styles.statusWait
-                    ]}>
-                      <Text style={styles.statusText}>
-                        {item.status === 'ANSWERED' ? '답변 완료' : '대기중'}
-                      </Text>
-                    </View>
-                    <Image source={arrowDown} style={styles.arrowIcon} />
-                  </View>
-                </Pressable>
-              ))
-            )}
+                  <Image source={arrowDown} style={styles.arrowIcon} />
+                </View>
+              </Pressable>
+            ))}
           </ScrollView>
         )}
       </View>
 
-      {/* 상세 조회 및 답변 모달 */}
+      {/* --- 답변 등록 모달 --- */}
       <Modal visible={isDetailModalVisible} animationType="slide" transparent={false}>
         <SafeAreaView style={styles.modalRoot}>
           <View style={styles.modalHeader}>
             <Pressable onPress={() => setIsDetailModalVisible(false)}>
               <Text style={styles.closeText}>취소</Text>
             </Pressable>
-            <Text style={styles.modalTitle}>문의 상세 및 답변</Text>
-            <View style={{ width: 40 }} /> 
+            <Text style={styles.modalTitle}>문의 답변</Text>
+            <View style={{ width: 40 }} />
           </View>
-
           <ScrollView style={styles.modalContent}>
             {selectedInquiry && (
               <>
@@ -184,40 +198,30 @@ function AdminHomeScreen() {
                   <Text style={styles.questionTitle}>{selectedInquiry.title}</Text>
                   <Text style={styles.questionContent}>{selectedInquiry.content}</Text>
                 </View>
-
-                {/* 답변 내역 표시 */}
-                {selectedInquiry.comments?.map((comment: any, index: number) => (
-                  <View 
-                    key={index} 
-                    style={comment.author_type === 'ADMIN' ? styles.adminReply : styles.userAdditional}
-                  >
-                    <Text style={styles.authorLabel}>
-                      {comment.author_type === 'ADMIN' ? '나의 답변' : '사용자'}
-                    </Text>
-                    <Text style={styles.commentText}>{comment.content}</Text>
+                {selectedInquiry.comments?.map((c: any, i: number) => (
+                  <View key={i} style={c.author_type === 'ADMIN' ? styles.adminReply : styles.userAdditional}>
+                    <Text style={styles.commentText}>{c.content}</Text>
                   </View>
                 ))}
-
-                <View style={styles.divider} />
-                <Text style={styles.inputLabel}>답변 달기</Text>
                 <TextInput
                   style={styles.answerInput}
                   multiline
-                  placeholder="사용자에게 전달할 답변을 입력하세요."
+                  placeholder="답변 내용을 입력해주세요..."
                   value={replyText}
                   onChangeText={setReplyText}
-                  textAlignVertical="top"
+                  placeholderTextColor="#BBB"
                 />
               </>
             )}
           </ScrollView>
-
           <Pressable 
-            style={[styles.submitButton, isSubmitting && { opacity: 0.5 }]} 
-            onPress={submitAnswer}
-            disabled={isSubmitting}
+            style={[styles.submitButton, !replyText.trim() && { backgroundColor: '#DDD' }]} 
+            onPress={submitAnswer} 
+            disabled={isSubmitting || !replyText.trim()}
           >
-            {isSubmitting ? <ActivityIndicator color="#fff" /> : <Text style={styles.submitButtonText}>답변 저장하기</Text>}
+            <Text style={styles.submitButtonText}>
+              {isSubmitting ? '저장 중...' : '답변 저장하기'}
+            </Text>
           </Pressable>
         </SafeAreaView>
       </Modal>
@@ -226,6 +230,7 @@ function AdminHomeScreen() {
 }
 
 const styles = StyleSheet.create({
+
   root: { flex: 1, backgroundColor: '#77E48C' },
   topSection: { paddingHorizontal: 20, paddingBottom: 25 },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginVertical: 15 },
@@ -251,23 +256,55 @@ const styles = StyleSheet.create({
   arrowIcon: { width: 10, height: 10, tintColor: '#CCC', transform: [{ rotate: '-90deg' }] },
   emptyText: { textAlign: 'center', marginTop: 50, color: '#BBB' },
 
+
+  // 모달 스타일
   modalRoot: { flex: 1, backgroundColor: '#FFF' },
-  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 20, borderBottomWidth: 1, borderBottomColor: '#F5F5F5' },
-  modalTitle: { fontSize: 16, fontWeight: '800' },
-  closeText: { color: '#AAA', fontSize: 14 },
-  modalContent: { padding: 20 },
-  userQuestionBox: { backgroundColor: '#F8F8F8', padding: 18, borderRadius: 12, marginBottom: 20 },
-  questionTitle: { fontSize: 16, fontWeight: '800', marginBottom: 8 },
-  questionContent: { fontSize: 14, color: '#555', lineHeight: 20 },
-  adminReply: { alignSelf: 'flex-end', backgroundColor: '#E8F5E9', padding: 12, borderRadius: 12, marginTop: 10, maxWidth: '85%' },
-  userAdditional: { alignSelf: 'flex-start', backgroundColor: '#F0F0F0', padding: 12, borderRadius: 12, marginTop: 10, maxWidth: '85%' },
-  authorLabel: { fontSize: 9, fontWeight: '700', color: '#999', marginBottom: 3 },
-  commentText: { fontSize: 14, color: '#333' },
-  divider: { height: 1, backgroundColor: '#F0F0F0', marginVertical: 25 },
-  inputLabel: { fontSize: 14, fontWeight: '800', marginBottom: 10 },
-  answerInput: { borderWidth: 1, borderColor: '#EEE', borderRadius: 10, padding: 15, minHeight: 120, backgroundColor: '#FAFAFA' },
-  submitButton: { backgroundColor: '#77E48C', margin: 20, padding: 18, borderRadius: 15, alignItems: 'center' },
-  submitButtonText: { color: '#FFF', fontSize: 16, fontWeight: '800' },
+  modalHeader: { 
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
+    alignItems: 'center', 
+    padding: 20, 
+    borderBottomWidth: 1, 
+    borderBottomColor: '#F5F5F5' 
+  },
+  modalTitle: { fontSize: 17, fontWeight: '800' },
+  closeText: { color: '#999', fontSize: 15 },
+  modalContent: { padding: 25 },
+  userQuestionBox: { backgroundColor: '#F8F8F8', padding: 20, borderRadius: 15, marginBottom: 25 },
+  questionTitle: { fontSize: 17, fontWeight: '800', marginBottom: 10, color: '#1A1A1A' },
+  questionContent: { fontSize: 15, color: '#444', lineHeight: 22 },
+  adminReply: { 
+    alignSelf: 'flex-end', 
+    backgroundColor: '#E8F5E9', 
+    padding: 15, 
+    borderRadius: 15, 
+    borderTopRightRadius: 2,
+    marginTop: 10, 
+    maxWidth: '85%' 
+  },
+  userAdditional: { 
+    alignSelf: 'flex-start', 
+    backgroundColor: '#F0F0F0', 
+    padding: 15, 
+    borderRadius: 15, 
+    borderTopLeftRadius: 2,
+    marginTop: 10, 
+    maxWidth: '85%' 
+  },
+  commentText: { fontSize: 15, color: '#333' },
+  answerInput: { 
+    borderWidth: 1.5, 
+    borderColor: '#F0F0F0', 
+    borderRadius: 15, 
+    padding: 20, 
+    minHeight: 150, 
+    backgroundColor: '#FAFAFA',
+    marginTop: 30,
+    fontSize: 15,
+    textAlignVertical: 'top'
+  },
+  submitButton: { backgroundColor: '#2FE377', margin: 25, padding: 20, borderRadius: 18, alignItems: 'center' },
+  submitButtonText: { color: '#FFF', fontSize: 17, fontWeight: '800' },
 });
 
 export default AdminHomeScreen;

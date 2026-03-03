@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Alert, Image, Pressable, SafeAreaView, StyleSheet, Text, View } from 'react-native';
 import { colors } from '../../../styles/colors';
+import { setAuthSession } from '../../../api/client';
 import {
   configureGoogleSignIn,
   formatGoogleSignInError,
@@ -20,26 +21,54 @@ function LoginScreen({ onLogin }: LoginScreenProps) {
     try {
       configureGoogleSignIn();
     } catch {
-      // 실제 로그인 시점에 사용자에게 에러를 안내한다.
     }
   }, []);
 
-  const handleGoogleLogin = async () => {
-    setOpeningGoogle(true);
-    try {
-      const result = await signInWithGoogle();
+const handleGoogleLogin = async () => {
+  setOpeningGoogle(true);
+  
+  try {
+    const result = await signInWithGoogle();
 
-      if (result.type === 'cancelled') {
-        return;
+    if (result.type === 'cancelled') {
+      console.log('>>> 로그인이 사용자에 의해 취소됨');
+      return;
+    }
+
+    if (result.serverAuthCode) {
+      
+      const response = await fetch('http://localhost:8085/auth/google', { 
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ serverAuthCode: result.serverAuthCode }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        console.error('>>> 백엔드 에러 발생:', errorData);
+        throw new Error('서버 인증 실패');
       }
 
+      const data = await response.json();
+      console.log('>>> 백엔드 토큰 발급 성공:', data);
+
+        if (data.accessToken && data.userId) {
+          setAuthSession(data.accessToken, data.userId, data.role || 'USER');
+        } else {
+          console.warn('!!! 서버 응답에 토큰이나 ID가 누락되었습니다.');
+        }
+
       onLogin?.();
-    } catch (error) {
-      Alert.alert('로그인 오류', formatGoogleSignInError(error));
-    } finally {
-      setOpeningGoogle(false);
+    } else {
+      console.warn('!!! serverAuthCode가 없어서 서버 로그인을 진행할 수 없습니다.');
     }
-  };
+
+  } catch (error) {
+    Alert.alert('로그인 오류', formatGoogleSignInError(error));
+  } finally {
+    setOpeningGoogle(false);
+  }
+};
 
   return (
     <SafeAreaView style={styles.safeArea}>
