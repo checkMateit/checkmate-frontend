@@ -20,6 +20,7 @@ const cartIcon = require('../../../assets/icon/shop_icon.png');
 const badgeIcon = require('../../../assets/badge/badge_2.png');
 const adminChar = require('../../../assets/character/ch_5.png');
 const arrowDown = require('../../../assets/icon/right_arrow.png');
+const brandLogoSource = require('../../../assets/checkmate_logo2.png');
 
 function AdminHomeScreen() {
   const insets = useSafeAreaInsets();
@@ -105,7 +106,7 @@ function AdminHomeScreen() {
       {/* 관리자 홈 헤더 */}
       <View style={styles.topSection}>
         <View style={styles.header}>
-          <Text style={styles.logo}>Checkmate Admin</Text>
+          <Image source={brandLogoSource} style={styles.logo} resizeMode="contain" />
           <View style={styles.headerIcons}>
             <Pressable hitSlop={10} style={styles.iconButton}>
               <Image source={cartIcon} style={styles.topIcon} />
@@ -228,7 +229,7 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: '#77E48C' },
   topSection: { paddingHorizontal: 20, paddingBottom: 25 },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginVertical: 15 },
-  logo: { fontSize: 18, fontWeight: '900', color: '#1A1A1A' },
+  logo: { width: 142, height: 28 },
   headerIcons: { flexDirection: 'row', gap: 15 },
   iconButton: { alignItems: 'center' },
   topIcon: { width: 22, height: 22, tintColor: '#1A1A1A' },
