@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Image,
@@ -7,6 +7,7 @@ import {
   Text,
   View,
 } from 'react-native';
+import MapView, { Marker } from 'react-native-maps';
 import { colors } from '../../../styles/colors';
 import {
   fetchStudyGroupMembers,
@@ -32,6 +33,84 @@ function displayName(member: StudyGroupMemberRes): string {
   if (member.role === 'Leader') return '방장';
   const short = member.userId.replace(/-/g, '').slice(-8);
   return short ? `…${short}` : '방장';
+}
+
+type LocationPoint = { name?: string; latitude?: number; longitude?: number };
+
+function VerificationLocationMap({ locations }: { locations: LocationPoint[] }) {
+  const mapRef = useRef<MapView>(null);
+  const points = locations.filter(
+    (loc): loc is LocationPoint & { latitude: number; longitude: number } =>
+      typeof loc.latitude === 'number' &&
+      typeof loc.longitude === 'number' &&
+      Number.isFinite(loc.latitude) &&
+      Number.isFinite(loc.longitude),
+  );
+  if (points.length === 0) return null;
+
+  const lats = points.map((p) => p.latitude);
+  const lngs = points.map((p) => p.longitude);
+  const minLat = Math.min(...lats);
+  const maxLat = Math.max(...lats);
+  const minLng = Math.min(...lngs);
+  const maxLng = Math.max(...lngs);
+  const padding = 0.002;
+  const region = {
+    latitude: (minLat + maxLat) / 2,
+    longitude: (minLng + maxLng) / 2,
+    latitudeDelta: Math.max(maxLat - minLat + padding * 2, 0.005),
+    longitudeDelta: Math.max(maxLng - minLng + padding * 2, 0.005),
+  };
+
+  const handleZoomIn = () => {
+    mapRef.current?.getCamera().then((camera: { zoom?: number; center?: { latitude: number; longitude: number } }) => {
+      const nextZoom = Math.min((camera.zoom ?? 15) + 1, 21);
+      mapRef.current?.animateCamera({
+        center: camera.center ?? { latitude: region.latitude, longitude: region.longitude },
+        zoom: nextZoom,
+      });
+    }).catch(() => {});
+  };
+
+  const handleZoomOut = () => {
+    mapRef.current?.getCamera().then((camera: { zoom?: number; center?: { latitude: number; longitude: number } }) => {
+      const nextZoom = Math.max((camera.zoom ?? 15) - 1, 3);
+      mapRef.current?.animateCamera({
+        center: camera.center ?? { latitude: region.latitude, longitude: region.longitude },
+        zoom: nextZoom,
+      });
+    }).catch(() => {});
+  };
+
+  return (
+    <View style={styles.mapWrap}>
+      <MapView
+        ref={mapRef}
+        style={styles.map}
+        initialRegion={region}
+        scrollEnabled
+        zoomEnabled
+        pitchEnabled={false}
+        rotateEnabled={false}
+      >
+        {points.map((p, idx) => (
+          <Marker
+            key={`${p.latitude}-${p.longitude}-${idx}`}
+            coordinate={{ latitude: p.latitude, longitude: p.longitude }}
+            title={p.name ?? undefined}
+          />
+        ))}
+      </MapView>
+      <View style={styles.zoomButtons} pointerEvents="box-none">
+        <Pressable style={[styles.zoomButton, styles.zoomButtonFirst]} onPress={handleZoomIn}>
+          <Text style={styles.zoomButtonText}>+</Text>
+        </Pressable>
+        <Pressable style={[styles.zoomButton, styles.zoomButtonBottom]} onPress={handleZoomOut}>
+          <Text style={styles.zoomButtonText}>−</Text>
+        </Pressable>
+      </View>
+    </View>
+  );
 }
 
 type StudyDetailRulesViewProps = {
@@ -193,12 +272,6 @@ function StudyDetailRulesView({
       const subLabel = isCommon ? '위치 - 공통 위치' : '위치 - 개인 위치';
       const loc = locations[0];
       const locationName = loc?.name ?? '-';
-      const locationPlace =
-        loc?.latitude != null && loc?.longitude != null
-          ? `${loc.latitude}, ${loc.longitude}`
-          : loc?.name
-            ? loc.name
-            : '-';
       return (
         <View key={`slot-${rule.slot}`} style={styles.ruleBlock}>
           <Text style={styles.ruleBlockTitle}>{rule.slot}. {subLabel}</Text>
@@ -207,21 +280,14 @@ function StudyDetailRulesView({
               <Text style={styles.ruleLabel}>마감 시각</Text>
               <Text style={styles.ruleValue}>{endTime || '-'}</Text>
             </View>
-            <View style={styles.ruleRow}>
-              <Text style={styles.ruleLabel}>
-                {isCommon ? '공통 위치 이름' : '개인 위치 이름'}
-              </Text>
-              <Text style={styles.ruleValue}>{locationName}</Text>
-            </View>
             <View style={[styles.ruleRow, styles.ruleRowLast]}>
               <Text style={styles.ruleLabel}>
                 {isCommon ? '공통 위치' : '개인 위치'}
               </Text>
-              <Text style={styles.ruleValue} numberOfLines={1}>
-                {locationPlace}
-              </Text>
+              <Text style={styles.ruleValue}>{locationName}</Text>
             </View>
           </View>
+          <VerificationLocationMap locations={locations} />
         </View>
       );
     }
@@ -430,6 +496,54 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+  },
+  mapWrap: {
+    marginTop: 12,
+    width: '100%',
+    height: 140,
+    borderRadius: 12,
+    overflow: 'hidden',
+    backgroundColor: '#F0F0F0',
+    position: 'relative',
+  },
+  map: {
+    width: '100%',
+    height: '100%',
+  },
+  zoomButtons: {
+    position: 'absolute',
+    right: 10,
+    bottom: 10,
+    flexDirection: 'column',
+    gap: 0,
+  },
+  zoomButton: {
+    width: 36,
+    height: 36,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 3,
+  },
+  zoomButtonBottom: {
+    borderTopWidth: 1,
+    borderTopColor: '#E0E0E0',
+    borderBottomLeftRadius: 8,
+    borderBottomRightRadius: 8,
+  },
+  zoomButtonFirst: {
+    borderTopLeftRadius: 8,
+    borderTopRightRadius: 8,
+  },
+  zoomButtonText: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: colors.textPrimary,
+    lineHeight: 22,
   },
 });
 
