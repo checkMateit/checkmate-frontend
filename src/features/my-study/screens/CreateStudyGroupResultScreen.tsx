@@ -6,6 +6,7 @@ import ResultHeader from '../components/ResultHeader';
 import StudySummaryCard from '../components/StudySummaryCard';
 import PrimaryActionButton from '../components/PrimaryActionButton';
 import { type MethodConfig } from '../components/AuthMethodSection';
+import { formatTimeKST } from '../../../utils/timeKST';
 
 type CreateStudyGroupResultScreenProps = {
   onClose: () => void;
@@ -25,22 +26,16 @@ type CreateStudyGroupResultScreenProps = {
 const formatDate = (value: Date) =>
   `${value.getFullYear()}. ${value.getMonth() + 1}. ${value.getDate()}.`;
 
-const formatTime = (value: Date) => {
-  const hours = value.getHours().toString().padStart(2, '0');
-  const minutes = value.getMinutes().toString().padStart(2, '0');
-  return `${hours}:${minutes}`;
-};
-
 const buildAuthTime = (config: MethodConfig) => {
   if (config.method === 'TODO') {
-    return `작성 마감 ${formatTime(config.todoDeadline)}\n완료 시간 ${formatTime(
+    return `작성 마감 ${formatTimeKST(config.todoDeadline)}\n완료 시간 ${formatTimeKST(
       config.todoComplete,
     )}`;
   }
   if (config.method === '위치') {
-    return `마감 시간 ${formatTime(config.rangeEnd)}`;
+    return `마감 시간 ${formatTimeKST(config.rangeEnd)}`;
   }
-  return `마감 시간 ${formatTime(config.rangeEnd)}`;
+  return `마감 시간 ${formatTimeKST(config.rangeEnd)}`;
 };
 
 const formatMethodLabel = (config: MethodConfig) => {

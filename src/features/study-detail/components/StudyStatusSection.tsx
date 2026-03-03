@@ -20,6 +20,7 @@ export type VerificationRule = {
 type StudyStatusSectionProps = {
   resetKey: number;
   groupId: string;
+  currentUserId: string | null;
   verificationRules: VerificationRule[];
   methods: string[];
 };
@@ -50,6 +51,7 @@ const getAvailableTabs = (methods: string[]) => {
 function StudyStatusSection({
   resetKey,
   groupId,
+  currentUserId,
   verificationRules,
   methods,
 }: StudyStatusSectionProps) {
@@ -72,7 +74,14 @@ function StudyStatusSection({
         </Text>
         <StudyStatusTabs activeTab={activeTab} onChange={setActiveTab} methods={methods} />
       </View>
-      {activeTab === 'summary' && <StudyStatusSummary methods={methods} />}
+      {activeTab === 'summary' && (
+          <StudyStatusSummary
+            groupId={groupId}
+            currentUserId={currentUserId}
+            verificationRules={verificationRules}
+            methods={methods}
+          />
+        )}
       {activeTab === 'todo' &&
         (slotChecklist != null ? (
           <StudyStatusTodo groupId={groupId} slot={slotChecklist} />

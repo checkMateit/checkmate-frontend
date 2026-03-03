@@ -35,6 +35,12 @@ import CreateStudyGroupResultScreen from './CreateStudyGroupResultScreen';
 import { createStudyGroup, updateStudyGroup } from '../../../api/studyGroups';
 import type { StudyGroupDetailRes } from '../../../api/studyGroups';
 import { buildStudyGroupCreatePayload } from '../../../api/studyGroupCreate';
+import {
+  createTimeKST,
+  formatTimeKST,
+  parseTimeToKST,
+  pickerDateToKST,
+} from '../../../utils/timeKST';
 
 type CreateStudyGroupScreenProps = {
   onClose: () => void;
@@ -46,13 +52,6 @@ type CreateStudyGroupScreenProps = {
 
 const categories = ['코딩 테스트', '자격증', '언어', '기상', '착석', '기타'];
 const authMethods: AuthMethod[] = ['사진', '위치', 'TODO', 'GitHub'];
-
-const createTime = (hours: number, minutes = 0) => {
-  const base = new Date();
-  const next = new Date(base);
-  next.setHours(hours, minutes, 0, 0);
-  return next;
-};
 
 const CATEGORY_REVERSE: Record<string, string> = {
   WAKE: '기상',
@@ -78,11 +77,6 @@ const DAY_REVERSE: Record<string, string> = {
   SUN: '일',
 };
 
-function parseTimeToDate(timeStr: string): Date {
-  const [h, m] = timeStr.split(':').map(Number);
-  return createTime(h ?? 0, m ?? 0);
-}
-
 function detailToInitialState(d: StudyGroupDetailRes): {
   name: string;
   description: string;
@@ -101,12 +95,12 @@ function detailToInitialState(d: StudyGroupDetailRes): {
   const method1 = r1 ? (METHOD_REVERSE[r1.methodCode] ?? '사진') : '사진';
   const days =
     r0?.daysOfWeek?.map((day) => DAY_REVERSE[day] ?? day).filter(Boolean) ?? ['월', '화'];
-  const endTime0 = r0?.endTime ? parseTimeToDate(r0.endTime) : createTime(10, 0);
+  const endTime0 = r0?.endTime ? parseTimeToKST(r0.endTime) : createTimeKST(10, 0);
   const checkTime0 =
     r0?.methodCode === 'CHECKLIST' && r0?.checkEndTime
-      ? parseTimeToDate(r0.checkEndTime)
-      : createTime(22, 0);
-  const endTime1 = r1?.endTime ? parseTimeToDate(r1.endTime) : createTime(10, 0);
+      ? parseTimeToKST(r0.checkEndTime)
+      : createTimeKST(22, 0);
+  const endTime1 = r1?.endTime ? parseTimeToKST(r1.endTime) : createTimeKST(10, 0);
   const startDate = d.startDate
     ? (() => {
         const [y, m, day] = d.startDate.split('-').map(Number);
@@ -127,10 +121,10 @@ function detailToInitialState(d: StudyGroupDetailRes): {
     primaryConfig: r0
       ? {
           method: method0,
-          todoDeadline: method0 === 'TODO' ? endTime0 : createTime(10, 0),
-          todoComplete: method0 === 'TODO' ? checkTime0 : createTime(22, 0),
-          rangeStart: method0 !== 'TODO' ? endTime0 : createTime(10, 0),
-          rangeEnd: method0 !== 'TODO' ? endTime0 : createTime(22, 0),
+          todoDeadline: method0 === 'TODO' ? endTime0 : createTimeKST(10, 0),
+          todoComplete: method0 === 'TODO' ? checkTime0 : createTimeKST(22, 0),
+          rangeStart: method0 !== 'TODO' ? endTime0 : createTimeKST(10, 0),
+          rangeEnd: method0 !== 'TODO' ? endTime0 : createTimeKST(22, 0),
           locationType: '공통 위치',
           locationName: (r0.methodDetails as { gps?: { locations?: Array<{ name?: string; latitude?: number; longitude?: number }> } })?.gps?.locations?.[0]?.name ?? '',
           locationLatitude: (r0.methodDetails as { gps?: { locations?: Array<{ latitude?: number }> } })?.gps?.locations?.[0]?.latitude ?? null,
@@ -146,18 +140,12 @@ function detailToInitialState(d: StudyGroupDetailRes): {
   };
 }
 
-const formatTime = (value: Date) => {
-  const hours = value.getHours().toString().padStart(2, '0');
-  const minutes = value.getMinutes().toString().padStart(2, '0');
-  return `${hours}:${minutes}`;
-};
-
 const createDefaultConfig = (method: AuthMethod): MethodConfig => ({
   method,
-  todoDeadline: createTime(10, 0),
-  todoComplete: createTime(22, 0),
-  rangeStart: createTime(10, 0),
-  rangeEnd: createTime(22, 0),
+  todoDeadline: createTimeKST(10, 0),
+  todoComplete: createTimeKST(22, 0),
+  rangeStart: createTimeKST(10, 0),
+  rangeEnd: createTimeKST(22, 0),
   locationType: '공통 위치',
   locationName: '',
   locationLatitude: null,
@@ -189,7 +177,7 @@ function CreateStudyGroupScreen({
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [activeDateField, setActiveDateField] = useState<'start' | 'end'>('start');
   const [tempDate, setTempDate] = useState(new Date(2026, 1, 4));
-  const [tempTime, setTempTime] = useState(createTime(10, 0));
+  const [tempTime, setTempTime] = useState(() => createTimeKST(10, 0));
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [showResult, setShowResult] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -229,7 +217,7 @@ function CreateStudyGroupScreen({
   const selectedConfig = activeConfigKey === 'primary' ? primaryConfig : secondaryConfig;
   const selectedTime =
     selectedConfig?.[activeTimeField] ??
-    createTime(10, 0);
+    createTimeKST(10, 0);
 
   const formatDate = (value: Date) =>
     `${value.getFullYear()}. ${value.getMonth() + 1}. ${value.getDate()}.`;
@@ -400,7 +388,9 @@ function CreateStudyGroupScreen({
 
   const applyTime = () => {
     const updater = activeConfigKey === 'primary' ? setPrimaryConfig : setSecondaryConfig;
-    updater((prev) => (prev ? { ...prev, [activeTimeField]: tempTime } : prev));
+    updater((prev) =>
+      prev ? { ...prev, [activeTimeField]: pickerDateToKST(tempTime) } : prev,
+    );
     setShowTimePicker(false);
   };
 
@@ -436,7 +426,7 @@ function CreateStudyGroupScreen({
     <AuthTimeControls
       config={config}
       configKey={configKey}
-      formatTime={formatTime}
+      formatTime={formatTimeKST}
       onOpenTimePicker={openTimePicker}
       onLocationTypeChange={(key, type) =>
         key === 'primary'

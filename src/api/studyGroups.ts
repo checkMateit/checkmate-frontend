@@ -204,3 +204,28 @@ export const fetchVerificationReport = (
     `${ENDPOINTS.studyGroups}/${groupId}/report`,
     { params: params?.endDate != null ? { endDate: params.endDate } : undefined },
   );
+
+/** GET /study-groups/{groupId}/verification/records — 기간별 인증 기록 (현황 탭 요약용). api-study-group-verification-records.md */
+export type VerificationRecordItemRes = {
+  userId: string;
+  slot: number;
+  verificationDate: string;
+};
+
+export type VerificationRecordsRes = {
+  records: VerificationRecordItemRes[];
+};
+
+export const fetchVerificationRecords = (
+  groupId: string | number,
+  params?: { startDate?: string; endDate?: string },
+) =>
+  apiClient.get<ApiResponse<VerificationRecordsRes>>(
+    `${ENDPOINTS.studyGroups}/${groupId}/verification/records`,
+    {
+      params:
+        params?.startDate != null || params?.endDate != null
+          ? { startDate: params?.startDate, endDate: params?.endDate }
+          : undefined,
+    },
+  );

@@ -5,8 +5,8 @@ import NotificationEmptyState from './NotificationEmptyState';
 import { notificationApi } from '../../../api/notification';
 import { Notification, NotificationType } from '../../../types/notification';
 import { apiClient } from '../../../api';
-// 정확한 경로 확인 필수: getCurrentUserId를 가져옵니다
-import { getCurrentUserId } from '../../../api/client'; 
+import { getCurrentUserId } from '../../../api/client';
+import { getTodayDateString } from '../../../utils/timeKST'; 
 
 const badgeOne = require('../../../assets/badge/badge_1.png');
 
@@ -107,7 +107,7 @@ function NotificationNoticeTab() {
   };
 
   const filtered = notifications.filter(n => filter === 'ALL' || n.type === filter);
-  const todayStr = new Date().toISOString().split('T')[0];
+  const todayStr = getTodayDateString();
   const todayNotices = filtered.filter(n => n.createdAt?.startsWith(todayStr));
   const previousNotices = filtered.filter(n => !n.createdAt?.startsWith(todayStr));
 

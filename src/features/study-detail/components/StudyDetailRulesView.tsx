@@ -30,6 +30,12 @@ import {
 } from '../../../api/verification';
 import { patchVerificationRule, type VerificationRulePatchPayload } from '../../../api/studyGroups';
 import type { MethodConfig } from '../../my-study/components/AuthMethodSection';
+import {
+  createTimeKST,
+  formatTimeKST,
+  parseTimeToKST,
+  pickerDateToKST,
+} from '../../../utils/timeKST';
 import AuthTimeControls from '../../my-study/components/AuthTimeControls';
 import WeekdayPicker from '../../my-study/components/WeekdayPicker';
 import TimePickerModal from '../../my-study/components/TimePickerModal';
@@ -78,21 +84,14 @@ const METHOD_MAP: Record<string, string> = {
   GitHub: 'GITHUB',
 };
 
-function parseTimeToDate(timeStr: string): Date {
-  const [h, m] = (timeStr || '10:00').split(':').map(Number);
-  const d = new Date();
-  d.setHours(h ?? 10, m ?? 0, 0, 0);
-  return d;
-}
-
 function ruleToMethodConfig(rule: VerificationRuleRes): MethodConfig {
   const details = rule.methodDetails ?? {};
   const gps = details.gps ?? {};
   const method = METHOD_REVERSE[rule.methodCode] ?? 'TODO';
-  const endTime = parseTimeToDate(rule.endTime ?? '10:00');
+  const endTime = parseTimeToKST(rule.endTime ?? '10:00');
   const checkEndTime = rule.checkEndTime
-    ? parseTimeToDate(rule.checkEndTime)
-    : parseTimeToDate('22:00');
+    ? parseTimeToKST(rule.checkEndTime)
+    : parseTimeToKST('22:00');
   const locations = Array.isArray((gps as { locations?: unknown[] }).locations)
     ? (gps as { locations: Array<{ name?: string; latitude?: number; longitude?: number }> }).locations
     : [];
@@ -101,8 +100,8 @@ function ruleToMethodConfig(rule: VerificationRuleRes): MethodConfig {
   const loc0 = locations[0];
   return {
     method,
-    todoDeadline: method === 'TODO' ? endTime : parseTimeToDate('10:00'),
-    todoComplete: method === 'TODO' ? checkEndTime : parseTimeToDate('22:00'),
+    todoDeadline: method === 'TODO' ? endTime : parseTimeToKST('10:00'),
+    todoComplete: method === 'TODO' ? checkEndTime : parseTimeToKST('22:00'),
     rangeStart: endTime,
     rangeEnd: endTime,
     locationType: isCommon ? '공통 위치' : '개인 위치',
@@ -306,7 +305,7 @@ function StudyDetailRulesView({
   const [editTimeField, setEditTimeField] = useState<
     'todoDeadline' | 'todoComplete' | 'rangeStart' | 'rangeEnd'
   >('rangeEnd');
-  const [tempTime, setTempTime] = useState(new Date());
+  const [tempTime, setTempTime] = useState(() => createTimeKST(10, 0));
   const [editRuleDetail, setEditRuleDetail] = useState<VerificationRuleRes | null>(null);
 
   const loadMyGpsLocationsForSlot = useCallback(
@@ -396,20 +395,16 @@ function StudyDetailRulesView({
     currentUserId && leader && leader.userId === currentUserId,
   );
 
-  const formatTime = useCallback((value: Date) => {
-    const h = value.getHours().toString().padStart(2, '0');
-    const m = value.getMinutes().toString().padStart(2, '0');
-    return `${h}:${m}`;
-  }, []);
+  const formatTime = useCallback((value: Date) => formatTimeKST(value), []);
 
   const buildEditPayload = useCallback((): VerificationRulePatchPayload | null => {
     if (!editConfig || editRuleSlot == null) return null;
     const endTime =
       editConfig.method === 'TODO'
-        ? formatTime(editConfig.todoDeadline)
-        : formatTime(editConfig.rangeEnd);
+        ? formatTimeKST(editConfig.todoDeadline)
+        : formatTimeKST(editConfig.rangeEnd);
     const checkEndTime =
-      editConfig.method === 'TODO' ? formatTime(editConfig.todoComplete) : null;
+      editConfig.method === 'TODO' ? formatTimeKST(editConfig.todoComplete) : null;
     const daysOfWeek =
       editDays.length > 0 ? editDays.map((d) => DAY_MAP[d] ?? d).filter(Boolean) : ['MON'];
     const methodCode = METHOD_MAP[editConfig.method] ?? 'PHOTO';
@@ -456,7 +451,7 @@ function StudyDetailRulesView({
       method,
       exemption: { isEnabled: false, limitUnit: 'TOTAL', limitCnt: 0 },
     };
-  }, [editConfig, editDays, editRuleDetail, formatTime]);
+  }, [editConfig, editDays, editRuleDetail]);
 
   const handleSaveEditRule = useCallback(async () => {
     if (editRuleSlot == null || !editConfig) return;
@@ -509,7 +504,9 @@ function StudyDetailRulesView({
   }, [editTimeField]);
 
   const applyEditTime = useCallback(() => {
-    setEditConfig((prev) => (prev ? { ...prev, [editTimeField]: tempTime } : prev));
+    setEditConfig((prev) =>
+      prev ? { ...prev, [editTimeField]: pickerDateToKST(tempTime) } : prev,
+    );
     setShowEditTimePicker(false);
   }, [editTimeField, tempTime]);
 

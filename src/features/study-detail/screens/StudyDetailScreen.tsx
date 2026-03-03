@@ -164,6 +164,7 @@ function StudyDetailScreen({ study: studyProp, onClose }: StudyDetailScreenProps
             <StudyStatusSection
               resetKey={statusResetKey}
               groupId={String(resolvedStudy.id)}
+              currentUserId={currentUserId}
               verificationRules={studyDetailForOwner?.verificationRules ?? []}
               methods={resolvedStudy.methods}
             />

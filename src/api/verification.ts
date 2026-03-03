@@ -1,19 +1,18 @@
 /**
  * 스터디 그룹 인증 API — photo, checklist, GPS
  * api-verification-photo-submit.md, api-verification-checklist.md, api-verification-gps.md
+ * 인증 날짜는 한국 시간 기준 오늘(getTodayDateString)을 사용합니다.
  */
 
 import { apiClient } from './client';
 import { ENDPOINTS } from './endpoints';
 import type { ApiResponse } from './studyGroupCreate';
+import { getTodayDateString } from '../utils/timeKST';
 
 const verificationPath = (groupId: string | number, slot: number) =>
   `${ENDPOINTS.studyGroups}/${groupId}/verification/slots/${slot}`;
 
-const today = () => {
-  const d = new Date();
-  return d.toISOString().slice(0, 10);
-};
+const today = () => getTodayDateString();
 
 // --- Photo ---
 export type VerificationPhotoSubmitRes = {
