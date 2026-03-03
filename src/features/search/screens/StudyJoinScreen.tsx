@@ -14,7 +14,7 @@ import {
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import { type NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { colors } from '../../../styles/colors';
-import { type SearchStackParamList } from '../../../navigation/types';
+import { type SearchStackParamList, type HomeStackParamList } from '../../../navigation/types';
 import { type StudyDetail } from '../../study-detail/screens/StudyDetailScreen';
 import { joinStudyGroup, fetchStudyGroupDetail } from '../../../api/studyGroups';
 import AuthMethodRow from '../../../components/common/AuthMethodRow';

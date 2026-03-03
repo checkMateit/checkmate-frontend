@@ -19,7 +19,7 @@ function SearchScreen() {
   const handleClose = () => {
     if (fromHomeEmptyCard) {
       const parent = navigation.getParent<BottomTabNavigationProp<BottomTabParamList>>();
-      parent?.navigate('Home');
+      parent?.navigate('Home', { screen: 'HomeMain' });
     }
   };
 

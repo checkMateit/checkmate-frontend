@@ -49,7 +49,6 @@ function BottomTabs() {
       screenOptions={{
         headerShown: false,
         tabBarStyle: styles.tabBar,
-        unmountOnBlur: true,
         tabBarItemStyle: { paddingVertical: 8 },
         tabBarLabelStyle: {
           marginTop: 6,   
