@@ -90,15 +90,15 @@
 
 ```text
 checkmate-frontend
-├── android/                  # Android 네이티브 설정
-├── ios/                      # iOS 네이티브 설정
-├── __tests__/                # 테스트 코드
+├── android/                 
+├── ios/                     
+├── __tests__/              
 ├── src/
 │   ├── api/                  # axios client, endpoint, 도메인별 API 함수
 │   ├── assets/               # 이미지, 아이콘, 배지 등 정적 리소스
 │   ├── components/
 │   │   └── common/           # 여러 화면에서 재사용하는 공통 컴포넌트
-│   ├── features/             # 기능 단위 화면/컴포넌트 모음
+│   ├── features/            
 │   │   ├── admin/
 │   │   ├── auth/             # 온보딩, 로그인, 인증 저장소
 │   │   ├── history/          # 기록 화면
