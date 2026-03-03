@@ -1,104 +1,126 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+# Checkmate Frontend
+
+스터디 모집부터 참여, 인증, 기록 관리까지 한 번에 다룰 수 있도록 만든 모바일 스터디 관리 애플리케이션
 
 
+## 🚨 Problem
+
+- 기존 인증 스터디는 카카오톡 오픈채팅이나 디스코드 등 일반 도구에 의존하는 경우가 많음.
+- 그 결과 참가자는 매일 인증을 수동으로 올려야 하고, 운영자는 인증 확인, 집계, 패널티 관리까지 직접 해야 하는 불편이 있음.
+- 특히 코테 스터디처럼 GitHub 커밋 기반 인증이 필요한 경우에도 자동화가 부족해 운영 비효율이 큼.
+
+## 🎯 Goal
+
+- 수기로 관리되던 인증 스터디 운영 과정을 자동화하는 것이 목표.
+- 스터디별 특성에 맞는 인증 방식을 선택할 수 있는 멀티 인증 스터디 앱을 구현하고자 함.
+- 참여자는 더 편하게 인증하고, 운영자는 더 쉽게 관리할 수 있는 서비스를 지향함.
+
+## 🛠 기능 설명
+
+### 스터디 생성 및 참여
+
+- 사용자는 스터디를 탐색하고 관심 있는 스터디에 참여할 수 있음.
+- 운영자는 스터디 기본 정보, 진행 기간, 인증 방식, 모집 조건 등을 설정할 수 있음.
+- 인증 방식은 여러 개 중 선택 가능하도록 구성.
+
+### 스터디 인증 방식
+
+- 사용자는 인증 방식을 최대 2개까지 선택 가능.
+- 인증 시간은 방식별로 설정 가능하며, 설정된 시간대 기준으로 인증 성공 여부를 판단.
+- 시스템 오류나 예외 상황 발생 시 방장이 인증 상태를 수동으로 변경할 수 있음.
+
+### GitHub 인증
+
+- GitHub 계정 연동과 인증용 레포지토리 연결이 선행 조건.
+- 설정된 시간 내 커밋이 발생하면 인증 완료 처리하는 방식.
+- 코테 스터디, 알고리즘 풀이 스터디처럼 커밋 기반 인증이 필요한 경우를 위한 기능.
+
+### TODO 인증
+
+- 할 일 작성 인증과 완료 인증의 2단계로 구성되는 방식.
+- 예시로 오전에는 할 일 작성, 밤에는 완료 체크를 진행하는 구조로 설정 가능.
+- 최소 할 일 등록 개수와 최소 완료 개수를 조건으로 둘 수 있음.
+- 두 조건을 모두 충족해야 하루 인증 완료로 처리되는 구조.
+
+### 사진 인증
+
+- 인증 시간대를 설정하고, 방장이 사진 주제를 정할 수 있음.
+- 예시로 책상 사진, 공부 중 사진, 운동 인증 사진 등을 기준으로 설정 가능함.
+- 업로드 여부를 시스템이 확인하거나, 기준에 따라 자동 판별 또는 방장 검토 방식으로 운영 가능.
+- 사진 metadata 시간을 기준으로 인증 시간 검증이 가능하도록 설계.
+
+### 위치 인증
+
+- 사용자가 정해진 장소에 도착했는지 기반으로 출석 또는 참여를 인증하는 방식임.
+- 기상 스터디, 도서관 착석 스터디, 오프라인 모임 인증 등 위치 기반 출석이 필요한 경우를 고려한 기능.
+
+### 기록 및 관리
+
+- 스터디별 진행 현황과 인증 내역을 한 화면에서 모아 볼 수 있음.
+- 누적된 활동 기록을 바탕으로 사용자별 스터디 히스토리를 확인할 수 있음.
+- 주간 인증 횟수 집계, 미인증자 확인, 운영 편의 기능을 지원하는 방향으로 구성.
+
+### 마이페이지
+
+- 개인정보 수정 기능 제공.
+- 보유 포인트 확인 및 포인트 환급 기능 제공.
+- 배지 시스템을 통해 활동 성과를 시각적으로 보여줄 수 있음.
+
+### 배지 기능
+
+- 특정 퀘스트를 달성하면 배지를 획득하는 구조임.
+- 획득한 배지 중 1개를 대표 배지로 설정 가능함.
+- 예시 배지로는 `열정맨`, `얼리버드`, `연속 5일 인증 성공`, `기상 인증 5회 달성` 등이 있음.
+
+## 💻 Tech Stack
+
+- React Native
+- TypeScript
+- React Navigation
+- Axios
+- Google Sign-In
 
 
-...
+## 🌳 Frontend Structure
 
+- `AuthGate`를 기준으로 온보딩, 로그인, 앱 진입 흐름을 분기한다.
+- `BottomTabs`를 기준으로 홈, 검색, 기록, 마이페이지의 주요 사용자 동선을 제공한다.
+- 각 기능은 `src/features` 아래에서 화면과 컴포넌트를 기능별로 나누어 관리한다.
+- API 호출은 `src/api`에 모아두고, 화면 로직에서는 필요한 함수만 불러와 사용한다.
 
-
-# Getting Started
-
-> **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
-
-## Step 1: Start Metro
-
-First, you will need to run **Metro**, the JavaScript build tool for React Native.
-
-To start the Metro dev server, run the following command from the root of your React Native project:
-
-```sh
-# Using npm
-npm start
-
-# OR using Yarn
-yarn start
+```text
+checkmate-frontend
+├── android/                  # Android 네이티브 설정
+├── ios/                      # iOS 네이티브 설정
+├── __tests__/                # 테스트 코드
+├── src/
+│   ├── api/                  # axios client, endpoint, 도메인별 API 함수
+│   ├── assets/               # 이미지, 아이콘, 배지 등 정적 리소스
+│   ├── components/
+│   │   └── common/           # 여러 화면에서 재사용하는 공통 컴포넌트
+│   ├── features/             # 기능 단위 화면/컴포넌트 모음
+│   │   ├── admin/
+│   │   ├── auth/             # 온보딩, 로그인, 인증 저장소
+│   │   ├── history/          # 기록 화면
+│   │   ├── home/             # 홈 화면
+│   │   ├── my-study/         # 스터디 생성 및 내 스터디 흐름
+│   │   ├── mypage/           # 마이페이지, 계정 설정, 문의
+│   │   ├── notification/     # 알림 화면
+│   │   ├── points/           # 포인트 상점, 교환, 내역
+│   │   ├── search/           # 검색 및 스터디 참여
+│   │   ├── study-board/      # 스터디 게시판
+│   │   ├── study-detail/     # 스터디 상세
+│   │   └── study-report/     # 스터디 리포트
+│   ├── mocks/                # 목업 데이터
+│   ├── navigation/           # BottomTab, Stack 등 앱 라우팅 구성
+│   ├── state/                # 전역 상태 및 provider
+│   ├── styles/               # 공통 색상/스타일 정의
+│   ├── types/                # API/도메인 타입 정의
+│   └── App.tsx               # 앱 진입점
+├── app.json
+├── babel.config.js
+├── jest.config.js
+├── metro.config.js
+├── package.json
+└── tsconfig.json
 ```
-
-## Step 2: Build and run your app
-
-With Metro running, open a new terminal window/pane from the root of your React Native project, and use one of the following commands to build and run your Android or iOS app:
-
-### Android
-
-```sh
-# Using npm
-npm run android
-
-# OR using Yarn
-yarn android
-```
-
-### iOS
-
-For iOS, remember to install CocoaPods dependencies (this only needs to be run on first clone or after updating native deps).
-
-The first time you create a new project, run the Ruby bundler to install CocoaPods itself:
-
-```sh
-bundle install
-```
-
-Then, and every time you update your native dependencies, run:
-
-```sh
-bundle exec pod install
-```
-
-For more information, please visit [CocoaPods Getting Started guide](https://guides.cocoapods.org/using/getting-started.html).
-
-```sh
-# Using npm
-npm run ios
-
-# OR using Yarn
-yarn ios
-```
-
-If everything is set up correctly, you should see your new app running in the Android Emulator, iOS Simulator, or your connected device.
-
-This is one way to run your app — you can also build it directly from Android Studio or Xcode.
-
-## Step 3: Modify your app
-
-Now that you have successfully run the app, let's make changes!
-
-Open `App.tsx` in your text editor of choice and make some changes. When you save, your app will automatically update and reflect these changes — this is powered by [Fast Refresh](https://reactnative.dev/docs/fast-refresh).
-
-When you want to forcefully reload, for example to reset the state of your app, you can perform a full reload:
-
-- **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Dev Menu**, accessed via <kbd>Ctrl</kbd> + <kbd>M</kbd> (Windows/Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (macOS).
-- **iOS**: Press <kbd>R</kbd> in iOS Simulator.
-
-## Congratulations! :tada:
-
-You've successfully run and modified your React Native App. :partying_face:
-
-### Now what?
-
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [docs](https://reactnative.dev/docs/getting-started).
-
-# Troubleshooting
-
-If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
-
-# Learn More
-
-To learn more about React Native, take a look at the following resources:
-
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
