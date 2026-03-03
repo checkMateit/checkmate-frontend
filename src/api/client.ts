@@ -2,7 +2,9 @@ import axios from 'axios';
 import { API_BASE_URL, API_TIMEOUT_MS } from './config';
 
 /** client 기본 헤더에 박아둔 사용자 UUID (담당 팀원 방식) */
-const DEFAULT_USER_ID = 'fa0835f3-f610-4c45-8d50-8cd532c93315';
+const DEFAULT_USER_ID = '51c19566-90d2-4495-91d0-4cd498124822';
+const DEFAULT_USER_ROLE = 'USER';
+const DEFAULT_DISPLAY_NAME = '회원';
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
@@ -10,12 +12,17 @@ export const apiClient = axios.create({
   headers: {
     Accept: 'application/json',
     'Content-Type': 'application/json',
-    Authorization:
-      'Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJmYTA4MzVmMy1mNjEwLTRjNDUtOGQ1MC04Y2Q1MzJjOTMzMTUiLCJyb2xlIjoiVVNFUiIsImlhdCI6MTc3MjM0MzE4MiwiZXhwIjoxNzcyOTQ3OTgyfQ.c2Ga1fSTfYNfUEV8VT9WNWtvOJuthdo3_GZ9gKyRwpxhv4tJtSujoQjk6giFzzPf6swwUO5LebYCM-o6UZ1Mfg',
-    'X-User-Id': DEFAULT_USER_ID,
-    'X-User-Role': 'USER',
   },
 });
+
+// 로그인 성공 시 호출하여 헤더를 업데이트하는 함수
+export const setAuthSession = (token: string, userId: string, role: string) => {
+  apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+  apiClient.defaults.headers.common['X-User-Id'] = userId;
+  apiClient.defaults.headers.common['X-User-Role'] = role;
+};
+
+let currentUserDisplayName: string | null = DEFAULT_DISPLAY_NAME;
 
 export const setAuthToken = (token?: string) => {
   if (token) {
@@ -25,8 +32,10 @@ export const setAuthToken = (token?: string) => {
   }
 };
 
-/** study-service 등에서 사용하는 사용자 식별자. 로그인 후 설정 필요. */
-export const setUserId = (userId: string | null) => {
+
+export const setUserId = (userId?: string) => {
+
+
   if (userId) {
     apiClient.defaults.headers.common['X-User-Id'] = userId;
   } else {
@@ -34,8 +43,32 @@ export const setUserId = (userId: string | null) => {
   }
 };
 
-/** 현재 로그인 사용자 ID. client 기본 헤더와 동일한 값 사용. */
-export const getCurrentUserId = (): string | null => DEFAULT_USER_ID;
+export const setUserRole = (role?: string) => {
+  if (role) {
+    apiClient.defaults.headers.common['X-User-Role'] = role;
+  } else {
+    delete apiClient.defaults.headers.common['X-User-Role'];
+  }
+};
 
-/** 현재 로그인 사용자 표시 이름. 실제 앱에서는 프로필/인증 연동 시 교체. */
-export const getCurrentUserDisplayName = (): string => '회원';
+export const setCurrentUserDisplayName = (displayName?: string | null) => {
+  currentUserDisplayName = displayName?.trim() || DEFAULT_DISPLAY_NAME;
+};
+
+export const getCurrentUserId = (): string | null => {
+  const userId = apiClient.defaults.headers.common['X-User-Id'];
+  if (typeof userId === 'string' && userId.trim()) {
+    return userId;
+  }
+  return DEFAULT_USER_ID;
+};
+
+export const getCurrentUserRole = (): string => {
+  const role = apiClient.defaults.headers.common['X-User-Role'];
+  if (typeof role === 'string' && role.trim()) {
+    return role;
+  }
+  return DEFAULT_USER_ROLE;
+};
+
+export const getCurrentUserDisplayName = (): string => currentUserDisplayName ?? DEFAULT_DISPLAY_NAME;

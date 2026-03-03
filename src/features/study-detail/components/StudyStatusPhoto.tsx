@@ -422,8 +422,9 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
   },
-  statusPass: {
-    color: colors.primary,
+  statusIcon: {
+    width: 14,
+    height: 14,
   },
   statusFail: {
     color: '#E53935',

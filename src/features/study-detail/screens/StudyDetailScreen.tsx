@@ -253,7 +253,10 @@ function StudyDetailScreen({ study: studyProp, onClose }: StudyDetailScreenProps
                                   'response' in err &&
                                   (err as { response?: { data?: { message?: string } } }).response
                                     ?.data?.message;
-                                Alert.alert('오류', msg ?? '삭제 요청을 처리하지 못했어요.');
+                                Alert.alert(
+                                  '오류',
+                                  typeof msg === 'string' ? msg : '삭제 요청을 처리하지 못했어요.',
+                                );
                               }
                             },
                           },
@@ -292,7 +295,10 @@ function StudyDetailScreen({ study: studyProp, onClose }: StudyDetailScreenProps
                                   'response' in err &&
                                   (err as { response?: { data?: { message?: string } } }).response
                                     ?.data?.message;
-                                Alert.alert('오류', msg ?? '탈퇴 요청을 처리하지 못했어요.');
+                                Alert.alert(
+                                  '오류',
+                                  typeof msg === 'string' ? msg : '탈퇴 요청을 처리하지 못했어요.',
+                                );
                               }
                             },
                           },

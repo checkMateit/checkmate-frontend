@@ -41,6 +41,7 @@ import { getTodayDateString, getDayIndexFromDate, BACKEND_DAY_CODES_BY_INDEX } f
 const rightIcon = require('../../../assets/icon/right_arrow.png');
 const backgroundSource = require('../../../assets/image/background.png');
 const emptyCardBg = require('../../../assets/image/linear_bg.png');
+const brandLogoSource = require('../../../assets/checkmate_logo2.png');
 const shopIconSource = require('../../../assets/icon/shop_icon.png');
 const alarmIconSource = require('../../../assets/icon/alarm_icon.png');
 const studyMascotOne = require('../../../assets/character/cha_1.png');
@@ -87,16 +88,16 @@ function HomeScreen() {
       .catch(() => {});
   }, []);
   
-  useEffect(() => {
-    try {
-      const userRole = apiClient.defaults.headers['X-User-Role'] as string;
-      setRole(userRole || 'USER');
-    } catch (e) {
-      setRole('USER');
-    } finally {
-      setIsReady(true);
-    }
-  }, []);
+useEffect(() => {
+  // ✅ apiClient 바구니(headers.common)에서 role을 꺼냅니다.
+  // 직접 접근해도 되고, 만들어두신 getCurrentUserRole()을 써도 됩니다.
+  const userRole = apiClient.defaults.headers.common['X-User-Role'] as string;
+  
+  console.log('홈에서 확인한 유저 권한:', userRole);
+  
+  setRole(userRole || 'USER'); // 상태에 저장
+  setIsReady(true);            // 렌더링 준비 완료
+}, []);
 
   const loadMyStudyGroups = useCallback(async () => {
     setLoadingMyStudies(true);
@@ -281,7 +282,7 @@ function HomeScreen() {
           { height: HEADER_HEIGHT + insets.top, paddingTop: insets.top },
         ]}
       >
-        <Text style={styles.brand}>Checkmate</Text>
+        <Image source={brandLogoSource} style={styles.brand} resizeMode="contain" />
           <View style={styles.iconRow}>
             <View style={styles.iconWrapper}>
               <Image
@@ -587,9 +588,8 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
   brand: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: colors.textPrimary,
+    width: 142,
+    height: 28,
   },
   iconRow: {
     flexDirection: 'row',
