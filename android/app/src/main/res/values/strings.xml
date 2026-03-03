@@ -1,3 +1,6 @@
 <resources>
     <string name="app_name">Checkmate</string>
+    <!-- Web Client ID (OAuth 2.0 Web application type). Required for Google Sign-In id token / server auth. -->
+    <string name="default_web_client_id">473395467428-oomnn549lmsb17gfnfhcv8r2moji6oi2.apps.googleusercontent.com</string>
+    <string name="server_client_id">473395467428-oomnn549lmsb17gfnfhcv8r2moji6oi2.apps.googleusercontent.com</string>
 </resources>

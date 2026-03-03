@@ -3,3 +3,6 @@ export const GOOGLE_WEB_CLIENT_ID =
 
 export const GOOGLE_IOS_CLIENT_ID =
   '473395467428-2itajco5imd1nihbvj14l1pq5kpn4524.apps.googleusercontent.com';
+
+export const GOOGLE_ANDROID_CLIENT_ID =
+  '473395467428-5ee51babkii4ro52em49ogk28q7i08d1.apps.googleusercontent.com';

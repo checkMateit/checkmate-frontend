@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Alert, Image, Pressable, SafeAreaView, StyleSheet, Text, View } from 'react-native';
 import { colors } from '../../../styles/colors';
 import { setAuthSession } from '../../../api/client';
+import { AUTH_GOOGLE_URL } from '../../../api/config';
 import {
   configureGoogleSignIn,
   formatGoogleSignInError,
@@ -37,7 +38,7 @@ const handleGoogleLogin = async () => {
 
     if (result.serverAuthCode) {
       
-      const response = await fetch('http://localhost:8085/auth/google', { 
+      const response = await fetch(AUTH_GOOGLE_URL, { 
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ serverAuthCode: result.serverAuthCode }),

@@ -160,7 +160,7 @@ useEffect(() => {
             return {
               ...base,
               statusText: todayCompleted ? '인증 완료' : '인증 미완료',
-              statusVariant: todayCompleted ? 'success' : 'neutral',
+              statusVariant: todayCompleted ? ('success' as const) : ('neutral' as const),
               statusIcons: todayCompleted ? ['success' as const] : [],
             };
           } catch {

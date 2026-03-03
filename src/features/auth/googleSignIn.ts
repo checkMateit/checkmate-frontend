@@ -6,7 +6,11 @@ import {
   isSuccessResponse,
   statusCodes,
 } from '@react-native-google-signin/google-signin';
-import { GOOGLE_IOS_CLIENT_ID, GOOGLE_WEB_CLIENT_ID } from './authConfig';
+import {
+  GOOGLE_ANDROID_CLIENT_ID,
+  GOOGLE_IOS_CLIENT_ID,
+  GOOGLE_WEB_CLIENT_ID,
+} from './authConfig';
 
 let configured = false;
 
@@ -35,6 +39,10 @@ export const configureGoogleSignIn = () => {
 
   if (Platform.OS === 'ios' && !GOOGLE_IOS_CLIENT_ID) {
     throw new Error('iOS Google client ID가 설정되지 않았어요.');
+  }
+
+  if (Platform.OS === 'android' && !GOOGLE_ANDROID_CLIENT_ID) {
+    throw new Error('Android Google client ID가 설정되지 않았어요.');
   }
 
   GoogleSignin.configure({
@@ -77,18 +85,18 @@ export const signInWithGoogle = async (): Promise<GoogleSignInResult> => {
   };
 };
 
-export const formatGoogleSignInError = (error: unknown) => {
-  if (!isErrorWithCode(error)) {
-    return '구글 로그인 중 오류가 발생했어요.';
+export const formatGoogleSignInError = (error: unknown): string => {
+  if (isErrorWithCode(error)) {
+    if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
+      return 'Google Play Services를 사용할 수 없어요.';
+    }
+    if (error.code === statusCodes.IN_PROGRESS) {
+      return '구글 로그인이 이미 진행 중이에요.';
+    }
+    return error.message || '구글 로그인 중 오류가 발생했어요.';
   }
-
-  if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
-    return 'Google Play Services를 사용할 수 없어요.';
-  }
-
-  if (error.code === statusCodes.IN_PROGRESS) {
-    return '구글 로그인이 이미 진행 중이에요.';
-  }
-
-  return error.message || '구글 로그인 중 오류가 발생했어요.';
+  // Google Sign-In 라이브러리 외 에러(네트워크, 백엔드 등)는 실제 메시지 노출
+  if (error instanceof Error) return error.message;
+  if (typeof error === 'string') return error;
+  return '구글 로그인 중 오류가 발생했어요.';
 };
