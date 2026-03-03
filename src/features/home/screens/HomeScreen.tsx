@@ -32,6 +32,7 @@ import { mapCardToStudyDetail } from '../../../api/studyGroupCard';
 const rightIcon = require('../../../assets/icon/right_arrow.png');
 const backgroundSource = require('../../../assets/image/background.png');
 const emptyCardBg = require('../../../assets/image/linear_bg.png');
+const brandLogoSource = require('../../../assets/checkmate_logo2.png');
 const shopIconSource = require('../../../assets/icon/shop_icon.png');
 const alarmIconSource = require('../../../assets/icon/alarm_icon.png');
 const studyMascotOne = require('../../../assets/character/cha_1.png');
@@ -200,7 +201,7 @@ function HomeScreen() {
           { height: HEADER_HEIGHT + insets.top, paddingTop: insets.top },
         ]}
       >
-        <Text style={styles.brand}>Checkmate</Text>
+        <Image source={brandLogoSource} style={styles.brand} resizeMode="contain" />
           <View style={styles.iconRow}>
             <View style={styles.iconWrapper}>
               <Image
@@ -509,9 +510,8 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
   brand: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: colors.textPrimary,
+    width: 142,
+    height: 28,
   },
   iconRow: {
     flexDirection: 'row',

@@ -23,6 +23,7 @@ const cartIcon = require('../../../assets/icon/white_cart_icon.png');
 const badgeIcon = require('../../../assets/icon/white_badge_icon.png');
 const adminChar = require('../../../assets/character/ch_5.png');
 const arrowDown = require('../../../assets/icon/right_arrow.png');
+const brandLogoSource = require('../../../assets/checkmate_logo2.png');
 
 function AdminHomeScreen() {
   const insets = useSafeAreaInsets();
@@ -118,7 +119,9 @@ function AdminHomeScreen() {
       {/* --- 상단 그린 섹션 (Wave 디자인) --- */}
       <View style={[styles.topSection, { paddingTop: insets.top + 10 }]}>
         <View style={styles.header}>
-          <Text style={styles.logo}>Checkmate</Text>
+
+          <Image source={brandLogoSource} style={styles.logo} resizeMode="contain" />
+
           <View style={styles.headerIcons}>
             <Pressable hitSlop={10} onPress={() => setCurrentView('STORE')}>
               <Image source={cartIcon} style={styles.topIcon} />
@@ -227,55 +230,32 @@ function AdminHomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#FFFFFF' },
-  // 상단 그린 영역: 비대칭 곡선 적용
-  topSection: { 
-    backgroundColor: '#2FE377', 
-    paddingHorizontal: 28, 
-    paddingBottom: 60,
-    borderBottomLeftRadius: 80, 
-    borderBottomRightRadius: 80,
-  },
-  header: { 
-    flexDirection: 'row', 
-    justifyContent: 'space-between', 
-    alignItems: 'center', 
-    marginBottom: 40 
-  },
-  logo: { fontSize: 24, fontWeight: '900', color: '#1A1A1A' },
-  headerIcons: { flexDirection: 'row', gap: 20 },
-  topIcon: { width: 30, height: 30, tintColor: '#FFFFFF' },
-  welcomeRow: { 
-    flexDirection: 'row', 
-    justifyContent: 'space-between', 
-    alignItems: 'flex-end',
-    position: 'relative'
-  },
-  welcomeText: { fontSize: 28, fontWeight: '800', color: '#1A1A1A', lineHeight: 38 },
-  // 캐릭터가 화이트 영역으로 살짝 삐져나오게 배치
-  charContainer: { position: 'absolute', right: -10, bottom: -75 },
-  charImage: { width: 130, height: 110, resizeMode: 'contain' },
-  
-  // 하단 리스트 영역
-  bottomSection: { flex: 1, paddingHorizontal: 28, paddingTop: 45 },
-  sectionTitle: { fontSize: 20, fontWeight: '800', color: '#1A1A1A', marginBottom: 25 },
-  scrollPadding: { paddingBottom: 40 },
-  inquiryCard: { 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    paddingVertical: 24, 
-    borderBottomWidth: 1.2, 
-    borderBottomColor: '#F8F8F8' 
-  },
-  userId: { fontSize: 13, color: '#B0B0B0', marginBottom: 6, fontWeight: '600' },
-  inquiryTitle: { fontSize: 18, fontWeight: '700', color: '#1A1A1A', marginBottom: 6 },
-  dateText: { fontSize: 13, color: '#D0D0D0' },
-  rightContent: { alignItems: 'flex-end', justifyContent: 'space-between', height: 55 },
-  statusBadge: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 14 },
-  statusText: { color: '#FFF', fontSize: 11, fontWeight: '800' },
-  statusDone: { backgroundColor: '#2FE377' },
-  statusWait: { backgroundColor: '#FF7777' },
-  arrowIcon: { width: 16, height: 16, tintColor: '#E0E0E0', marginTop: 5 },
+
+  root: { flex: 1, backgroundColor: '#77E48C' },
+  topSection: { paddingHorizontal: 20, paddingBottom: 25 },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginVertical: 15 },
+  logo: { width: 142, height: 28 },
+  headerIcons: { flexDirection: 'row', gap: 15 },
+  iconButton: { alignItems: 'center' },
+  topIcon: { width: 22, height: 22, tintColor: '#1A1A1A' },
+  iconLabel: { fontSize: 8, fontWeight: '700', marginTop: 3 },
+  welcomeRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  welcomeText: { fontSize: 20, fontWeight: '800', color: '#1A1A1A', lineHeight: 28 },
+  charImage: { width: 80, height: 60, resizeMode: 'contain' },
+  bottomSection: { flex: 1, backgroundColor: '#FFFFFF', borderTopLeftRadius: 30, borderTopRightRadius: 30, paddingHorizontal: 24, paddingTop: 24 },
+  sectionTitle: { fontSize: 17, fontWeight: '800', color: '#1A1A1A', marginBottom: 20 },
+  scrollPadding: { paddingBottom: 30 },
+  inquiryCard: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 18, borderBottomWidth: 1, borderBottomColor: '#F0F0F0' },
+  userId: { fontSize: 10, color: '#AAA', marginBottom: 2 },
+  inquiryTitle: { fontSize: 15, fontWeight: '700', color: '#333' },
+  rightContent: { alignItems: 'flex-end', gap: 6 },
+  statusBadge: { paddingHorizontal: 7, paddingVertical: 3, borderRadius: 8 },
+  statusText: { color: '#FFF', fontSize: 9, fontWeight: '800' },
+  statusDone: { backgroundColor: '#77E48C' },
+  statusWait: { backgroundColor: '#FF6B6B' },
+  arrowIcon: { width: 10, height: 10, tintColor: '#CCC', transform: [{ rotate: '-90deg' }] },
+  emptyText: { textAlign: 'center', marginTop: 50, color: '#BBB' },
+
 
   // 모달 스타일
   modalRoot: { flex: 1, backgroundColor: '#FFF' },

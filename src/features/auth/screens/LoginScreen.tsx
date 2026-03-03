@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Alert, Pressable, SafeAreaView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Image, Pressable, SafeAreaView, StyleSheet, Text, View } from 'react-native';
 import { colors } from '../../../styles/colors';
 import { setAuthSession } from '../../../api/client';
 import {
@@ -7,6 +7,8 @@ import {
   formatGoogleSignInError,
   signInWithGoogle,
 } from '../googleSignIn';
+
+const loginLogoSource = require('../../../assets/checkmate_logo1.png');
 
 type LoginScreenProps = {
   onLogin?: () => void;
@@ -72,7 +74,7 @@ const handleGoogleLogin = async () => {
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.root}>
         <View style={styles.header}>
-          <Text style={styles.title}>Checkmate</Text>
+          <Image source={loginLogoSource} style={styles.title} resizeMode="contain" />
         </View>
 
         <View style={styles.actions}>
@@ -109,9 +111,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   title: {
-    fontSize: 34,
-    fontWeight: '800',
-    color: '#3A3A3A',
+    width: 240,
+    height: 72,
   },
   actions: {
     gap: 28,
