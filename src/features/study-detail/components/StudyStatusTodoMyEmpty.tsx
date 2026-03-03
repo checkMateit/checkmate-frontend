@@ -3,18 +3,32 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { colors } from '../../../styles/colors';
 
 type StudyStatusTodoMyEmptyProps = {
-  onAddPress: () => void;
+  onAddPress: (() => void) | undefined;
+  canAddItems: boolean;
+  writeDeadlinePassed: boolean;
 };
 
-function StudyStatusTodoMyEmpty({ onAddPress }: StudyStatusTodoMyEmptyProps) {
+function StudyStatusTodoMyEmpty({
+  onAddPress,
+  canAddItems,
+  writeDeadlinePassed,
+}: StudyStatusTodoMyEmptyProps) {
   return (
     <View style={styles.card}>
       <Text style={styles.title}>나의 TODO</Text>
       <View style={styles.emptyWrap}>
-        <Pressable style={styles.plusButton} onPress={onAddPress}>
-          <Text style={styles.plusText}>+</Text>
-        </Pressable>
-        <Text style={styles.emptyText}>등록한 일정이 없어요.</Text>
+        {canAddItems && onAddPress != null ? (
+          <>
+            <Pressable style={styles.plusButton} onPress={onAddPress}>
+              <Text style={styles.plusText}>+</Text>
+            </Pressable>
+            <Text style={styles.emptyText}>등록한 일정이 없어요.</Text>
+          </>
+        ) : writeDeadlinePassed ? (
+          <Text style={styles.deadlineText}>작성 마감 시간이 지났어요.</Text>
+        ) : (
+          <Text style={styles.emptyText}>등록한 일정이 없어요.</Text>
+        )}
       </View>
     </View>
   );
@@ -55,6 +69,10 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   emptyText: {
+    fontSize: 12,
+    color: colors.textSecondary,
+  },
+  deadlineText: {
     fontSize: 12,
     color: colors.textSecondary,
   },

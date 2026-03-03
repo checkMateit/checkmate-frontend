@@ -3,6 +3,7 @@ import type { ImageSourcePropType } from 'react-native';
 import {
   ActivityIndicator,
   FlatList,
+  Image,
   Modal,
   Pressable,
   SafeAreaView,
@@ -33,9 +34,12 @@ const mascotOne = require('../../../assets/character/cha_1.png');
 const mascotTwo = require('../../../assets/character/ch_2.png');
 const mascotThree = require('../../../assets/character/ch_3.png');
 const mascotFour = require('../../../assets/character/ch_4.png');
+const filterIcon = require('../../../assets/icon/filter_icon.png');
 const MASCOTS = [mascotOne, mascotTwo, mascotThree, mascotFour];
 
 const PAGE_SIZE = 5;
+/** 인증 방식 2개 선택 시 클라이언트 필터를 쓰므로, 한 번에 많이 받아 한 페이지에 모두 표시 */
+const PAGE_SIZE_WHEN_TWO_METHODS = 50;
 
 type StudyItem = {
   id: string;
@@ -60,6 +64,7 @@ function SearchTabScreen({ onClose }: SearchTabScreenProps) {
   const [showCreateStudy, setShowCreateStudy] = useState(false);
   const [keyword, setKeyword] = useState('');
   const [searchSubmitted, setSearchSubmitted] = useState('');
+  const [showFilter, setShowFilter] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedMethods, setSelectedMethods] = useState<string[]>([]);
   const [data, setData] = useState<StudyItem[]>([]);
@@ -76,6 +81,9 @@ function SearchTabScreen({ onClose }: SearchTabScreenProps) {
         selectedMethods.length > 0
           ? selectedMethods.map((m) => METHOD_TO_CODE[m]).filter(Boolean)
           : undefined;
+      const twoMethodsSelected = selectedMethods.length === 2;
+      const requestSize = twoMethodsSelected ? PAGE_SIZE_WHEN_TWO_METHODS : PAGE_SIZE;
+      const requestPage = twoMethodsSelected ? 0 : pageNum;
       setLoading(true);
       setError(null);
       try {
@@ -83,8 +91,8 @@ function SearchTabScreen({ onClose }: SearchTabScreenProps) {
           category: categoryCode,
           verificationMethod: methodCodes?.length ? methodCodes : undefined,
           keyword: searchSubmitted.trim() || undefined,
-          page: pageNum,
-          size: PAGE_SIZE,
+          page: requestPage,
+          size: requestSize,
           sort: 'createdAt,desc',
         });
         const success =
@@ -102,11 +110,26 @@ function SearchTabScreen({ onClose }: SearchTabScreenProps) {
         }
         const pageData = res.data;
         const list = (pageData.content as StudyGroupCardRes[]).map((card, i) =>
-          mapCardToStudyItem(card, (pageNum * PAGE_SIZE + i) % MASCOTS.length, MASCOTS),
+          mapCardToStudyItem(
+            card,
+            (requestPage * requestSize + i) % MASCOTS.length,
+            MASCOTS,
+          ),
         ) as StudyItem[];
-        setData(list);
-        setLast(pageData.last ?? true);
-        setTotalPages((pageData as { totalPages?: number }).totalPages ?? 0);
+        // 2개 선택 시: 두 인증 방식 모두 포함된 스터디만 표시 (API는 OR일 수 있어 클라이언트에서 한 번 더 필터)
+        const filteredList = twoMethodsSelected
+          ? list.filter((item) =>
+              selectedMethods.every((m) => item.methods.includes(m)),
+            )
+          : list;
+        setData(filteredList);
+        if (twoMethodsSelected) {
+          setLast(true);
+          setTotalPages(1);
+        } else {
+          setLast(pageData.last ?? true);
+          setTotalPages((pageData as { totalPages?: number }).totalPages ?? 0);
+        }
       } catch {
         setError('목록을 불러오지 못했어요.');
         setData([]);
@@ -150,6 +173,11 @@ function SearchTabScreen({ onClose }: SearchTabScreenProps) {
     });
   };
 
+  const resetFilters = () => {
+    setSelectedCategory(null);
+    setSelectedMethods([]);
+  };
+
   const handlePressStudy = (item: StudyItem) => {
     const hasJoinRoute = navigation.getState().routeNames.includes('StudyJoin');
     if (!hasJoinRoute) return;
@@ -187,43 +215,11 @@ function SearchTabScreen({ onClose }: SearchTabScreenProps) {
           returnKeyType="search"
         />
       </View>
-      <View style={styles.filterSection}>
-        <Text style={styles.filterSectionTitle}>카테고리</Text>
-        <View style={styles.filterChipRow}>
-          {categoryOptions.map((opt) => {
-            const isActive = selectedCategory === opt;
-            return (
-              <Pressable
-                key={opt}
-                style={[styles.filterChip, isActive && styles.filterChipActive]}
-                onPress={() => handleCategoryPress(opt)}
-              >
-                <Text style={[styles.filterChipText, isActive && styles.filterChipTextActive]}>
-                  {opt}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
-        <Text style={[styles.filterSectionTitle, styles.filterSectionTitleSecond]}>
-          인증 방식
-        </Text>
-        <View style={styles.filterChipRow}>
-          {methodOptions.map((opt) => {
-            const isActive = selectedMethods.includes(opt);
-            return (
-              <Pressable
-                key={opt}
-                style={[styles.filterChip, isActive && styles.filterChipActive]}
-                onPress={() => handleMethodPress(opt)}
-              >
-                <Text style={[styles.filterChipText, isActive && styles.filterChipTextActive]}>
-                  {opt}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
+      <View style={styles.filterRow}>
+        <Pressable style={styles.filterChip} onPress={() => setShowFilter(true)}>
+          <Text style={styles.filterText}>필터</Text>
+          <Image source={filterIcon} style={styles.filterIcon} />
+        </Pressable>
       </View>
       <View style={styles.divider} />
     </View>
@@ -312,6 +308,62 @@ function SearchTabScreen({ onClose }: SearchTabScreenProps) {
           }}
         />
       </Modal>
+      <Modal
+        visible={showFilter}
+        animationType="fade"
+        transparent
+        onRequestClose={() => setShowFilter(false)}
+      >
+        <View style={styles.filterOverlay}>
+          <View style={styles.filterModal}>
+            <Text style={styles.filterTitle}>필터</Text>
+            <Text style={styles.filterSectionTitle}>카테고리</Text>
+            <View style={styles.filterList}>
+              {categoryOptions.map((option) => {
+                const isActive = selectedCategory === option;
+                return (
+                  <Pressable
+                    key={option}
+                    style={[styles.filterItem, isActive && styles.filterItemActive]}
+                    onPress={() => handleCategoryPress(option)}
+                  >
+                    <View style={[styles.checkbox, isActive && styles.checkboxActive]} />
+                    <Text style={[styles.filterItemText, isActive && styles.filterItemTextActive]}>
+                      {option}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+            <Text style={styles.filterSectionTitle}>인증 방식</Text>
+            <View style={styles.filterList}>
+              {methodOptions.map((option) => {
+                const isActive = selectedMethods.includes(option);
+                return (
+                  <Pressable
+                    key={option}
+                    style={[styles.filterItem, isActive && styles.filterItemActive]}
+                    onPress={() => handleMethodPress(option)}
+                  >
+                    <View style={[styles.checkbox, isActive && styles.checkboxActive]} />
+                    <Text style={[styles.filterItemText, isActive && styles.filterItemTextActive]}>
+                      {option}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+            <View style={styles.filterActions}>
+              <Pressable style={styles.resetButton} onPress={resetFilters}>
+                <Text style={styles.resetText}>초기화</Text>
+              </Pressable>
+              <Pressable style={styles.applyButton} onPress={() => setShowFilter(false)}>
+                <Text style={styles.applyText}>적용</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -341,33 +393,127 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.textPrimary,
   },
-  filterSection: { marginBottom: 10 },
+  filterRow: {
+    paddingBottom: 10,
+    alignItems: 'flex-start',
+  },
+  filterChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#BEBEBE',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    gap: 6,
+  },
+  filterText: {
+    color: colors.textSecondary,
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  filterIcon: {
+    width: 14,
+    height: 14,
+    tintColor: colors.textSecondary,
+  },
+  filterOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.35)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+  },
+  filterModal: {
+    width: '100%',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 22,
+    minHeight: 360,
+    maxHeight: '80%',
+  },
+  filterTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: colors.textPrimary,
+    marginBottom: 12,
+  },
   filterSectionTitle: {
     fontSize: 14,
     fontWeight: '700',
     color: colors.textSecondary,
-    marginBottom: 8,
+    marginTop: 12,
+    marginBottom: 12,
   },
-  filterSectionTitleSecond: { marginTop: 4 },
-  filterChipRow: {
+  filterList: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: 12,
   },
-  filterChip: {
-    paddingHorizontal: 14,
+  filterItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
     paddingVertical: 8,
+    paddingHorizontal: 10,
     borderRadius: 16,
     borderWidth: 1,
     borderColor: '#E0E0E0',
     backgroundColor: '#F9F9F9',
   },
-  filterChipActive: {
+  filterItemActive: {
     borderColor: colors.primary,
     backgroundColor: '#E9FDF1',
   },
-  filterChipText: { fontSize: 12, color: colors.textSecondary, fontWeight: '600' },
-  filterChipTextActive: { color: colors.textPrimary },
+  checkbox: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#BDBDBD',
+    backgroundColor: '#FFFFFF',
+  },
+  checkboxActive: {
+    borderColor: colors.primary,
+    backgroundColor: colors.primary,
+  },
+  filterItemText: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    fontWeight: '600',
+  },
+  filterItemTextActive: {
+    color: colors.textPrimary,
+  },
+  filterActions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: 10,
+    marginTop: 16,
+  },
+  resetButton: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#D7D7D7',
+  },
+  resetText: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    fontWeight: '700',
+  },
+  applyButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+    backgroundColor: colors.primary,
+  },
+  applyText: {
+    fontSize: 12,
+    color: '#FFFFFF',
+    fontWeight: '700',
+  },
   divider: { height: 1, backgroundColor: '#E8E8E8', marginBottom: 6 },
   listContent: { paddingBottom: 16 },
   loadingText: { marginTop: 12, fontSize: 14, color: colors.textSecondary },

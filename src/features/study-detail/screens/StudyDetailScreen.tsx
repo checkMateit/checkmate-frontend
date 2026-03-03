@@ -17,6 +17,7 @@ import StudyDetailHeader from '../components/StudyDetailHeader';
 import StudyDetailTabs from '../components/StudyDetailTabs';
 import StudyInfoTab from '../components/StudyInfoTab';
 import StudyMemberInfoView from '../components/StudyMemberInfoView';
+import StudyDetailRulesView from '../components/StudyDetailRulesView';
 import StudySummaryInfoView from '../components/StudySummaryInfoView';
 import StudyOverviewCard from '../components/StudyOverviewCard';
 import CreateStudyGroupScreen from '../../my-study/screens/CreateStudyGroupScreen';
@@ -163,6 +164,7 @@ function StudyDetailScreen({ study: studyProp, onClose }: StudyDetailScreenProps
             <StudyStatusSection
               resetKey={statusResetKey}
               groupId={String(resolvedStudy.id)}
+              currentUserId={currentUserId}
               verificationRules={studyDetailForOwner?.verificationRules ?? []}
               methods={resolvedStudy.methods}
             />
@@ -179,6 +181,23 @@ function StudyDetailScreen({ study: studyProp, onClose }: StudyDetailScreenProps
                 groupId={resolvedStudy.id}
                 currentUserId={getCurrentUserId()}
                 onBack={() => setInfoSubView(null)}
+              />
+            ) : infoSubView === 'rules' ? (
+              <StudyDetailRulesView
+                groupId={resolvedStudy.id}
+                currentUserId={getCurrentUserId()}
+                onBack={() => setInfoSubView(null)}
+                onEditRule={
+                  isOwner
+                    ? (_groupId, slot) => {
+                        Alert.alert(
+                          '인증 규칙 수정',
+                          `슬롯 ${slot} 규칙 수정 기능은 준비 중입니다.`,
+                          [{ text: '확인' }],
+                        );
+                      }
+                    : undefined
+                }
               />
             ) : infoSubView === 'info' ? (
               <StudySummaryInfoView
@@ -198,6 +217,7 @@ function StudyDetailScreen({ study: studyProp, onClose }: StudyDetailScreenProps
                 onSelectRow={(id) => {
                   if (id === 'members') setInfoSubView('members');
                   if (id === 'info') setInfoSubView('info');
+                  if (id === 'rules') setInfoSubView('rules');
                   if (id === 'leave') {
                     const groupName = resolvedStudy.title || '이 스터디';
                     if (isOwner) {

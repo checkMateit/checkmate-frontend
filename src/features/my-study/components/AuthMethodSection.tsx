@@ -12,6 +12,10 @@ export type MethodConfig = {
   rangeEnd: Date;
   locationType: '개인 위치' | '공통 위치';
   locationName: string;
+  /** 공통 위치일 때 그룹장이 지정한 인증 위치 위도 */
+  locationLatitude: number | null;
+  /** 공통 위치일 때 그룹장이 지정한 인증 위치 경도 */
+  locationLongitude: number | null;
 };
 
 type AuthMethodSectionProps = {

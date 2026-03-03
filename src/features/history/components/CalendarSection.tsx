@@ -2,14 +2,19 @@ import React, { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { colors } from '../../../styles/colors';
 
-type CalendarSectionProps = {
+export type CalendarSectionProps = {
   currentMonth: Date;
   selectedDate: Date | null;
   onSelectDate: (date: Date) => void;
   onChangeMonth: (date: Date) => void;
+  /** 날짜별 인증 횟수 (키: 'YYYY-MM-DD'). 0=미인증(옅은 회색), 1~4+ = 단계별 색상 */
+  verificationCountByDate?: Record<string, number>;
+  loading?: boolean;
 };
 
 const weekLabels = ['일', '월', '화', '수', '목', '금', '토'];
+/** 0=미인증(옅은 회색), 1~4단계 = 옅은색→짙은색 */
+const noAuthColor = '#E5E5E5';
 const levelColors = ['#A3FFC5', '#2FE377', '#18A04E', '#06521F'];
 const DARK_LEVEL_INDEX = 3;
 const CALENDAR_PADDING = 20;
@@ -26,13 +31,32 @@ const isSameDay = (a: Date | null, b: Date) =>
   a.getMonth() === b.getMonth() &&
   a.getDate() === b.getDate();
 
+function toDateKey(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
 function CalendarSection({
   currentMonth,
   selectedDate,
   onSelectDate,
   onChangeMonth,
+  verificationCountByDate = {},
+  loading = false,
 }: CalendarSectionProps) {
   const [activeArrow, setActiveArrow] = useState<'prev' | 'next' | null>(null);
+
+  const todayMonthStart = useMemo(() => {
+    const t = new Date();
+    return new Date(t.getFullYear(), t.getMonth(), 1);
+  }, []);
+
+  const canGoPrev = useMemo(() => {
+    const cur = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1).getTime();
+    return cur > todayMonthStart.getTime();
+  }, [currentMonth, todayMonthStart]);
 
   const calendarDays = useMemo(() => {
     const year = currentMonth.getFullYear();
@@ -54,6 +78,7 @@ function CalendarSection({
       <View style={styles.monthRow}>
         <Pressable
           onPress={() =>
+            canGoPrev &&
             onChangeMonth(
               new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1),
             )
@@ -61,8 +86,15 @@ function CalendarSection({
           onPressIn={() => setActiveArrow('prev')}
           onPressOut={() => setActiveArrow(null)}
           style={styles.monthButton}
+          disabled={!canGoPrev}
         >
-          <Text style={[styles.monthArrow, activeArrow === 'prev' && styles.monthArrowActive]}>
+          <Text
+            style={[
+              styles.monthArrow,
+              activeArrow === 'prev' && styles.monthArrowActive,
+              !canGoPrev && styles.monthArrowDisabled,
+            ]}
+          >
             ◀
           </Text>
         </Pressable>
@@ -102,20 +134,22 @@ function CalendarSection({
             );
           }
           const isSelected = isSameDay(selectedDate, day);
-          const level = (day.getDate() - 1) % 4;
-          const dayColor = levelColors[level];
+          const key = toDateKey(day);
+          const count = verificationCountByDate[key] ?? 0;
+          const level = count <= 0 ? -1 : Math.min(count, 4) - 1;
+          const dayColor = level < 0 ? noAuthColor : levelColors[level];
           const useWhiteText = level === DARK_LEVEL_INDEX || isSelected;
           return (
-              <Pressable
-                key={`day-${day.getDate()}`}
-                onPress={() => onSelectDate(day)}
-                style={[
-                  styles.dayCell,
-                  { width: CELL_WIDTH, height: CELL_HEIGHT },
-                  { backgroundColor: dayColor },
-                  isSelected ? styles.daySelected : null,
-                ]}
-              >
+            <Pressable
+              key={`day-${key}`}
+              onPress={() => onSelectDate(day)}
+              style={[
+                styles.dayCell,
+                { width: CELL_WIDTH, height: CELL_HEIGHT },
+                { backgroundColor: loading ? noAuthColor : dayColor },
+                isSelected ? styles.daySelected : null,
+              ]}
+            >
               <Text style={[styles.dayText, useWhiteText ? styles.dayTextSelected : null]}>
                 {day.getDate()}
               </Text>
@@ -151,6 +185,9 @@ const styles = StyleSheet.create({
   },
   monthArrowActive: {
     color: colors.primary,
+  },
+  monthArrowDisabled: {
+    opacity: 0.4,
   },
   weekRow: {
     flexDirection: 'row',

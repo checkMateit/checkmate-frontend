@@ -66,7 +66,7 @@ function MyStudyScreen({ onClose, mode = 'my' }: MyStudyScreenProps) {
   const navigation = useNavigation<NativeStackNavigationProp<SearchStackParamList>>();
   const [showCreateStudy, setShowCreateStudy] = useState(false);
   const [showFilter, setShowFilter] = useState(false);
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedMethods, setSelectedMethods] = useState<string[]>([]);
   const [data, setData] = useState<StudyItem[]>(() => {
     if (mode === 'search') {
@@ -124,28 +124,29 @@ function MyStudyScreen({ onClose, mode = 'my' }: MyStudyScreenProps) {
   const filteredData = useMemo(() => {
     return data.filter((item) => {
       const categoryMatch =
-        selectedCategories.length === 0 || selectedCategories.includes(item.tag);
+        selectedCategory == null || item.tag === selectedCategory;
+      // 0개: 전체, 1개: 해당 인증 방식 포함 스터디, 2개: 두 방식 모두 포함된 스터디만
       const methodMatch =
         selectedMethods.length === 0 ||
-        selectedMethods.some((method) => item.methods.includes(method));
+        selectedMethods.every((method) => item.methods.includes(method));
       return categoryMatch && methodMatch;
     });
-  }, [data, selectedCategories, selectedMethods]);
+  }, [data, selectedCategory, selectedMethods]);
 
   const toggleCategory = (value: string) => {
-    setSelectedCategories((prev) =>
-      prev.includes(value) ? prev.filter((item) => item !== value) : [...prev, value],
-    );
+    setSelectedCategory((prev) => (prev === value ? null : value));
   };
 
   const toggleMethod = (value: string) => {
-    setSelectedMethods((prev) =>
-      prev.includes(value) ? prev.filter((item) => item !== value) : [...prev, value],
-    );
+    setSelectedMethods((prev) => {
+      if (prev.includes(value)) return prev.filter((m) => m !== value);
+      if (prev.length >= 2) return prev;
+      return [...prev, value];
+    });
   };
 
   const resetFilters = () => {
-    setSelectedCategories([]);
+    setSelectedCategory(null);
     setSelectedMethods([]);
   };
 
@@ -283,7 +284,7 @@ function MyStudyScreen({ onClose, mode = 'my' }: MyStudyScreenProps) {
             <Text style={styles.filterSectionTitle}>카테고리</Text>
             <View style={styles.filterList}>
               {categoryOptions.map((option) => {
-                const isActive = selectedCategories.includes(option);
+                const isActive = selectedCategory === option;
                 return (
                   <Pressable
                     key={option}

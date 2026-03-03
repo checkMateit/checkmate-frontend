@@ -1,19 +1,27 @@
 /**
  * 스터디 그룹 인증 API — photo, checklist, GPS
  * api-verification-photo-submit.md, api-verification-checklist.md, api-verification-gps.md
+ * 인증 날짜는 한국 시간 기준 오늘(getTodayDateString)을 사용합니다.
  */
 
 import { apiClient } from './client';
+import { API_BASE_URL } from './config';
 import { ENDPOINTS } from './endpoints';
 import type { ApiResponse } from './studyGroupCreate';
+import { getTodayDateString } from '../utils/timeKST';
+
+/** 서버에 저장된 인증 사진 URL 생성 (상대 경로 → 전체 URL) */
+export function getVerificationPhotoUrl(filePath: string): string {
+  if (!filePath) return '';
+  if (filePath.startsWith('http://') || filePath.startsWith('https://')) return filePath;
+  const base = API_BASE_URL?.replace(/\/$/, '') ?? '';
+  return `${base}/uploads/verification/${filePath.replace(/^\//, '')}`;
+}
 
 const verificationPath = (groupId: string | number, slot: number) =>
   `${ENDPOINTS.studyGroups}/${groupId}/verification/slots/${slot}`;
 
-const today = () => {
-  const d = new Date();
-  return d.toISOString().slice(0, 10);
-};
+const today = () => getTodayDateString();
 
 // --- Photo ---
 export type VerificationPhotoSubmitRes = {
@@ -56,7 +64,7 @@ export function situationFromFilePath(filePath: string): string {
   return base || '사진';
 }
 
-/** POST .../photo — multipart/form-data, param "files" */
+/** POST .../photo — multipart/form-data, param "files". Content-Type은 boundary 포함을 위해 생략(클라이언트가 자동 설정). */
 export const submitPhotoVerification = (
   groupId: string | number,
   slot: number,
@@ -78,8 +86,9 @@ export const submitPhotoVerification = (
     {
       params,
       headers: {
-        'Content-Type': 'multipart/form-data',
+        'Content-Type': false as unknown as string,
       },
+      transformRequest: [(data) => data],
     },
   );
 };

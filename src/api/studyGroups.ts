@@ -101,15 +101,50 @@ export const fetchRecommendedStudyGroups = (params?: { size?: number }) =>
 export const fetchStudyGroupDetail = (groupId: string | number) =>
   apiClient.get<ApiResponse<StudyGroupDetailRes>>(`${ENDPOINTS.studyGroups}/${groupId}`);
 
-/** GET /study-groups/{groupId} — 상세 규칙용 verificationRules만 반환 (상세 규칙 뷰용) */
+/** GET /study-groups/{groupId}/verification-rules — 인증 규칙 목록 */
 export const fetchVerificationRules = (groupId: string | number) =>
-  fetchStudyGroupDetail(groupId).then((res) => ({
-    ...res,
-    data: {
-      ...res.data,
-      data: res.data?.data?.verificationRules ?? [],
-    },
-  }));
+  apiClient.get<ApiResponse<VerificationRuleRes[]>>(
+    `${ENDPOINTS.studyGroups}/${groupId}/verification-rules`,
+  );
+
+/** GET /study-groups/{groupId}/verification-rules/{slot} — 인증 규칙 1건 상세 */
+export const fetchVerificationRuleDetail = (groupId: string | number, slot: number) =>
+  apiClient.get<ApiResponse<VerificationRuleRes>>(
+    `${ENDPOINTS.studyGroups}/${groupId}/verification-rules/${slot}`,
+  );
+
+/** PATCH /study-groups/{groupId}/verification-rules/{slot} — 인증 규칙 수정 (그룹장만) */
+export type VerificationRulePatchPayload = {
+  schedule: {
+    endTime: string;
+    checkEndTime?: string | null;
+    daysOfWeek: string[];
+    timezone: string;
+  };
+  frequency: { unit: string; requiredCnt: number };
+  method: {
+    methodCode: string;
+    photo?: { minFiles?: number; maxFiles?: number; source?: string };
+    gps?: { radiusM?: number; locations?: unknown[]; blockOutsideTime?: unknown };
+    github?: { repoUrl?: string; branch?: string };
+  };
+  exemption?: { isEnabled: boolean; limitUnit: string; limitCnt: number };
+};
+export const patchVerificationRule = (
+  groupId: string | number,
+  slot: number,
+  payload: VerificationRulePatchPayload,
+) =>
+  apiClient.patch<ApiResponse<VerificationRuleRes>>(
+    `${ENDPOINTS.studyGroups}/${groupId}/verification-rules/${slot}`,
+    payload,
+  );
+
+/** DELETE /study-groups/{groupId}/verification-rules/{slot} — 인증 규칙 삭제 (그룹장만) */
+export const deleteVerificationRule = (groupId: string | number, slot: number) =>
+  apiClient.delete<ApiResponse<null>>(
+    `${ENDPOINTS.studyGroups}/${groupId}/verification-rules/${slot}`,
+  );
 
 /** POST /study-groups. 응답은 ApiResponse<StudyGroupCreateRes> (data.groupId, data.createdAt) */
 export const createStudyGroup = (payload: Record<string, unknown>) =>
@@ -168,4 +203,29 @@ export const fetchVerificationReport = (
   apiClient.get<ApiResponse<VerificationReportRes>>(
     `${ENDPOINTS.studyGroups}/${groupId}/report`,
     { params: params?.endDate != null ? { endDate: params.endDate } : undefined },
+  );
+
+/** GET /study-groups/{groupId}/verification/records — 기간별 인증 기록 (현황 탭 요약용). api-study-group-verification-records.md */
+export type VerificationRecordItemRes = {
+  userId: string;
+  slot: number;
+  verificationDate: string;
+};
+
+export type VerificationRecordsRes = {
+  records: VerificationRecordItemRes[];
+};
+
+export const fetchVerificationRecords = (
+  groupId: string | number,
+  params?: { startDate?: string; endDate?: string },
+) =>
+  apiClient.get<ApiResponse<VerificationRecordsRes>>(
+    `${ENDPOINTS.studyGroups}/${groupId}/verification/records`,
+    {
+      params:
+        params?.startDate != null || params?.endDate != null
+          ? { startDate: params?.startDate, endDate: params?.endDate }
+          : undefined,
+    },
   );

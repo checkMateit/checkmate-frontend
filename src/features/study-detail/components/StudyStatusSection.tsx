@@ -20,6 +20,7 @@ export type VerificationRule = {
 type StudyStatusSectionProps = {
   resetKey: number;
   groupId: string;
+  currentUserId: string | null;
   verificationRules: VerificationRule[];
   methods: string[];
 };
@@ -50,6 +51,7 @@ const getAvailableTabs = (methods: string[]) => {
 function StudyStatusSection({
   resetKey,
   groupId,
+  currentUserId,
   verificationRules,
   methods,
 }: StudyStatusSectionProps) {
@@ -72,10 +74,31 @@ function StudyStatusSection({
         </Text>
         <StudyStatusTabs activeTab={activeTab} onChange={setActiveTab} methods={methods} />
       </View>
-      {activeTab === 'summary' && <StudyStatusSummary methods={methods} />}
+      {activeTab === 'summary' && (
+          <StudyStatusSummary
+            groupId={groupId}
+            currentUserId={currentUserId}
+            verificationRules={verificationRules}
+            methods={methods}
+          />
+        )}
       {activeTab === 'todo' &&
         (slotChecklist != null ? (
-          <StudyStatusTodo groupId={groupId} slot={slotChecklist} />
+          <StudyStatusTodo
+            groupId={groupId}
+            slot={slotChecklist}
+            currentUserId={currentUserId}
+            schedule={
+              verificationRules.find((r) => r.slot === slotChecklist)
+                ? {
+                    endTime:
+                      verificationRules.find((r) => r.slot === slotChecklist)?.endTime ?? '09:00',
+                    checkEndTime:
+                      verificationRules.find((r) => r.slot === slotChecklist)?.checkEndTime ?? null,
+                  }
+                : undefined
+            }
+          />
         ) : (
           <View style={styles.placeholder}>
             <Text style={styles.placeholderText}>체크리스트 인증 규칙을 불러오는 중이에요.</Text>
@@ -83,7 +106,18 @@ function StudyStatusSection({
         ))}
       {activeTab === 'photo' &&
         (slotPhoto != null ? (
-          <StudyStatusPhoto groupId={groupId} slot={slotPhoto} />
+          <StudyStatusPhoto
+            groupId={groupId}
+            slot={slotPhoto}
+            schedule={
+              verificationRules.find((r) => r.slot === slotPhoto)
+                ? {
+                    endTime:
+                      verificationRules.find((r) => r.slot === slotPhoto)?.endTime ?? '23:59',
+                  }
+                : undefined
+            }
+          />
         ) : (
           <View style={styles.placeholder}>
             <Text style={styles.placeholderText}>사진 인증 규칙을 불러오는 중이에요.</Text>

@@ -1,38 +1,111 @@
-import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { colors } from '../../../styles/colors';
+import { fetchStudyGroupMembers } from '../../../api/studyGroups';
+import { fetchVerificationRecords } from '../../../api/studyGroups';
+import type { StudyGroupMemberRes } from '../../../api/studyGroups';
+import type { TodoSchedule } from './StudyStatusTodo';
+import { isAfterTimeInKST } from '../../../utils/timeKST';
 
-const people = [
-  {
-    name: '라즈베리님',
-    todos: [
-      { id: 1, label: '영단어 10개 외우기', checked: true },
-      { id: 2, label: '영단어 10개 외우기', checked: false },
-      { id: 3, label: '영단어 10개 외우기', checked: false },
-    ],
-  },
-  {
-    name: '단쌀말님',
-    todos: [
-      { id: 1, label: '영단어 10개 외우기', checked: true },
-      { id: 2, label: '영단어 10개 외우기', checked: false },
-      { id: 3, label: '영단어 10개 외우기', checked: false },
-    ],
-  },
-];
+type StudyStatusTodoOthersProps = {
+  groupId: string;
+  slot: number;
+  currentUserId: string | null;
+  date: string;
+  schedule?: TodoSchedule;
+};
 
-function StudyStatusTodoOthers() {
+type MemberStatus = {
+  userId: string;
+  nickname: string;
+  passed: boolean | null;
+};
+
+function StudyStatusTodoOthers({
+  groupId,
+  slot,
+  currentUserId,
+  date,
+  schedule,
+}: StudyStatusTodoOthersProps) {
+  const [members, setMembers] = useState<StudyGroupMemberRes[]>([]);
+  const [recordUserIds, setRecordUserIds] = useState<Set<string>>(new Set());
+  const [loading, setLoading] = useState(true);
+
+  const load = useCallback(() => {
+    setLoading(true);
+    Promise.all([
+      fetchStudyGroupMembers(groupId),
+      fetchVerificationRecords(groupId, { startDate: date, endDate: date }),
+    ])
+      .then(([membersRes, recordsRes]) => {
+        const list = (membersRes.data?.data ?? []).filter(
+          (m) => m.status === 'ACTIVE',
+        );
+        setMembers(list);
+        const records = recordsRes.data?.data?.records ?? [];
+        const set = new Set<string>();
+        records.forEach((r) => {
+          if (r.slot === slot && r.verificationDate === date) {
+            set.add(r.userId);
+          }
+        });
+        setRecordUserIds(set);
+      })
+      .catch(() => {
+        setMembers([]);
+        setRecordUserIds(new Set());
+      })
+      .finally(() => setLoading(false));
+  }, [groupId, slot, date]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const checkEndTimePassed = Boolean(
+    schedule?.checkEndTime && isAfterTimeInKST(schedule.checkEndTime),
+  );
+
+  const othersWithStatus = useMemo((): MemberStatus[] => {
+    return members
+      .filter((m) => m.userId !== currentUserId)
+      .map((m) => ({
+        userId: m.userId,
+        nickname: (m.nickname?.trim() || '회원').replace(/\s*님$/, '') || '회원',
+        passed: checkEndTimePassed ? recordUserIds.has(m.userId) : null,
+      }));
+  }, [members, currentUserId, recordUserIds, checkEndTimePassed]);
+
+  if (loading) {
+    return (
+      <View style={styles.wrap}>
+        <View style={styles.loadingWrap}>
+          <ActivityIndicator size="small" color={colors.primary} />
+          <Text style={styles.loadingText}>그룹원 현황 불러오는 중…</Text>
+        </View>
+      </View>
+    );
+  }
+
+  if (othersWithStatus.length === 0) {
+    return null;
+  }
+
   return (
     <View style={styles.gridRow}>
-      {people.map((person) => (
-        <View key={person.name} style={styles.todoSmall}>
-          <Text style={styles.smallName}>{person.name}</Text>
-          {person.todos.map((todo) => (
-            <View key={todo.id} style={styles.todoRow}>
-              <View style={[styles.check, todo.checked && styles.checkActive]} />
-              <Text style={styles.todoText}>{todo.label}</Text>
-            </View>
-          ))}
+      {othersWithStatus.map((member) => (
+        <View key={member.userId} style={styles.todoSmall}>
+          <Text style={styles.smallName}>{member.nickname}님</Text>
+          <View style={styles.statusWrap}>
+            {member.passed === null ? (
+              <Text style={styles.statusWait}>체크 마감 전</Text>
+            ) : member.passed ? (
+              <Text style={styles.statusPass}>인증 완료</Text>
+            ) : (
+              <Text style={styles.statusFail}>미인증</Text>
+            )}
+          </View>
         </View>
       ))}
     </View>
@@ -40,12 +113,30 @@ function StudyStatusTodoOthers() {
 }
 
 const styles = StyleSheet.create({
+  wrap: {
+    marginTop: 8,
+  },
+  loadingWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 12,
+  },
+  loadingText: {
+    fontSize: 12,
+    color: colors.textSecondary,
+  },
   gridRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 12,
+    marginTop: 8,
   },
   todoSmall: {
+    minWidth: 100,
     flex: 1,
+    maxWidth: 160,
     borderRadius: 12,
     backgroundColor: '#F3F3F3',
     padding: 12,
@@ -54,28 +145,24 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '700',
     color: colors.textPrimary,
-    marginBottom: 8,
-  },
-  todoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
     marginBottom: 6,
   },
-  check: {
-    width: 12,
-    height: 12,
-    borderRadius: 3,
-    borderWidth: 1,
-    borderColor: '#C8C8C8',
-    backgroundColor: '#FFFFFF',
+  statusWrap: {
+    marginTop: 4,
   },
-  checkActive: {
-    borderColor: colors.primary,
-    backgroundColor: colors.primary,
-  },
-  todoText: {
+  statusPass: {
     fontSize: 11,
+    fontWeight: '600',
+    color: colors.primary,
+  },
+  statusFail: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#E53935',
+  },
+  statusWait: {
+    fontSize: 11,
+    fontWeight: '600',
     color: colors.textSecondary,
   },
 });

@@ -13,7 +13,7 @@ import {
   Pressable,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { type BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { type NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { type BottomTabParamList, type HomeStackParamList } from '../../../navigation/types';
@@ -27,8 +27,17 @@ import { type StudyDetail } from '../../study-detail/screens/StudyDetailScreen';
 import { type StudyPreview } from '../../search/types';
 import AdminHomeScreen from '../../admin/screen/AdminHomeScreen';
 import { apiClient } from '../../../api';
-import { fetchMyStudyGroups, fetchRecommendedStudyGroups } from '../../../api/studyGroups';
+import { getCurrentUserId } from '../../../api/client';
+import { getMyInfo } from '../../../api/users';
+import {
+  fetchMyStudyGroups,
+  fetchRecommendedStudyGroups,
+  fetchStudyGroupDetail,
+  fetchVerificationRecords,
+} from '../../../api/studyGroups';
 import { mapCardToStudyDetail } from '../../../api/studyGroupCard';
+import type { StudyGroupCardRes } from '../../../api/studyGroupCard';
+import { getTodayDateString, getDayIndexFromDate, BACKEND_DAY_CODES_BY_INDEX } from '../../../utils/timeKST';
 const rightIcon = require('../../../assets/icon/right_arrow.png');
 const backgroundSource = require('../../../assets/image/background.png');
 const emptyCardBg = require('../../../assets/image/linear_bg.png');
@@ -67,7 +76,17 @@ function HomeScreen() {
   const [errorMyStudies, setErrorMyStudies] = useState<string | null>(null);
   const [recommendedStudies, setRecommendedStudies] = useState<StudyDetail[]>([]);
   const [loadingRecommended, setLoadingRecommended] = useState(true);
+  const [userNickname, setUserNickname] = useState<string>('회원');
   const { notifications } = useNotificationCenter();
+
+  useEffect(() => {
+    getMyInfo()
+      .then((res) => {
+        const nickname = res.data?.data?.nickname?.trim();
+        if (nickname) setUserNickname(nickname);
+      })
+      .catch(() => {});
+  }, []);
   
 useEffect(() => {
   // ✅ apiClient 바구니(headers.common)에서 role을 꺼냅니다.
@@ -86,18 +105,78 @@ useEffect(() => {
     try {
       const { data } = await fetchMyStudyGroups();
       const ok = data && ((data as { success?: boolean; isSuccess?: boolean }).success === true || data.isSuccess === true);
-      if (ok && Array.isArray(data.data)) {
-        const list = data.data.map((card, i) => mapCardToStudyDetail(card, i, MASCOTS));
-        setMyStudies(list);
-      } else {
+      if (!ok || !Array.isArray(data.data)) {
         setMyStudies([]);
+        return;
       }
+      const cards = data.data as StudyGroupCardRes[];
+      const todayStr = getTodayDateString();
+      const userId = getCurrentUserId();
+
+      if (!userId) {
+        const list = cards.map((card, i) => mapCardToStudyDetail(card, i, MASCOTS));
+        setMyStudies(list);
+        return;
+      }
+
+      const enriched = await Promise.all(
+        cards.map(async (card, i) => {
+          const base = mapCardToStudyDetail(card, i, MASCOTS);
+          try {
+            const [detailRes, recordsRes] = await Promise.all([
+              fetchStudyGroupDetail(card.groupId),
+              fetchVerificationRecords(card.groupId, {
+                startDate: todayStr,
+                endDate: todayStr,
+              }),
+            ]);
+            const detail = detailRes.data?.data;
+            const rules = detail?.verificationRules ?? [];
+            const records = recordsRes.data?.data?.records ?? [];
+            const dayIndex = getDayIndexFromDate(todayStr);
+            const backendCode = BACKEND_DAY_CODES_BY_INDEX[dayIndex];
+            const requiredSlots = rules
+              .filter(
+                (r: { daysOfWeek?: string[] }) =>
+                  (r.daysOfWeek ?? []).includes(backendCode),
+              )
+              .map((r: { slot: number }) => r.slot);
+            const recordSet = new Set(
+              records
+                .filter(
+                  (r: { verificationDate: string }) =>
+                    r.verificationDate === todayStr,
+                )
+                .map(
+                  (r: { userId: string; slot: number }) =>
+                    `${r.userId}-${r.slot}-${todayStr}`,
+                ),
+            );
+            const todayCompleted =
+              requiredSlots.length === 0 ||
+              requiredSlots.every((slot: number) =>
+                recordSet.has(`${userId}-${slot}-${todayStr}`),
+              );
+            return {
+              ...base,
+              statusText: todayCompleted ? '인증 완료' : '인증 미완료',
+              statusVariant: todayCompleted ? 'success' : 'neutral',
+              statusIcons: todayCompleted ? ['success' as const] : [],
+            };
+          } catch {
+            return base;
+          }
+        }),
+      );
+      setMyStudies(enriched);
     } catch (err) {
       setMyStudies([]);
       let msg = '목록을 불러오지 못했어요';
       if (err && typeof err === 'object' && 'response' in err) {
-        const res = (err as { response?: { status?: number; data?: { message?: string } } }).response;
-        if (res?.status === 401) msg = '로그인 정보가 없거나 만료됐어요. (X-User-Id 확인)';
+        const res = (err as { response?: { status?: number; data?: { message?: string } } })
+          .response;
+        if (res?.status === 401)
+          msg = '로그인 정보가 없거나 만료됐어요. (X-User-Id 확인)';
         else if (res?.data?.message) msg = res.data.message;
       } else if (err && typeof err === 'object' && 'message' in err) {
         msg = String((err as Error).message);
@@ -108,9 +187,11 @@ useEffect(() => {
     }
   }, []);
 
-  useEffect(() => {
-    loadMyStudyGroups();
-  }, [loadMyStudyGroups]);
+  useFocusEffect(
+    useCallback(() => {
+      loadMyStudyGroups();
+    }, [loadMyStudyGroups]),
+  );
 
   const loadRecommendedStudyGroups = useCallback(async () => {
     setLoadingRecommended(true);
@@ -243,20 +324,17 @@ useEffect(() => {
           >
             <View style={styles.heroTextBlock}>
               {loadingMyStudies ? (
-                <>
-                  <Text style={styles.heroLine}>승연 메이트님</Text>
-                  <Text style={styles.heroLine}>스터디를 불러오는 중…</Text>
-                </>
+                <Text style={styles.heroLine}>
+                  {userNickname} 메이트님{'\n'}스터디를 불러오는 중…
+                </Text>
               ) : hasStudies ? (
-                <>
-                  <Text style={styles.heroLine}>승연 메이트님</Text>
-                  <Text style={styles.heroLine}>오늘은 스터디 {myStudies.length}개가 있어요!</Text>
-                </>
+                <Text style={styles.heroLine}>
+                  {userNickname} 메이트님{'\n'}오늘은 스터디 {myStudies.length}개가 있어요!
+                </Text>
               ) : (
-                <>
-                  <Text style={styles.heroLine}>승연 메이트님 반가워요!</Text>
-                  <Text style={styles.heroLine}>참여중인 스터디가 없네요.</Text>
-                </>
+                <Text style={styles.heroLine}>
+                  {userNickname} 메이트님 반가워요!{'\n'}참여중인 스터디가 없네요.
+                </Text>
               )}
             </View>
 
@@ -540,9 +618,8 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   heroTextBlock: {
-    paddingHorizontal:10,
+    paddingHorizontal: 10,
     marginBottom: 50,
-    marginTop: -50,
   },
   heroMascot: {
     position: 'absolute',

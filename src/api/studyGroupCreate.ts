@@ -1,9 +1,11 @@
 /**
  * POST /study-groups 요청/응답 타입 및 폼 → API payload 변환
  * 백엔드 StudyGroupCreateReq / StudyGroupCreateRes 스펙 기준
+ * 시간은 한국 시간(KST) 기준으로 입력·전송합니다.
  */
 
 import type { MethodConfig } from '../features/my-study/components/AuthMethodSection';
+import { formatTimeKST } from '../utils/timeKST';
 
 export type ApiResponse<T> = {
   isSuccess: boolean;
@@ -44,12 +46,6 @@ const DAY_MAP: Record<string, string> = {
   금: 'FRI',
   토: 'SAT',
   일: 'SUN',
-};
-
-const formatTime = (date: Date) => {
-  const h = date.getHours().toString().padStart(2, '0');
-  const m = date.getMinutes().toString().padStart(2, '0');
-  return `${h}:${m}`;
 };
 
 type CreatePayload = {
@@ -93,8 +89,8 @@ function configToVerificationRule(
 ): CreatePayload['verificationRules'][0] {
   const methodCode = METHOD_MAP[config.method] ?? 'PHOTO';
   const endTime =
-    config.method === 'TODO' ? formatTime(config.todoDeadline) : formatTime(config.rangeEnd);
-  const checkEndTime = config.method === 'TODO' ? formatTime(config.todoComplete) : null;
+    config.method === 'TODO' ? formatTimeKST(config.todoDeadline) : formatTimeKST(config.rangeEnd);
+  const checkEndTime = config.method === 'TODO' ? formatTimeKST(config.todoComplete) : null;
 
   const method: CreatePayload['verificationRules'][0]['method'] = {
     methodCode,
@@ -103,10 +99,24 @@ function configToVerificationRule(
     method.photo = { minFiles: 1, maxFiles: 3, source: 'ALLOW_ALBUM' };
   }
   if (config.method === '위치') {
+    const isCommon = config.locationType === '공통 위치';
+    const hasCommonLocation =
+      isCommon &&
+      (config.locationName?.trim() ?? '') !== '' &&
+      config.locationLatitude != null &&
+      config.locationLongitude != null;
     method.gps = {
-      radiusMode: config.locationType === '공통 위치' ? 'COMMON' : 'PER_LOCATION',
+      radiusMode: isCommon ? 'COMMON' : 'PER_LOCATION',
       radiusM: 100,
-      locations: config.locationName ? [{ name: config.locationName, latitude: 0, longitude: 0 }] : [],
+      locations: hasCommonLocation
+        ? [
+            {
+              name: config.locationName!.trim(),
+              latitude: config.locationLatitude,
+              longitude: config.locationLongitude,
+            },
+          ]
+        : [],
       blockOutsideTime: true,
     };
   }
