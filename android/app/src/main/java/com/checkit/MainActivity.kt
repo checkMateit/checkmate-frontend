@@ -1,4 +1,4 @@
-package com.checkmate
+package com.checkit
 
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate
