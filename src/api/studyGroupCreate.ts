@@ -103,10 +103,24 @@ function configToVerificationRule(
     method.photo = { minFiles: 1, maxFiles: 3, source: 'ALLOW_ALBUM' };
   }
   if (config.method === '위치') {
+    const isCommon = config.locationType === '공통 위치';
+    const hasCommonLocation =
+      isCommon &&
+      (config.locationName?.trim() ?? '') !== '' &&
+      config.locationLatitude != null &&
+      config.locationLongitude != null;
     method.gps = {
-      radiusMode: config.locationType === '공통 위치' ? 'COMMON' : 'PER_LOCATION',
+      radiusMode: isCommon ? 'COMMON' : 'PER_LOCATION',
       radiusM: 100,
-      locations: config.locationName ? [{ name: config.locationName, latitude: 0, longitude: 0 }] : [],
+      locations: hasCommonLocation
+        ? [
+            {
+              name: config.locationName!.trim(),
+              latitude: config.locationLatitude,
+              longitude: config.locationLongitude,
+            },
+          ]
+        : [],
       blockOutsideTime: true,
     };
   }

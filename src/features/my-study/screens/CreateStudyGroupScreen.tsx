@@ -132,7 +132,9 @@ function detailToInitialState(d: StudyGroupDetailRes): {
           rangeStart: method0 !== 'TODO' ? endTime0 : createTime(10, 0),
           rangeEnd: method0 !== 'TODO' ? endTime0 : createTime(22, 0),
           locationType: '공통 위치',
-          locationName: '',
+          locationName: (r0.methodDetails as { gps?: { locations?: Array<{ name?: string; latitude?: number; longitude?: number }> } })?.gps?.locations?.[0]?.name ?? '',
+          locationLatitude: (r0.methodDetails as { gps?: { locations?: Array<{ latitude?: number }> } })?.gps?.locations?.[0]?.latitude ?? null,
+          locationLongitude: (r0.methodDetails as { gps?: { locations?: Array<{ longitude?: number }> } })?.gps?.locations?.[0]?.longitude ?? null,
         }
       : createDefaultConfig('TODO'),
     secondaryConfig: r1 ? createDefaultConfig(method1) : null,
@@ -158,6 +160,8 @@ const createDefaultConfig = (method: AuthMethod): MethodConfig => ({
   rangeEnd: createTime(22, 0),
   locationType: '공통 위치',
   locationName: '',
+  locationLatitude: null,
+  locationLongitude: null,
 });
 
 function CreateStudyGroupScreen({
@@ -286,6 +290,19 @@ function CreateStudyGroupScreen({
     }
     if (days.length === 0) {
       Alert.alert('안내', '인증 요일을 하나 이상 선택해주세요.');
+      return;
+    }
+    const needLocationCoords = (c: MethodConfig | null) =>
+      c?.method === '위치' &&
+      c?.locationType === '공통 위치' &&
+      (c?.locationName?.trim() ?? '') !== '' &&
+      (c?.locationLatitude == null || c?.locationLongitude == null);
+    if (needLocationCoords(primaryConfig)) {
+      Alert.alert('안내', '공통 위치를 사용할 때는 위치 이름을 입력한 뒤 지도에서 인증 위치를 지정해주세요.');
+      return;
+    }
+    if (needLocationCoords(secondaryConfig)) {
+      Alert.alert('안내', '공통 위치를 사용할 때는 위치 이름을 입력한 뒤 지도에서 인증 위치를 지정해주세요.');
       return;
     }
     if (isEdit && members < currentMembers) {
@@ -430,6 +447,11 @@ function CreateStudyGroupScreen({
         key === 'primary'
           ? setPrimaryConfig((prev) => (prev ? { ...prev, locationName: text } : prev))
           : setSecondaryConfig((prev) => (prev ? { ...prev, locationName: text } : prev))
+      }
+      onLocationCoordsChange={(key, latitude, longitude) =>
+        key === 'primary'
+          ? setPrimaryConfig((prev) => (prev ? { ...prev, locationLatitude: latitude, locationLongitude: longitude } : prev))
+          : setSecondaryConfig((prev) => (prev ? { ...prev, locationLatitude: latitude, locationLongitude: longitude } : prev))
       }
     />
   );
