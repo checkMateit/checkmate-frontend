@@ -2,6 +2,13 @@
 
 스터디 모집부터 참여, 인증, 기록 관리까지 한 번에 다룰 수 있도록 만든 모바일 스터디 관리 애플리케이션
 
+<img width="24%"  alt="Image" src="https://github.com/user-attachments/assets/87dbed18-b84c-48e2-bd78-9a79ad73d3cf" />
+
+<img width="24%"   alt="Image" src="https://github.com/user-attachments/assets/7555e246-053c-472b-b5d8-8098da56b775" />
+
+<img width="24%"  alt="Image" src="https://github.com/user-attachments/assets/24a2924f-9668-458f-af04-4d10744f57a4" />
+
+<img width="24%"  alt="Image" src="https://github.com/user-attachments/assets/358ba85b-176f-4704-8e83-627a46f228e5" />
 
 ## 🚨 Problem
 
