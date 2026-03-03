@@ -4,9 +4,11 @@
   "private": true,
   "scripts": {
     "android": "react-native run-android",
+    "android:reset": "react-native start --reset-cache",
     "ios": "react-native run-ios",
     "lint": "eslint .",
     "start": "react-native start",
+    "start:reset": "react-native start --reset-cache",
     "test": "JEST_USE_WATCHMAN=0 WATCHMAN_DISABLE_WATCHER=1 jest"
   },
   "dependencies": {

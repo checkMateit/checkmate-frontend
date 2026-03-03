@@ -23,6 +23,7 @@ const editIcon = require('../../../assets/icon/modify_icon.png');
 const METHOD_LABEL: Record<string, string> = {
   PHOTO: '사진',
   CHECKLIST: 'TODO',
+  GPS: '위치',
   GITHUB: 'GITHUB',
 };
 
@@ -105,7 +106,7 @@ function StudyDetailRulesView({
       const photo = details.photo ?? {};
       return (
         <View key={`slot-${rule.slot}`} style={styles.ruleBlock}>
-          <Text style={styles.ruleBlockTitle}>{label} (슬롯 {rule.slot})</Text>
+          <Text style={styles.ruleBlockTitle}>{rule.slot}. {label}</Text>
           <View style={styles.ruleRows}>
             <View style={styles.ruleRow}>
               <Text style={styles.ruleLabel}>마감 시각</Text>
@@ -145,7 +146,7 @@ function StudyDetailRulesView({
     if (methodCode === 'CHECKLIST') {
       return (
         <View key={`slot-${rule.slot}`} style={styles.ruleBlock}>
-          <Text style={styles.ruleBlockTitle}>{label} (슬롯 {rule.slot})</Text>
+          <Text style={styles.ruleBlockTitle}>{rule.slot}. {label}</Text>
           <View style={styles.ruleRows}>
             <View style={styles.ruleRow}>
               <Text style={styles.ruleLabel}>작성 마감 시각</Text>
@@ -164,7 +165,7 @@ function StudyDetailRulesView({
       const github = details.github ?? {};
       return (
         <View key={`slot-${rule.slot}`} style={styles.ruleBlock}>
-          <Text style={styles.ruleBlockTitle}>{label} (슬롯 {rule.slot})</Text>
+          <Text style={styles.ruleBlockTitle}>{rule.slot}. {label}</Text>
           <View style={styles.ruleRows}>
             <View style={styles.ruleRow}>
               <Text style={styles.ruleLabel}>마감 시각</Text>
@@ -185,9 +186,49 @@ function StudyDetailRulesView({
       );
     }
 
+    if (methodCode === 'GPS') {
+      const gps = details.gps ?? {};
+      const locations = Array.isArray(gps.locations) ? gps.locations : [];
+      const isCommon = locations.length <= 1;
+      const subLabel = isCommon ? '위치 - 공통 위치' : '위치 - 개인 위치';
+      const loc = locations[0];
+      const locationName = loc?.name ?? '-';
+      const locationPlace =
+        loc?.latitude != null && loc?.longitude != null
+          ? `${loc.latitude}, ${loc.longitude}`
+          : loc?.name
+            ? loc.name
+            : '-';
+      return (
+        <View key={`slot-${rule.slot}`} style={styles.ruleBlock}>
+          <Text style={styles.ruleBlockTitle}>{rule.slot}. {subLabel}</Text>
+          <View style={styles.ruleRows}>
+            <View style={styles.ruleRow}>
+              <Text style={styles.ruleLabel}>마감 시각</Text>
+              <Text style={styles.ruleValue}>{endTime || '-'}</Text>
+            </View>
+            <View style={styles.ruleRow}>
+              <Text style={styles.ruleLabel}>
+                {isCommon ? '공통 위치 이름' : '개인 위치 이름'}
+              </Text>
+              <Text style={styles.ruleValue}>{locationName}</Text>
+            </View>
+            <View style={[styles.ruleRow, styles.ruleRowLast]}>
+              <Text style={styles.ruleLabel}>
+                {isCommon ? '공통 위치' : '개인 위치'}
+              </Text>
+              <Text style={styles.ruleValue} numberOfLines={1}>
+                {locationPlace}
+              </Text>
+            </View>
+          </View>
+        </View>
+      );
+    }
+
     return (
       <View key={`slot-${rule.slot}`} style={styles.ruleBlock}>
-        <Text style={styles.ruleBlockTitle}>{label} (슬롯 {rule.slot})</Text>
+        <Text style={styles.ruleBlockTitle}>{rule.slot}. {label}</Text>
         <View style={styles.ruleRows}>
           <View style={[styles.ruleRow, styles.ruleRowLast]}>
             <Text style={styles.ruleLabel}>마감 시각</Text>
