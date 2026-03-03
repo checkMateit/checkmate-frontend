@@ -84,7 +84,21 @@ function StudyStatusSection({
         )}
       {activeTab === 'todo' &&
         (slotChecklist != null ? (
-          <StudyStatusTodo groupId={groupId} slot={slotChecklist} />
+          <StudyStatusTodo
+            groupId={groupId}
+            slot={slotChecklist}
+            currentUserId={currentUserId}
+            schedule={
+              verificationRules.find((r) => r.slot === slotChecklist)
+                ? {
+                    endTime:
+                      verificationRules.find((r) => r.slot === slotChecklist)?.endTime ?? '09:00',
+                    checkEndTime:
+                      verificationRules.find((r) => r.slot === slotChecklist)?.checkEndTime ?? null,
+                  }
+                : undefined
+            }
+          />
         ) : (
           <View style={styles.placeholder}>
             <Text style={styles.placeholderText}>체크리스트 인증 규칙을 불러오는 중이에요.</Text>

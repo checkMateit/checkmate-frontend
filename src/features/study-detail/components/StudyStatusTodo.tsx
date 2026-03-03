@@ -21,13 +21,26 @@ import {
   type ChecklistItemRes,
 } from '../../../api/verification';
 import { colors } from '../../../styles/colors';
+import { isAfterTimeInKST } from '../../../utils/timeKST';
+
+export type TodoSchedule = {
+  endTime: string;
+  checkEndTime: string | null;
+};
 
 type StudyStatusTodoProps = {
   groupId: string;
   slot: number;
+  currentUserId: string | null;
+  schedule?: TodoSchedule;
 };
 
-function StudyStatusTodo({ groupId, slot }: StudyStatusTodoProps) {
+function StudyStatusTodo({
+  groupId,
+  slot,
+  currentUserId,
+  schedule,
+}: StudyStatusTodoProps) {
   const [items, setItems] = useState<ChecklistItemRes[]>([]);
   const [result, setResult] = useState<{ passed: boolean } | null>(null);
   const [loading, setLoading] = useState(true);
@@ -36,6 +49,10 @@ function StudyStatusTodo({ groupId, slot }: StudyStatusTodoProps) {
   const [submitting, setSubmitting] = useState(false);
 
   const date = getVerificationDateToday();
+  const writeDeadlinePassed = Boolean(
+    schedule?.endTime && isAfterTimeInKST(schedule.endTime),
+  );
+  const canAddItems = !writeDeadlinePassed;
 
   const refresh = useCallback(() => {
     setLoading(true);
@@ -74,8 +91,21 @@ function StudyStatusTodo({ groupId, slot }: StudyStatusTodoProps) {
     (content: string) => {
       const trimmed = content.trim();
       if (!trimmed) return;
+      if (!canAddItems) {
+        Alert.alert('추가 불가', '작성 마감 시간이 지났어요.');
+        return;
+      }
       setSubmitting(true);
-      addChecklistItem(groupId, slot, { content: trimmed }, date)
+      const nextSortOrder =
+        items.length > 0
+          ? Math.max(...items.map((i) => i.sortOrder), 0) + 1
+          : 0;
+      addChecklistItem(
+        groupId,
+        slot,
+        { content: trimmed, sortOrder: nextSortOrder },
+        date,
+      )
         .then(() => {
           setAddModalVisible(false);
           setDraftContent('');
@@ -90,7 +120,7 @@ function StudyStatusTodo({ groupId, slot }: StudyStatusTodoProps) {
         })
         .finally(() => setSubmitting(false));
     },
-    [groupId, slot, date, refresh],
+    [groupId, slot, date, refresh, canAddItems, items],
   );
 
   const hasMyTodos = items.length > 0;
@@ -113,12 +143,23 @@ function StudyStatusTodo({ groupId, slot }: StudyStatusTodoProps) {
           items={items}
           result={result}
           onToggleCheck={handleToggleCheck}
-          onAddPress={() => setAddModalVisible(true)}
+          onAddPress={canAddItems ? () => setAddModalVisible(true) : undefined}
+          canAddItems={canAddItems}
         />
       ) : (
-        <StudyStatusTodoMyEmpty onAddPress={() => setAddModalVisible(true)} />
+        <StudyStatusTodoMyEmpty
+          onAddPress={canAddItems ? () => setAddModalVisible(true) : undefined}
+          canAddItems={canAddItems}
+          writeDeadlinePassed={writeDeadlinePassed}
+        />
       )}
-      <StudyStatusTodoOthers />
+      <StudyStatusTodoOthers
+        groupId={groupId}
+        slot={slot}
+        currentUserId={currentUserId}
+        date={date}
+        schedule={schedule}
+      />
 
       <Modal
         visible={addModalVisible}
@@ -150,9 +191,9 @@ function StudyStatusTodo({ groupId, slot }: StudyStatusTodoProps) {
                 <Text style={styles.modalCancelText}>취소</Text>
               </Pressable>
               <Pressable
-                style={[styles.modalSubmit, submitting && styles.modalSubmitDisabled]}
+                style={[styles.modalSubmit, (submitting || !canAddItems) && styles.modalSubmitDisabled]}
                 onPress={() => handleAddItem(draftContent)}
-                disabled={submitting || !draftContent.trim()}
+                disabled={submitting || !draftContent.trim() || !canAddItems}
               >
                 <Text style={styles.modalSubmitText}>
                   {submitting ? '등록 중…' : '등록'}

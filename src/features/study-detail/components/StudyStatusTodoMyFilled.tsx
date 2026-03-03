@@ -10,7 +10,8 @@ type StudyStatusTodoMyFilledProps = {
   items: ChecklistItemRes[];
   result: { passed: boolean } | null;
   onToggleCheck: (itemId: number, checked: boolean) => void;
-  onAddPress: () => void;
+  onAddPress: (() => void) | undefined;
+  canAddItems: boolean;
 };
 
 function StudyStatusTodoMyFilled({
@@ -18,6 +19,7 @@ function StudyStatusTodoMyFilled({
   result,
   onToggleCheck,
   onAddPress,
+  canAddItems,
 }: StudyStatusTodoMyFilledProps) {
   return (
     <View style={styles.card}>
@@ -51,9 +53,11 @@ function StudyStatusTodoMyFilled({
         </View>
         <Image source={mascotImage} style={styles.mascot} resizeMode="contain" />
       </View>
-      <Pressable style={styles.addButton} onPress={onAddPress}>
-        <Text style={styles.addText}>+ 추가하기</Text>
-      </Pressable>
+      {canAddItems && onAddPress != null && (
+        <Pressable style={styles.addButton} onPress={onAddPress}>
+          <Text style={styles.addText}>+ 추가하기</Text>
+        </Pressable>
+      )}
     </View>
   );
 }

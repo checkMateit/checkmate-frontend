@@ -79,3 +79,26 @@ export function getTodayDateString(): string {
   const day = d.getDate().toString().padStart(2, '0');
   return `${y}-${m}-${day}`;
 }
+
+/**
+ * 현재 시각(KST)이 주어진 "HH:mm" 시각을 이미 지났는지 여부.
+ * 체크리스트 작성 마감(end_time) 이후에는 항목 추가 불가 판단에 사용.
+ */
+export function isAfterTimeInKST(timeStr: string): boolean {
+  const match = (timeStr || '').trim().match(/^(\d{1,2}):(\d{2})/);
+  if (!match) return false;
+  const deadlineMin = parseInt(match[1], 10) * 60 + parseInt(match[2], 10);
+  const now = new Date();
+  const kstMin = ((now.getUTCHours() + KST_OFFSET_HOURS) % 24) * 60 + now.getUTCMinutes();
+  return kstMin >= deadlineMin;
+}
+
+/** yyyy-MM-dd → 요일 인덱스 (월=0, 화=1, ..., 일=6) */
+export function getDayIndexFromDate(dateStr: string): number {
+  const d = new Date(dateStr + 'T12:00:00');
+  const day = d.getDay();
+  return day === 0 ? 6 : day - 1;
+}
+
+/** 요일 인덱스(0~6) → 백엔드 요일 코드 (MON, TUE, ..., SUN) */
+export const BACKEND_DAY_CODES_BY_INDEX = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
