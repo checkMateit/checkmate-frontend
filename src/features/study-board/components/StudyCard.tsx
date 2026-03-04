@@ -11,6 +11,7 @@ import {
 import { colors } from '../../../styles/colors';
 import MascotImage from '../../../components/common/CategoryImage';
 import AuthMethodRow from '../../../components/common/AuthMethodRow';
+import StatusFailIcon from '../../../components/common/StatusFailIcon';
 export type StatusVariant = 'success' | 'danger' | 'neutral';
 export type StatusIconType = 'success' | 'danger';
 
@@ -32,8 +33,17 @@ export type StudyCardProps = {
 
 
 const personIcon = require('../../../assets/icon/person_icon.png');
-const cancelIcon = require('../../../assets/icon/cancel_icon.png');
 const checkIcon = require('../../../assets/icon/check_icon.png');
+const timeIcon = require('../../../assets/icon/time_icon.png');
+const pencilIcon = require('../../../assets/icon/modify_icon.png');
+
+/** 요일만 표시: "화/수/목 22:00" → "화/수/목", "화목" → "화/목" */
+function daysOnly(authDays?: string): string {
+  if (!authDays || authDays === '-') return '';
+  const part = (authDays.split(/\s+/)[0] ?? authDays).trim();
+  if (part.includes('/')) return part;
+  return part.split('').join('/');
+}
 
 function StudyCard({
   tag,
@@ -51,7 +61,7 @@ function StudyCard({
   onPress,
 }: StudyCardProps) {
   const statusIcon =
-    statusVariant === 'danger' ? cancelIcon : statusVariant === 'success' ? checkIcon : null;
+    statusVariant === 'danger' ? 'danger' : statusVariant === 'success' ? checkIcon : null;
   const statusIconList =
     statusIcons && statusIcons.length > 0
       ? statusIcons.slice(0, 2)
@@ -59,40 +69,61 @@ function StudyCard({
         ? [statusVariant === 'danger' ? 'danger' : 'success']
         : [];
 
+  const daysOnlyStr = daysOnly(authDays);
+
   return (
     <Pressable style={styles.card} onPress={onPress}>
       <View style={styles.topRow}>
         {/* left */}
         <View style={styles.leftInfo}>
-          <View style={styles.categoryRow}>
-            <ImageBackground
-              source={require('../../../assets/icon/category_icon.png')}
-              style={styles.category}
-              resizeMode="contain">
-              <Text style={styles.chipText}>{tag}</Text>
-            </ImageBackground>
-            <View style={styles.membersInline}>
-              <Image source={personIcon} style={styles.membersIcon} />
-              <Text style={styles.membersText}>{members}</Text>
+          <View>
+            <View style={styles.categoryRow}>
+              <ImageBackground
+                source={require('../../../assets/icon/category_icon.png')}
+                style={styles.category}
+                resizeMode="contain">
+                <Text style={styles.chipText}>{tag}</Text>
+              </ImageBackground>
+              <View style={styles.membersInline}>
+                <Image source={personIcon} style={styles.membersIcon} />
+                <Text style={styles.membersText}>{members}</Text>
+              </View>
             </View>
+            <Text style={styles.title}>{title}</Text>
+            {daysOnlyStr ? <Text style={styles.schedule}>{daysOnlyStr}</Text> : null}
           </View>
-
-          <Text style={styles.title}>{title}</Text>
-          {authDays ? <Text style={styles.schedule}>{authDays}</Text> : null}
-          {authTimes && authTimes.length > 0 ? (
-            <View style={styles.methodList}>
-              {authTimes.map((item, index) => (
-                <View key={`${item.method}-${index}`} style={styles.methodLine}>
-                  <AuthMethodRow methods={[item.method]} label="" showIcon={false} />
-                  <Text style={styles.methodTime}>
-                    {item.method === 'TODO' ? item.time.replace('|', ' | ') : item.time}
-                  </Text>
+          <View style={styles.methodListWrap}>
+            {authTimes && authTimes.length > 0 ? (
+              <View style={styles.methodTwoCol}>
+                <View style={styles.methodChipsCol}>
+                  {authTimes.map((item, index) => (
+                    <AuthMethodRow key={`chip-${index}`} methods={[item.method]} label="" showIcon={false} />
+                  ))}
                 </View>
-              ))}
-            </View>
-          ) : methods && methods.length > 0 ? (
-            <AuthMethodRow methods={methods} label="" showIcon={false} />
-          ) : null}
+                <View style={styles.methodTimesCol}>
+                  {authTimes.map((item, index) =>
+                    item.method === 'TODO' && (item.deadline != null || item.complete != null) ? (
+                      <View key={`time-${index}`} style={styles.methodTimeRow}>
+                        <Image source={pencilIcon} style={styles.methodTimeIcon} />
+                        <Text style={styles.methodTime}>{item.deadline ?? '-'}</Text>
+                        <Image source={timeIcon} style={styles.methodTimeIcon} />
+                        <Text style={styles.methodTime}>{item.complete ?? item.time}</Text>
+                      </View>
+                    ) : (
+                      <View key={`time-${index}`} style={styles.methodTimeRow}>
+                        <Image source={timeIcon} style={styles.methodTimeIcon} />
+                        <Text style={styles.methodTime}>{item.time}</Text>
+                      </View>
+                    ),
+                  )}
+                </View>
+              </View>
+            ) : methods && methods.length > 0 ? (
+              <View style={styles.methodList}>
+                <AuthMethodRow methods={methods} label="" showIcon={false} />
+              </View>
+            ) : null}
+          </View>
         </View>
 
         {/* right */}
@@ -111,13 +142,17 @@ function StudyCard({
         <View style={styles.membersRow} />
         <View style={styles.statusRow}>
           <Text style={styles.statusText}>{statusText}</Text>
-          {statusIconList.map((iconType, index) => (
-            <Image
-              key={`${iconType}-${index}`}
-              source={iconType === 'danger' ? cancelIcon : checkIcon}
-              style={styles.statusIcon}
-            />
-          ))}
+          {statusIconList.map((iconType, index) =>
+            iconType === 'danger' ? (
+              <StatusFailIcon key={`${iconType}-${index}`} size={20} />
+            ) : (
+              <Image
+                key={`${iconType}-${index}`}
+                source={checkIcon}
+                style={styles.statusIcon}
+              />
+            ),
+          )}
         </View>
       </View>
     </Pressable>
@@ -143,19 +178,25 @@ const styles = StyleSheet.create({
   topRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    alignItems: 'stretch',
   },
 
   leftInfo: {
     flex: 1,
-    paddingRight: 12, 
+    paddingRight: 12,
+    justifyContent: 'space-between',
+  },
+  methodListWrap: {
+    flex: 1,
+    justifyContent: 'center',
+    minHeight: 32,
   },
   categoryRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    marginTop: 8,
-    marginBottom: 8,
+    marginTop: 6,
+    marginBottom: 6,
   },
   category: {
     paddingHorizontal: 10,
@@ -190,21 +231,38 @@ const styles = StyleSheet.create({
     fontSize: 21,
     fontWeight: '700',
     color: colors.textPrimary,
-    marginBottom: 4,
-    
+    marginBottom: 6,
   },
   schedule: {
     fontSize: 12,
     color: colors.textSecondary,
-    marginBottom: 10,
+    marginBottom: 6,
   },
   methodList: {
-    gap: 6,
+    gap: 2,
   },
-  methodLine: {
+  methodTwoCol: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
+  },
+  methodChipsCol: {
+    gap: 2,
+    minWidth: 52,
+  },
+  methodTimesCol: {
+    flex: 1,
+    gap: 2,
+  },
+  methodTimeRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 6,
+  },
+  methodTimeIcon: {
+    width: 12,
+    height: 12,
+    tintColor: colors.textSecondary,
   },
   methodTime: {
     fontSize: 12,

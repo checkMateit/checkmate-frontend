@@ -21,7 +21,7 @@ import StudyDetailRulesView from '../components/StudyDetailRulesView';
 import StudySummaryInfoView from '../components/StudySummaryInfoView';
 import StudyOverviewCard from '../components/StudyOverviewCard';
 import CreateStudyGroupScreen from '../../my-study/screens/CreateStudyGroupScreen';
-import type { StudyGroupDetailRes } from '../../../api/studyGroups';
+import type { StudyGroupDetailRes, VerificationRuleRes } from '../../../api/studyGroups';
 import StudyReportTab from '../../study-report/components/StudyReportTab';
 import StudyStatusSection from '../components/StudyStatusSection';
 import { colors } from '../../../styles/colors';
@@ -142,6 +142,55 @@ function StudyDetailScreen({ study: studyProp, onClose }: StudyDetailScreenProps
       ? { uri: studyDetailForOwner.thumbnailUrl.trim() }
       : resolvedStudy.image;
 
+  const OVERVIEW_METHOD_LABEL: Record<string, string> = {
+    PHOTO: '사진',
+    CHECKLIST: 'TODO',
+    GPS: '위치',
+    GITHUB: 'GitHub',
+  };
+  const OVERVIEW_DAY_LABEL: Record<string, string> = {
+    MON: '월',
+    TUE: '화',
+    WED: '수',
+    THU: '목',
+    FRI: '금',
+    SAT: '토',
+    SUN: '일',
+  };
+  const overviewFromDetail = useMemo(() => {
+    if (!studyDetailForOwner) return null;
+    const rules = studyDetailForOwner.verificationRules ?? [];
+    if (rules.length === 0) return null;
+    const fmt = (s: string) => s.replace(/-/g, '. ');
+    const period =
+      studyDetailForOwner.startDate != null
+        ? studyDetailForOwner.endDate != null
+          ? `${fmt(studyDetailForOwner.startDate)} - ${fmt(studyDetailForOwner.endDate)}`
+          : fmt(studyDetailForOwner.startDate)
+        : undefined;
+    const daySet = new Set<string>();
+    rules.forEach((r: VerificationRuleRes) => {
+      (r.daysOfWeek ?? []).forEach((d) => daySet.add(d));
+    });
+    const dayOrder = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
+    const sortedDays = dayOrder.filter((d) => daySet.has(d));
+    const authDays =
+      sortedDays.length > 0
+        ? sortedDays.map((d) => OVERVIEW_DAY_LABEL[d] ?? d).join('/')
+        : undefined;
+    const authTimes = rules.map((r: VerificationRuleRes) => ({
+      method: OVERVIEW_METHOD_LABEL[r.methodCode] ?? r.methodCode,
+      time: r.endTime ?? '-',
+      deadline: r.methodCode === 'CHECKLIST' ? (r.endTime ?? undefined) : undefined,
+      complete: r.methodCode === 'CHECKLIST' ? (r.checkEndTime ?? undefined) : undefined,
+    }));
+    return { period, authDays, authTimes };
+  }, [studyDetailForOwner]);
+
+  const overviewPeriod = overviewFromDetail?.period ?? resolvedStudy.period;
+  const overviewAuthDays = overviewFromDetail?.authDays ?? resolvedStudy.authDays;
+  const overviewAuthTimes = overviewFromDetail?.authTimes ?? resolvedStudy.authTimes;
+
   return (
     <SafeAreaView style={styles.root}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -149,14 +198,14 @@ function StudyDetailScreen({ study: studyProp, onClose }: StudyDetailScreenProps
         <StudyOverviewCard
           tag={resolvedStudy.tag}
           title={resolvedStudy.title}
-          members={resolvedStudy.members}
-          description={resolvedStudy.description}
-          schedule={resolvedStudy.schedule}
-          methods={resolvedStudy.methods}
+          members={resolvedStudy.members ?? '0/0'}
+          description={resolvedStudy.description ?? ''}
+          schedule={resolvedStudy.schedule ?? ''}
+          methods={resolvedStudy.methods ?? []}
           image={overviewImage}
-          authTimes={resolvedStudy.authTimes}
-          authDays={resolvedStudy.authDays}
-          period={resolvedStudy.period}
+          authTimes={overviewAuthTimes}
+          authDays={overviewAuthDays}
+          period={overviewPeriod}
         />
         <StudyDetailTabs activeTab={activeTab} onChange={handleTabChange} />
         <View style={styles.section}>
@@ -166,7 +215,11 @@ function StudyDetailScreen({ study: studyProp, onClose }: StudyDetailScreenProps
               groupId={String(resolvedStudy.id)}
               currentUserId={currentUserId}
               verificationRules={studyDetailForOwner?.verificationRules ?? []}
-              methods={resolvedStudy.methods}
+              methods={resolvedStudy.methods ?? []}
+              onNavigateToDetailRules={() => {
+                setActiveTab('info');
+                setInfoSubView('rules');
+              }}
             />
           )}
           {activeTab === 'report' && (

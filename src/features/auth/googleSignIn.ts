@@ -62,6 +62,14 @@ export const signInWithGoogle = async (): Promise<GoogleSignInResult> => {
     await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
   }
 
+  // 이전에 로그인한 계정이 캐시되어 있으면 계정 선택 창 없이 자동 로그인됨.
+  // signOut()으로 캐시를 비워서 매번 계정 선택(다른 계정 선택)이 가능하도록 함.
+  try {
+    await GoogleSignin.signOut();
+  } catch {
+    // 이미 로그인된 계정이 없으면 무시
+  }
+
   const response = await GoogleSignin.signIn();
 
   if (isCancelledResponse(response)) {

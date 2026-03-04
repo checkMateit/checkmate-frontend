@@ -1,244 +1,393 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import {
+  ActivityIndicator,
   Alert,
   Image,
-  Modal,
+  Linking,
+  Platform,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from 'react-native';
+import { PermissionsAndroid } from 'react-native';
+import Geolocation from '@react-native-community/geolocation';
 import { colors } from '../../../styles/colors';
 import {
+  getGpsVerificationRecords,
   getGpsLocations,
-  addGpsLocation,
   submitGpsVerification,
   getVerificationDateToday,
-  type GpsLocationRes,
+  getGpsRecordSubmittedAt,
+  type GpsVerificationRecordRes,
 } from '../../../api/verification';
-import { getCurrentUserDisplayName } from '../../../api/client';
+import { getCurrentUserDisplayName, getCurrentUserId } from '../../../api/client';
+import { fetchStudyGroupMembers } from '../../../api/studyGroups';
+import type { StudyGroupMemberRes } from '../../../api/studyGroups';
+import {
+  isAfterTimeInKST,
+  getDayIndexFromDate,
+  BACKEND_DAY_CODES_BY_INDEX,
+} from '../../../utils/timeKST';
+import StatusFailIcon from '../../../components/common/StatusFailIcon';
 
 const profileImage = require('../../../assets/icon/profile_1.png');
 const checkIcon = require('../../../assets/icon/check_icon.png');
-const cancelIcon = require('../../../assets/icon/cancel_icon.png');
 const locationIcon = require('../../../assets/icon/gps_icon.png');
 
-/** 현재 위치 조회. 실제 앱에서는 @react-native-community/geolocation 등으로 대체 */
-function getCurrentPosition(): Promise<{ latitude: number; longitude: number }> {
-  return new Promise((resolve, reject) => {
-    const geo = (
-      globalThis as typeof globalThis & {
-        navigator?: {
-          geolocation?: {
-            getCurrentPosition: (
-              onOk: (p: { coords: { latitude: number; longitude: number } }) => void,
-              onErr: (e: unknown) => void,
-            ) => void;
-          };
-        };
-      }
-    ).navigator?.geolocation;
-    if (geo?.getCurrentPosition) {
-      geo.getCurrentPosition(
-        (p) => resolve({ latitude: p.coords.latitude, longitude: p.coords.longitude }),
-        reject,
-      );
-    } else {
-      reject(new Error('Geolocation not available'));
-    }
-  });
+function displayName(member: StudyGroupMemberRes): string {
+  if (member.nickname?.trim()) return member.nickname.trim();
+  if (member.role === 'Leader') return '방장';
+  const short = member.userId.replace(/-/g, '').slice(-8);
+  return short ? `…${short}` : '회원';
 }
+
+/** 표시용 이름: 이름만 표시, 없으면 '사용자 이름' */
+function formatDisplayNameLabel(name: string): string {
+  const n = (name ?? '').trim();
+  if (!n || n === '회원') return '사용자 이름';
+  return n;
+}
+
+type LocationSchedule = {
+  endTime?: string;
+  daysOfWeek?: string[];
+};
 
 type StudyStatusLocationProps = {
   groupId: string;
   slot: number;
+  currentUserId: string | null;
+  schedule?: LocationSchedule;
+  /** COMMON | PER_LOCATION. 개인위치일 때 내 위치 미등록 시 상세 규칙으로 이동 */
+  radiusMode?: string;
+  onNavigateToDetailRules?: () => void;
 };
 
-function StudyStatusLocation({ groupId, slot }: StudyStatusLocationProps) {
-  const [submitted, setSubmitted] = useState(false);
+function StudyStatusLocation({
+  groupId,
+  slot,
+  currentUserId,
+  schedule,
+  radiusMode,
+  onNavigateToDetailRules,
+}: StudyStatusLocationProps) {
   const [submitting, setSubmitting] = useState(false);
-  const [locations, setLocations] = useState<GpsLocationRes[]>([]);
-  const [locationsLoading, setLocationsLoading] = useState(true);
-  const [addModalVisible, setAddModalVisible] = useState(false);
-  const [addName, setAddName] = useState('');
-  const [addLat, setAddLat] = useState('');
-  const [addLng, setAddLng] = useState('');
-  const [addSubmitting, setAddSubmitting] = useState(false);
+  const [members, setMembers] = useState<StudyGroupMemberRes[]>([]);
+  const [records, setRecords] = useState<GpsVerificationRecordRes[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const refreshLocations = useCallback(() => {
-    setLocationsLoading(true);
-    getGpsLocations(groupId, slot)
-      .then((r) => setLocations(r.data?.data ?? []))
-      .catch(() => setLocations([]))
-      .finally(() => setLocationsLoading(false));
-  }, [groupId, slot]);
+  const date = getVerificationDateToday();
+  const rawEnd = schedule?.endTime?.trim();
+  const effectiveEnd =
+    !rawEnd || rawEnd === '00:00' || rawEnd === '0:00' ? '23:59' : rawEnd;
+  const deadlinePassed = isAfterTimeInKST(effectiveEnd);
+  const todayDayIndex = getDayIndexFromDate(date);
+  const todayDayCode = BACKEND_DAY_CODES_BY_INDEX[todayDayIndex];
+  const isVerificationDayToday =
+    (schedule?.daysOfWeek ?? []).includes(todayDayCode);
+
+  const refresh = useCallback(() => {
+    if (!groupId) return;
+    setLoading(true);
+    Promise.all([
+      fetchStudyGroupMembers(groupId),
+      getGpsVerificationRecords(groupId, slot, date).catch(() => ({
+        data: { data: [] as GpsVerificationRecordRes[] },
+      })),
+    ])
+      .then(([membersRes, recordsRes]) => {
+        setMembers(Array.isArray(membersRes.data?.data) ? membersRes.data.data : []);
+        const list =
+          (recordsRes as { data?: { data?: GpsVerificationRecordRes[] } }).data?.data ?? [];
+        setRecords(Array.isArray(list) ? list : []);
+      })
+      .catch(() => {
+        setMembers([]);
+        setRecords([]);
+      })
+      .finally(() => setLoading(false));
+  }, [groupId, slot, date]);
 
   useEffect(() => {
-    refreshLocations();
-  }, [refreshLocations]);
+    refresh();
+  }, [refresh]);
 
-  const handleVerify = () => {
+  const getCurrentPosition = (): Promise<{ latitude: number; longitude: number }> =>
+    new Promise((resolve, reject) => {
+      Geolocation.getCurrentPosition(
+        (position) =>
+          resolve({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+          }),
+        reject,
+        { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 },
+      );
+    });
+
+  /** Android: 런타임 위치 권한 요청. iOS는 Info.plist만 있으면 요청됨. */
+  const requestLocationPermission = async (): Promise<boolean> => {
+    if (Platform.OS !== 'android') return true;
+    try {
+      const granted = await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+        {
+          title: '위치 권한',
+          message:
+            '위치 인증을 위해 이 앱이 위치 정보에 접근할 수 있도록 허용해 주세요.',
+          buttonNeutral: '나중에',
+          buttonNegative: '거부',
+          buttonPositive: '허용',
+        },
+      );
+      return granted === PermissionsAndroid.RESULTS.GRANTED;
+    } catch {
+      return false;
+    }
+  };
+
+  const showLocationPermissionAlert = () => {
+    Alert.alert(
+      '위치 인증',
+      '위치 정보를 사용할 수 없습니다. 앱 설정에서 위치 권한을 허용해 주세요.',
+      [
+        { text: '취소', style: 'cancel' },
+        {
+          text: '설정 열기',
+          onPress: () => Linking.openSettings(),
+        },
+      ],
+    );
+  };
+
+  const isPerLocationMode =
+    (radiusMode ?? '').toUpperCase() === 'PER_LOCATION';
+
+  const showNavigateToDetailRulesAlert = () => {
+    Alert.alert(
+      '내 위치 등록 필요',
+      '개인위치 인증을 위해 먼저 상세 규칙에서 내 위치를 등록해 주세요.',
+      [
+        { text: '취소', style: 'cancel' },
+        {
+          text: '상세 규칙으로 이동',
+          onPress: () => onNavigateToDetailRules?.(),
+        },
+      ],
+    );
+  };
+
+  const handleVerify = async () => {
+    if (!isVerificationDayToday) {
+      Alert.alert('안내', '오늘은 인증 요일이 아닙니다.', [{ text: '확인' }]);
+      return;
+    }
+    if (deadlinePassed) {
+      Alert.alert('마감됨', '인증 시간이 지났습니다.', [{ text: '확인' }]);
+      return;
+    }
+    if (submitting) return;
+
+    if (isPerLocationMode && onNavigateToDetailRules) {
+      try {
+        const { data } = await getGpsLocations(groupId, slot);
+        const myLocations = data?.data ?? [];
+        if (myLocations.length === 0) {
+          showNavigateToDetailRulesAlert();
+          return;
+        }
+      } catch {
+        showNavigateToDetailRulesAlert();
+        return;
+      }
+    }
+
+    const hasPermission = await requestLocationPermission();
+    if (!hasPermission) {
+      showLocationPermissionAlert();
+      return;
+    }
+
     setSubmitting(true);
     getCurrentPosition()
-      .then(({ latitude, longitude }) => {
-        const date = getVerificationDateToday();
-        return submitGpsVerification(groupId, slot, { latitude, longitude }, date);
-      })
-      .then(() => setSubmitted(true))
+      .then(({ latitude, longitude }) =>
+        submitGpsVerification(groupId, slot, { latitude, longitude }, date),
+      )
+      .then(() => refresh())
       .catch((err) => {
-        if (err?.message === 'Geolocation not available') {
-          Alert.alert(
-            '위치 인증',
-            '현재 기기에서 위치 서비스를 사용할 수 없습니다. @react-native-community/geolocation 설치 후 연동해 주세요.',
-          );
+        const code = err?.code;
+        const serverMsg =
+          err?.response?.status === 400
+            ? (err?.response?.data?.message as string | undefined) ?? ''
+            : '';
+        const isNoLocationError =
+          typeof serverMsg === 'string' &&
+          (serverMsg.includes('등록된 내 위치가 없습니다') ||
+            serverMsg.includes('위치를 등록해 주세요'));
+        if (isNoLocationError && onNavigateToDetailRules) {
+          showNavigateToDetailRulesAlert();
           return;
         }
         const msg =
           err?.response?.status === 400
-            ? err?.response?.data?.message ?? '제출 시간이 지났거나 지정된 범위 밖이에요.'
+            ? serverMsg || '제출 시간이 지났거나 지정된 범위 밖이에요.'
             : '위치 인증 제출에 실패했어요.';
+        if (code === 1 || code === 2 || code === 3) {
+          showLocationPermissionAlert();
+          return;
+        }
         Alert.alert('인증 실패', msg);
       })
       .finally(() => setSubmitting(false));
   };
 
-  const handleAddLocation = () => {
-    const name = addName.trim();
-    const lat = parseFloat(addLat);
-    const lng = parseFloat(addLng);
-    if (!name || Number.isNaN(lat) || Number.isNaN(lng)) {
-      Alert.alert('이름, 위도, 경도를 입력해 주세요.');
-      return;
-    }
-    setAddSubmitting(true);
-    addGpsLocation(groupId, slot, { name, latitude: lat, longitude: lng })
-      .then(() => {
-        setAddModalVisible(false);
-        setAddName('');
-        setAddLat('');
-        setAddLng('');
-        refreshLocations();
-      })
-      .catch(() => Alert.alert('위치 등록에 실패했어요.'))
-      .finally(() => setAddSubmitting(false));
-  };
+  const myRecord = records.find((r) => r.userId === currentUserId);
+  const myMember = members.find((m) => m.userId === currentUserId);
+  const myDisplayName =
+    (myMember ? displayName(myMember) : null) ??
+    (myRecord?.nickname?.trim() || null) ??
+    getCurrentUserDisplayName();
+  const isDone = Boolean(myRecord);
+  const mySubmittedAt = myRecord ? getGpsRecordSubmittedAt(myRecord) : null;
+  const myTime =
+    mySubmittedAt != null
+      ? new Date(mySubmittedAt).toLocaleTimeString('ko-KR', {
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: true,
+        })
+      : '--:--';
 
-  const displayName = getCurrentUserDisplayName();
-  const isDone = submitted;
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.loadingWrap}>
+          <ActivityIndicator size="small" color={colors.primary} />
+          <Text style={styles.loadingText}>불러오는 중…</Text>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
-      <View style={styles.row}>
-        <Image source={profileImage} style={styles.avatar} />
-        <View style={styles.content}>
-          <View style={styles.nameRow}>
-            <Text style={styles.name}>{displayName} 님</Text>
-          </View>
-          <View style={styles.metaRow}>
-            <Text style={styles.time}>{isDone ? '제출 완료' : '--:--'}</Text>
-            <View style={styles.statusWrap}>
-              <Text style={[styles.statusText, !isDone && styles.statusFail]}>
-                {isDone ? '착석 완료' : '미인증'}
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        nestedScrollEnabled
+      >
+        {/* 나의 위치 인증 카드 */}
+        <View style={[styles.row, styles.myCard]}>
+          <Image source={profileImage} style={styles.avatar} />
+          <View style={styles.content}>
+            <View style={styles.nameRow}>
+              <Text style={styles.name}>
+                {formatDisplayNameLabel(myDisplayName)}
               </Text>
-              <Image
-                source={isDone ? checkIcon : cancelIcon}
-                style={styles.statusIcon}
-              />
+            </View>
+            <View style={styles.metaRow}>
+              <Text style={styles.time}>{myTime}</Text>
+              <View style={styles.statusWrap}>
+                <Text
+                  style={[
+                    styles.statusText,
+                    isDone ? styles.statusPass : styles.statusFail,
+                  ]}
+                >
+                  {isDone ? '완료' : '미인증'}
+                </Text>
+                {isDone ? (
+                  <Image source={checkIcon} style={styles.statusIcon} />
+                ) : (
+                  <StatusFailIcon size={14} />
+                )}
+              </View>
             </View>
           </View>
-        </View>
-        {!isDone && (
-          <Pressable
-            style={[styles.verifyButton, submitting && styles.verifyButtonDisabled]}
-            onPress={handleVerify}
-            disabled={submitting}
-          >
-            <Image source={locationIcon} style={styles.verifyIcon} />
-            <Text style={styles.verifyText}>
-              {submitting ? '제출 중…' : '내 위치 인증'}
-            </Text>
-          </Pressable>
-        )}
-      </View>
-
-      {!locationsLoading && locations.length > 0 && (
-        <View style={styles.locationsSection}>
-          <Text style={styles.locationsTitle}>내 위치</Text>
-          {locations.map((loc) => (
-            <Text key={loc.locationId} style={styles.locationItem}>
-              {loc.name} ({loc.latitude.toFixed(4)}, {loc.longitude.toFixed(4)})
-            </Text>
-          ))}
-        </View>
-      )}
-      <Pressable
-        style={styles.addLocationButton}
-        onPress={() => setAddModalVisible(true)}
-      >
-        <Text style={styles.addLocationText}>+ 위치 등록</Text>
-      </Pressable>
-
-      <Modal
-        visible={addModalVisible}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setAddModalVisible(false)}
-      >
-        <Pressable
-          style={styles.modalBackdrop}
-          onPress={() => !addSubmitting && setAddModalVisible(false)}
-        >
-          <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>위치 등록</Text>
-            <Text style={styles.modalLabel}>이름 (최대 50자)</Text>
-            <TextInput
-              style={styles.modalInput}
-              value={addName}
-              onChangeText={setAddName}
-              placeholder="예: 집, 도서관"
-              placeholderTextColor="#B0B0B0"
-              maxLength={50}
-            />
-            <Text style={styles.modalLabel}>위도</Text>
-            <TextInput
-              style={styles.modalInput}
-              value={addLat}
-              onChangeText={setAddLat}
-              placeholder="예: 37.5665"
-              placeholderTextColor="#B0B0B0"
-              keyboardType="decimal-pad"
-            />
-            <Text style={styles.modalLabel}>경도</Text>
-            <TextInput
-              style={styles.modalInput}
-              value={addLng}
-              onChangeText={setAddLng}
-              placeholder="예: 126.9780"
-              placeholderTextColor="#B0B0B0"
-              keyboardType="decimal-pad"
-            />
-            <View style={styles.modalActions}>
+          {!isDone && (
+            isVerificationDayToday && !deadlinePassed ? (
               <Pressable
-                style={styles.modalCancel}
-                onPress={() => !addSubmitting && setAddModalVisible(false)}
-                disabled={addSubmitting}
+                style={[styles.verifyButton, submitting && styles.verifyButtonDisabled]}
+                onPress={handleVerify}
+                disabled={submitting}
               >
-                <Text style={styles.modalCancelText}>취소</Text>
-              </Pressable>
-              <Pressable
-                style={[styles.modalSubmit, addSubmitting && styles.modalSubmitDisabled]}
-                onPress={handleAddLocation}
-                disabled={addSubmitting}
-              >
-                <Text style={styles.modalSubmitText}>
-                  {addSubmitting ? '등록 중…' : '등록'}
+                <Image source={locationIcon} style={styles.verifyIcon} />
+                <Text style={styles.verifyText}>
+                  {submitting ? '제출 중…' : '내 위치 인증'}
                 </Text>
               </Pressable>
-            </View>
-          </View>
-        </Pressable>
-      </Modal>
+            ) : (
+              <Pressable
+                onPress={() => {
+                  if (!isVerificationDayToday) {
+                    Alert.alert('안내', '오늘은 인증 요일이 아닙니다.', [
+                      { text: '확인' },
+                    ]);
+                  } else {
+                    Alert.alert('마감됨', '인증 시간이 지났습니다.', [
+                      { text: '확인' },
+                    ]);
+                  }
+                }}
+              >
+                <Text style={styles.deadlineText}>
+                  {!isVerificationDayToday
+                    ? '인증 요일 아님'
+                    : '마감됨'}
+                </Text>
+              </Pressable>
+            )
+          )}
+        </View>
+
+        {/* 그룹원 위치 인증 현황 */}
+        {members
+          .filter((m) => m.userId !== currentUserId)
+          .map((member) => {
+            const record = records.find((r) => r.userId === member.userId);
+            const done = Boolean(record);
+            const otherSubmittedAt = record
+              ? getGpsRecordSubmittedAt(record)
+              : null;
+            const time = otherSubmittedAt
+              ? new Date(otherSubmittedAt).toLocaleTimeString('ko-KR', {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  hour12: true,
+                })
+              : '--:--';
+            return (
+              <View key={member.userId} style={styles.row}>
+                <Image source={profileImage} style={styles.avatar} />
+                <View style={styles.content}>
+                  <Text style={styles.name}>
+                    {formatDisplayNameLabel(displayName(member))}
+                  </Text>
+                  <View style={styles.metaRow}>
+                    <Text style={styles.time}>{time}</Text>
+                    <View style={styles.statusWrap}>
+                      <Text
+                        style={[
+                          styles.statusText,
+                          done ? styles.statusPass : styles.statusFail,
+                        ]}
+                      >
+                        {done ? '완료' : '미인증'}
+                      </Text>
+                      {done ? (
+                        <Image source={checkIcon} style={styles.statusIcon} />
+                      ) : (
+                        <StatusFailIcon size={14} />
+                      )}
+                    </View>
+                  </View>
+                </View>
+              </View>
+            );
+          })}
+      </ScrollView>
     </View>
   );
 }
@@ -246,13 +395,30 @@ function StudyStatusLocation({ groupId, slot }: StudyStatusLocationProps) {
 const styles = StyleSheet.create({
   container: {
     paddingHorizontal: 25,
-    paddingTop: 8,
     paddingBottom: 30,
+    marginTop: 8,
+  },
+  loadingWrap: {
+    paddingVertical: 24,
+    alignItems: 'center',
+    gap: 8,
+  },
+  loadingText: {
+    fontSize: 12,
+    color: '#666',
   },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 18,
+  },
+  myCard: {
+    backgroundColor: colors.secondary,
+    marginHorizontal: -25,
+    paddingHorizontal: 25,
+    paddingVertical: 12,
+    borderRadius: 16,
+    marginBottom: 16,
   },
   avatar: {
     width: 40,
@@ -262,7 +428,7 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    gap: 6,
+    gap: 4,
   },
   nameRow: {
     flexDirection: 'row',
@@ -270,9 +436,9 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   name: {
-    fontSize: 10,
-    color: '#6E6E6E',
-    fontWeight: '400',
+    fontSize: 14,
+    color: colors.textPrimary,
+    fontWeight: '600',
   },
   metaRow: {
     flexDirection: 'row',
@@ -292,15 +458,22 @@ const styles = StyleSheet.create({
   },
   statusText: {
     fontSize: 12,
-    color: '#7D7D7D',
     fontWeight: '600',
+  },
+  statusPass: {
+    color: '#7D7D7D',
+  },
+  statusFail: {
+    color: '#E57373',
   },
   statusIcon: {
     width: 14,
     height: 14,
   },
-  statusFail: {
-    color: '#7D7D7D',
+  deadlineText: {
+    fontSize: 12,
+    color: '#999',
+    fontWeight: '600',
   },
   verifyButton: {
     flexDirection: 'row',
@@ -325,90 +498,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#6F6F6F',
     fontWeight: '600',
-  },
-  locationsSection: {
-    marginBottom: 12,
-  },
-  locationsTitle: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: colors.textPrimary,
-    marginBottom: 6,
-  },
-  locationItem: {
-    fontSize: 11,
-    color: '#666',
-    marginBottom: 2,
-  },
-  addLocationButton: {
-    alignSelf: 'flex-start',
-    paddingVertical: 6,
-  },
-  addLocationText: {
-    fontSize: 12,
-    color: colors.primary,
-    fontWeight: '600',
-  },
-  modalBackdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 24,
-  },
-  modalCard: {
-    width: '100%',
-    maxWidth: 340,
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 20,
-  },
-  modalTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    marginBottom: 12,
-  },
-  modalLabel: {
-    fontSize: 12,
-    color: '#666',
-    marginBottom: 4,
-  },
-  modalInput: {
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 14,
-    marginBottom: 12,
-  },
-  modalActions: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    gap: 12,
-    marginTop: 8,
-  },
-  modalCancel: {
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-  },
-  modalCancelText: {
-    fontSize: 14,
-    color: '#666',
-  },
-  modalSubmit: {
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    backgroundColor: colors.primary,
-    borderRadius: 8,
-  },
-  modalSubmitDisabled: {
-    opacity: 0.6,
-  },
-  modalSubmitText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#fff',
   },
 });
 

@@ -22,6 +22,8 @@ type AuthTimeControlsProps = {
   onLocationTypeChange: (key: ConfigKey, type: '개인 위치' | '공통 위치') => void;
   onLocationNameChange: (key: ConfigKey, name: string) => void;
   onLocationCoordsChange: (key: ConfigKey, latitude: number, longitude: number) => void;
+  onGithubRepoUrlChange?: (key: ConfigKey, value: string) => void;
+  onGithubBranchChange?: (key: ConfigKey, value: string) => void;
 };
 
 function AuthTimeControls({
@@ -32,6 +34,8 @@ function AuthTimeControls({
   onLocationTypeChange,
   onLocationNameChange,
   onLocationCoordsChange,
+  onGithubRepoUrlChange,
+  onGithubBranchChange,
 }: AuthTimeControlsProps) {
   const mapRef = useRef<MapView>(null);
   const defaultCenter = {
@@ -189,6 +193,44 @@ function AuthTimeControls({
     );
   }
 
+  if (config.method === 'GitHub') {
+    return (
+      <View style={styles.githubWrap}>
+        <View style={styles.locationInputWrap}>
+          <Text style={styles.githubLabel}>저장소 URL</Text>
+          <TextInput
+            value={config.githubRepoUrl}
+            onChangeText={(text) => onGithubRepoUrlChange?.(configKey, text)}
+            placeholder="https://github.com/owner/repo 또는 owner/repo"
+            placeholderTextColor="#B0B0B0"
+            style={styles.locationInput}
+          />
+        </View>
+        <View style={[styles.locationInputWrap, { marginTop: 8 }]}>
+          <Text style={styles.githubLabel}>브랜치</Text>
+          <TextInput
+            value={config.githubBranch}
+            onChangeText={(text) => onGithubBranchChange?.(configKey, text)}
+            placeholder="main"
+            placeholderTextColor="#B0B0B0"
+            style={styles.locationInput}
+          />
+        </View>
+        <View style={styles.timeRow}>
+          <View style={styles.timeGroup}>
+            <Text style={styles.timeLabel}>인증 마감 시간</Text>
+            <Pressable
+              style={styles.timeChip}
+              onPress={() => onOpenTimePicker('rangeEnd', configKey)}
+            >
+              <Text style={styles.timeText}>{formatTime(config.rangeEnd)}</Text>
+            </Pressable>
+          </View>
+        </View>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.timeRow}>
       <View style={styles.timeGroup}>
@@ -284,6 +326,16 @@ const styles = StyleSheet.create({
   mapHint: {
     fontSize: 11,
     color: '#9B9B9B',
+    marginBottom: 4,
+  },
+  githubWrap: {
+    marginTop: 6,
+    gap: 0,
+  },
+  githubLabel: {
+    fontSize: 11,
+    color: '#9B9B9B',
+    fontWeight: '700',
     marginBottom: 4,
   },
   map: {

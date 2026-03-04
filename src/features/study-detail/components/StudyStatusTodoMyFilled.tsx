@@ -2,9 +2,11 @@ import React from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { colors } from '../../../styles/colors';
 import type { ChecklistItemRes } from '../../../api/verification';
+import StatusFailIcon from '../../../components/common/StatusFailIcon';
 
 const vectorIcon = require('../../../assets/icon/vector_icon.png');
 const mascotImage = require('../../../assets/character/ch_2.png');
+const checkIcon = require('../../../assets/icon/check_icon.png');
 
 type StudyStatusTodoMyFilledProps = {
   items: ChecklistItemRes[];
@@ -26,9 +28,16 @@ function StudyStatusTodoMyFilled({
       <View style={styles.titleRow}>
         <Text style={styles.title}>나의 TODO</Text>
         {result != null && (
-          <Text style={result.passed ? styles.resultPass : styles.resultFail}>
-            {result.passed ? '인증 완료' : '인증 미완료'}
-          </Text>
+          <View style={styles.resultWrap}>
+            <Text style={result.passed ? styles.resultPass : styles.resultFail}>
+              {result.passed ? '인증 완료' : '인증 미완료'}
+            </Text>
+            {result.passed ? (
+              <Image source={checkIcon} style={styles.resultIcon} />
+            ) : (
+              <StatusFailIcon size={11} />
+            )}
+          </View>
         )}
       </View>
       <View style={styles.contentRow}>
@@ -79,6 +88,15 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '800',
     color: colors.textPrimary,
+  },
+  resultWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  resultIcon: {
+    width: 11,
+    height: 11,
   },
   resultPass: {
     fontSize: 11,

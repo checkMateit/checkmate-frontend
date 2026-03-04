@@ -1,6 +1,9 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Image, StyleSheet, Text, View } from 'react-native';
 import { colors } from '../../../styles/colors';
+import StatusFailIcon from '../../../components/common/StatusFailIcon';
+
+const checkIcon = require('../../../assets/icon/check_icon.png');
 import { fetchStudyGroupMembers } from '../../../api/studyGroups';
 import { fetchVerificationRecords } from '../../../api/studyGroups';
 import type { StudyGroupMemberRes } from '../../../api/studyGroups';
@@ -101,9 +104,15 @@ function StudyStatusTodoOthers({
             {member.passed === null ? (
               <Text style={styles.statusWait}>체크 마감 전</Text>
             ) : member.passed ? (
-              <Text style={styles.statusPass}>인증 완료</Text>
+              <>
+                <Text style={styles.statusPass}>인증 완료</Text>
+                <Image source={checkIcon} style={styles.statusIcon} />
+              </>
             ) : (
-              <Text style={styles.statusFail}>미인증</Text>
+              <>
+                <Text style={styles.statusFail}>미인증</Text>
+                <StatusFailIcon size={11} />
+              </>
             )}
           </View>
         </View>
@@ -149,6 +158,13 @@ const styles = StyleSheet.create({
   },
   statusWrap: {
     marginTop: 4,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  statusIcon: {
+    width: 11,
+    height: 11,
   },
   statusPass: {
     fontSize: 11,
@@ -158,7 +174,7 @@ const styles = StyleSheet.create({
   statusFail: {
     fontSize: 11,
     fontWeight: '600',
-    color: '#E53935',
+    color: '#E57373',
   },
   statusWait: {
     fontSize: 11,

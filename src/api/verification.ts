@@ -39,10 +39,19 @@ export type PhotoVerificationRecordRes = {
   nickname: string | null;
   verificationDate: string;
   submittedAt: string | null;
+  /** 서버가 snake_case로 내려줄 수 있음 */
+  submitted_at?: string | null;
   filePaths: string[];
   /** 사진별 제목(상황). 없으면 filePaths에서 파일명(확장자 제외)으로 표시 */
   titles?: string[];
 };
+
+/** 기록에서 제출 시각 추출 (submittedAt / submitted_at 모두 처리) */
+export function getRecordSubmittedAt(record: PhotoVerificationRecordRes): string | null {
+  if (!record) return null;
+  const at = (record as { submitted_at?: string | null }).submitted_at ?? record.submittedAt;
+  return at ?? null;
+}
 
 /** GET .../photo/records — 해당 날짜 멤버별 사진 인증 목록 (현황 탭용) */
 export const getPhotoVerificationRecords = (
@@ -212,6 +221,33 @@ export const submitGpsVerification = (
     {
       params: verificationDate ? { verificationDate } : undefined,
     },
+  );
+
+/** 위치 인증 현황 탭용 — 해당 날짜·슬롯 멤버별 기록 (submittedAt 포함) */
+export type GpsVerificationRecordRes = {
+  userId: string;
+  nickname: string | null;
+  verificationDate: string;
+  submittedAt: string | null;
+  submitted_at?: string | null;
+};
+
+/** 위치 인증 기록에서 제출 시각 추출 (submittedAt / submitted_at) */
+export function getGpsRecordSubmittedAt(record: GpsVerificationRecordRes): string | null {
+  if (!record) return null;
+  const at = (record as { submitted_at?: string | null }).submitted_at ?? record.submittedAt;
+  return at ?? null;
+}
+
+/** GET .../gps/records — 해당 날짜 위치 인증 기록 목록 */
+export const getGpsVerificationRecords = (
+  groupId: string | number,
+  slot: number,
+  verificationDate?: string,
+) =>
+  apiClient.get<ApiResponse<GpsVerificationRecordRes[]>>(
+    `${verificationPath(groupId, slot)}/gps/records`,
+    { params: verificationDate ? { verificationDate } : undefined },
   );
 
 /** GET .../gps/locations */

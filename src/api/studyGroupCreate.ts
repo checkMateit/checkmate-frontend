@@ -121,7 +121,10 @@ function configToVerificationRule(
     };
   }
   if (config.method === 'GitHub') {
-    method.github = { repoUrl: '', branch: 'main' };
+    method.github = {
+      repoUrl: (config.githubRepoUrl ?? '').trim() || 'owner/repo',
+      branch: (config.githubBranch ?? '').trim() || 'main',
+    };
   }
 
   return {

@@ -5,6 +5,7 @@ import StudyStatusTabs from './StudyStatusTabs';
 import StudyStatusSummary from './StudyStatusSummary';
 import StudyStatusTodo from './StudyStatusTodo';
 import StudyStatusPhoto from './StudyStatusPhoto';
+import StudyStatusLocation from './StudyStatusLocation';
 import StudyStatusGithub from './StudyStatusGithub';
 
 export type VerificationRule = {
@@ -15,6 +16,7 @@ export type VerificationRule = {
   daysOfWeek?: string[];
   timezone?: string;
   frequency?: { unit: string; requiredCnt: number };
+  methodDetails?: { gps?: { radius_mode?: string } };
 };
 
 type StudyStatusSectionProps = {
@@ -23,6 +25,8 @@ type StudyStatusSectionProps = {
   currentUserId: string | null;
   verificationRules: VerificationRule[];
   methods: string[];
+  /** 개인위치 모드에서 내 위치 미등록 시 상세 규칙으로 이동할 때 호출 */
+  onNavigateToDetailRules?: () => void;
 };
 
 function getSlotForMethod(
@@ -39,13 +43,17 @@ const getAvailableTabs = (methods: string[]) => {
   const hasPhoto = normalized.some(
     (method) => method.includes('사진') || method.includes('photo'),
   );
+  const hasLocation = normalized.some(
+    (method) => method.includes('위치') || method.includes('gps'),
+  );
   const hasGithub = normalized.some((method) => method.includes('github'));
   return [
     'summary',
     ...(hasTodo ? ['todo'] : []),
     ...(hasPhoto ? ['photo'] : []),
+    ...(hasLocation ? ['location'] : []),
     ...(hasGithub ? ['github'] : []),
-  ] as Array<'summary' | 'todo' | 'photo' | 'github'>;
+  ] as Array<'summary' | 'todo' | 'photo' | 'location' | 'github'>;
 };
 
 function StudyStatusSection({
@@ -54,13 +62,16 @@ function StudyStatusSection({
   currentUserId,
   verificationRules,
   methods,
+  onNavigateToDetailRules,
 }: StudyStatusSectionProps) {
   const [activeTab, setActiveTab] = useState<
-    'summary' | 'todo' | 'photo' | 'github'
+    'summary' | 'todo' | 'photo' | 'location' | 'github'
   >('summary');
   const availableTabs = useMemo(() => getAvailableTabs(methods), [methods]);
   const slotChecklist = getSlotForMethod(verificationRules, 'CHECKLIST');
   const slotPhoto = getSlotForMethod(verificationRules, 'PHOTO');
+  const slotGps = getSlotForMethod(verificationRules, 'GPS');
+  const slotGithub = getSlotForMethod(verificationRules, 'GITHUB');
 
   useEffect(() => {
     setActiveTab(availableTabs[0] ?? 'summary');
@@ -104,8 +115,9 @@ function StudyStatusSection({
             <Text style={styles.placeholderText}>체크리스트 인증 규칙을 불러오는 중이에요.</Text>
           </View>
         ))}
-      {activeTab === 'photo' &&
-        (slotPhoto != null ? (
+      {/* 사진탭: 탭 전환 시에도 마운트 유지해 완료/썸네일 상태 유지 */}
+      <View style={[styles.tabPanel, activeTab !== 'photo' && styles.tabPanelHidden]}>
+        {slotPhoto != null ? (
           <StudyStatusPhoto
             groupId={groupId}
             slot={slotPhoto}
@@ -118,12 +130,60 @@ function StudyStatusSection({
                 : undefined
             }
           />
-        ) : (
+        ) : activeTab === 'photo' ? (
           <View style={styles.placeholder}>
             <Text style={styles.placeholderText}>사진 인증 규칙을 불러오는 중이에요.</Text>
           </View>
+        ) : null}
+      </View>
+      {activeTab === 'location' &&
+        (slotGps != null ? (
+          <StudyStatusLocation
+            groupId={groupId}
+            slot={slotGps}
+            currentUserId={currentUserId}
+            schedule={
+              verificationRules.find((r) => r.slot === slotGps)
+                ? {
+                    endTime:
+                      verificationRules.find((r) => r.slot === slotGps)?.endTime ?? '23:59',
+                    daysOfWeek:
+                      verificationRules.find((r) => r.slot === slotGps)?.daysOfWeek ?? [],
+                  }
+                : undefined
+            }
+            radiusMode={
+              verificationRules.find((r) => r.slot === slotGps)?.methodDetails?.gps?.radius_mode
+            }
+            onNavigateToDetailRules={onNavigateToDetailRules}
+          />
+        ) : (
+          <View style={styles.placeholder}>
+            <Text style={styles.placeholderText}>위치 인증 규칙을 불러오는 중이에요.</Text>
+          </View>
         ))}
-      {activeTab === 'github' && <StudyStatusGithub />}
+      {activeTab === 'github' &&
+        (slotGithub != null ? (
+          <StudyStatusGithub
+            groupId={groupId}
+            slot={slotGithub}
+            schedule={
+              verificationRules.find((r) => r.slot === slotGithub)
+                ? {
+                    endTime:
+                      verificationRules.find((r) => r.slot === slotGithub)
+                        ?.endTime ?? '23:59',
+                  }
+                : undefined
+            }
+          />
+        ) : (
+          <View style={styles.placeholder}>
+            <Text style={styles.placeholderText}>
+              GitHub 인증 규칙을 불러오는 중이에요.
+            </Text>
+          </View>
+        ))}
     </View>
   );
 }
@@ -149,6 +209,12 @@ const styles = StyleSheet.create({
   placeholderText: {
     fontSize: 13,
     color: '#666',
+  },
+  tabPanel: {
+    flex: 1,
+  },
+  tabPanelHidden: {
+    display: 'none',
   },
 });
 
