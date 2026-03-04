@@ -104,8 +104,9 @@ function StudyStatusSection({
             <Text style={styles.placeholderText}>체크리스트 인증 규칙을 불러오는 중이에요.</Text>
           </View>
         ))}
-      {activeTab === 'photo' &&
-        (slotPhoto != null ? (
+      {/* 사진탭: 탭 전환 시에도 마운트 유지해 완료/썸네일 상태 유지 */}
+      <View style={[styles.tabPanel, activeTab !== 'photo' && styles.tabPanelHidden]}>
+        {slotPhoto != null ? (
           <StudyStatusPhoto
             groupId={groupId}
             slot={slotPhoto}
@@ -118,11 +119,12 @@ function StudyStatusSection({
                 : undefined
             }
           />
-        ) : (
+        ) : activeTab === 'photo' ? (
           <View style={styles.placeholder}>
             <Text style={styles.placeholderText}>사진 인증 규칙을 불러오는 중이에요.</Text>
           </View>
-        ))}
+        ) : null}
+      </View>
       {activeTab === 'github' && <StudyStatusGithub />}
     </View>
   );
@@ -149,6 +151,12 @@ const styles = StyleSheet.create({
   placeholderText: {
     fontSize: 13,
     color: '#666',
+  },
+  tabPanel: {
+    flex: 1,
+  },
+  tabPanelHidden: {
+    display: 'none',
   },
 });
 

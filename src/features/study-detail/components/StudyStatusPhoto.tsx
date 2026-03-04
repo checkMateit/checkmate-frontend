@@ -19,6 +19,7 @@ import {
   getPhotoVerificationRecords,
   situationFromFilePath,
   getVerificationPhotoUrl,
+  getRecordSubmittedAt,
   type PhotoVerificationRecordRes,
 } from '../../../api/verification';
 import { getCurrentUserDisplayName, getCurrentUserId } from '../../../api/client';
@@ -39,10 +40,20 @@ function displayName(member: StudyGroupMemberRes): string {
   return short ? `…${short}` : '회원';
 }
 
-/** 기록에서 상황 목록 추출 (업로드한 사진 제목 = 상황) */
+/** 기록에서 상황 목록 추출 (업로드한 사진 제목 = 상황). 파일명이 UUID면 비어 있음. */
 function getSituations(record: PhotoVerificationRecordRes): string[] {
-  if (record.titles?.length) return record.titles;
-  return (record.filePaths ?? []).map(situationFromFilePath);
+  const raw = record.titles?.length
+    ? record.titles
+    : (record.filePaths ?? []).map(situationFromFilePath);
+  return raw.filter((s) => !isUuidLikeSituation(s));
+}
+
+/** 저장용 UUID 파일명 등 의미 없는 '상황'이면 true (표시 생략) */
+function isUuidLikeSituation(s: string): boolean {
+  const t = (s ?? '').trim();
+  if (!t) return true;
+  if (t.length < 10) return false;
+  return /^[0-9a-f-]{10,}$/i.test(t) || /^[0-9a-f]{10,}$/i.test(t);
 }
 
 type PhotoSchedule = { endTime?: string };
@@ -66,7 +77,6 @@ function StudyStatusPhoto({ groupId, slot, schedule }: StudyStatusPhotoProps) {
 
   const date = getVerificationDateToday();
   const currentUserId = getCurrentUserId();
-  const myDisplayName = getCurrentUserDisplayName();
   // endTime이 없거나 "00:00"이면 당일 마감 없는 것으로 보고, 23:59로 두어 인증 버튼 활성화 유지
   const rawEnd = schedule?.endTime?.trim();
   const effectiveEnd =
@@ -175,10 +185,17 @@ function StudyStatusPhoto({ groupId, slot, schedule }: StudyStatusPhotoProps) {
   };
 
   const myRecord = records.find((r) => r.userId === currentUserId);
+  /** 멤버 목록/인증 기록의 닉네임 사용 (getCurrentUserDisplayName은 미설정 시 '회원') */
+  const myMember = members.find((m) => m.userId === currentUserId);
+  const myDisplayName =
+    (myMember ? displayName(myMember) : null) ??
+    (myRecord?.nickname?.trim() || null) ??
+    getCurrentUserDisplayName();
   const isDone = submitted || Boolean(myRecord);
+  const mySubmittedAt = myRecord ? getRecordSubmittedAt(myRecord) : null;
   const myTime =
-    myRecord?.submittedAt != null
-      ? new Date(myRecord.submittedAt).toLocaleTimeString('ko-KR', {
+    mySubmittedAt != null
+      ? new Date(mySubmittedAt).toLocaleTimeString('ko-KR', {
           hour: '2-digit',
           minute: '2-digit',
           hour12: true,
@@ -213,7 +230,7 @@ function StudyStatusPhoto({ groupId, slot, schedule }: StudyStatusPhotoProps) {
           <Image source={profileImage} style={styles.avatar} />
           <View style={styles.content}>
             <View style={styles.nameRow}>
-              <Text style={styles.name}>{myDisplayName} (나)님</Text>
+              <Text style={styles.name}>{myDisplayName} 님</Text>
             </View>
             <View style={styles.metaRow}>
               <Text style={styles.time}>{myTime}</Text>
@@ -289,14 +306,18 @@ function StudyStatusPhoto({ groupId, slot, schedule }: StudyStatusPhotoProps) {
           .map((member) => {
             const record = records.find((r) => r.userId === member.userId);
             const done = Boolean(record);
-            const time = record?.submittedAt
-              ? new Date(record.submittedAt).toLocaleTimeString('ko-KR', {
+            const otherSubmittedAt = record ? getRecordSubmittedAt(record) : null;
+            const time = otherSubmittedAt
+              ? new Date(otherSubmittedAt).toLocaleTimeString('ko-KR', {
                   hour: '2-digit',
                   minute: '2-digit',
                   hour12: true,
                 })
               : '--:--';
             const situations = record ? getSituations(record) : [];
+            const otherThumbnailUri = record?.filePaths?.[0]
+              ? getVerificationPhotoUrl(record.filePaths[0])
+              : null;
             return (
               <View key={member.userId} style={styles.row}>
                 <Image source={profileImage} style={styles.avatar} />
@@ -320,6 +341,37 @@ function StudyStatusPhoto({ groupId, slot, schedule }: StudyStatusPhotoProps) {
                     </Text>
                   )}
                 </View>
+                {done ? (
+                  <Pressable
+                    onPress={() => {
+                      if (otherThumbnailUri) {
+                        setPreviewUri(otherThumbnailUri);
+                        openPreview();
+                      }
+                    }}
+                    style={styles.thumbnailWrap}
+                  >
+                    {otherThumbnailUri ? (
+                      <Image
+                        source={{ uri: otherThumbnailUri }}
+                        style={styles.thumbnail}
+                        resizeMode="cover"
+                      />
+                    ) : (
+                      <View style={styles.photoBox}>
+                        <Text style={styles.photoText}>사진</Text>
+                        <Image source={vectorIcon} style={styles.photoIcon} />
+                      </View>
+                    )}
+                  </Pressable>
+                ) : (
+                  <View style={styles.thumbnailWrap}>
+                    <View style={styles.photoBox}>
+                      <Text style={styles.photoText}>사진</Text>
+                      <Image source={vectorIcon} style={styles.photoIcon} />
+                    </View>
+                  </View>
+                )}
               </View>
             );
           })}
