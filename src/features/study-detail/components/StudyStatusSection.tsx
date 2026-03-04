@@ -5,6 +5,7 @@ import StudyStatusTabs from './StudyStatusTabs';
 import StudyStatusSummary from './StudyStatusSummary';
 import StudyStatusTodo from './StudyStatusTodo';
 import StudyStatusPhoto from './StudyStatusPhoto';
+import StudyStatusLocation from './StudyStatusLocation';
 import StudyStatusGithub from './StudyStatusGithub';
 
 export type VerificationRule = {
@@ -39,13 +40,17 @@ const getAvailableTabs = (methods: string[]) => {
   const hasPhoto = normalized.some(
     (method) => method.includes('사진') || method.includes('photo'),
   );
+  const hasLocation = normalized.some(
+    (method) => method.includes('위치') || method.includes('gps'),
+  );
   const hasGithub = normalized.some((method) => method.includes('github'));
   return [
     'summary',
     ...(hasTodo ? ['todo'] : []),
     ...(hasPhoto ? ['photo'] : []),
+    ...(hasLocation ? ['location'] : []),
     ...(hasGithub ? ['github'] : []),
-  ] as Array<'summary' | 'todo' | 'photo' | 'github'>;
+  ] as Array<'summary' | 'todo' | 'photo' | 'location' | 'github'>;
 };
 
 function StudyStatusSection({
@@ -56,11 +61,12 @@ function StudyStatusSection({
   methods,
 }: StudyStatusSectionProps) {
   const [activeTab, setActiveTab] = useState<
-    'summary' | 'todo' | 'photo' | 'github'
+    'summary' | 'todo' | 'photo' | 'location' | 'github'
   >('summary');
   const availableTabs = useMemo(() => getAvailableTabs(methods), [methods]);
   const slotChecklist = getSlotForMethod(verificationRules, 'CHECKLIST');
   const slotPhoto = getSlotForMethod(verificationRules, 'PHOTO');
+  const slotGps = getSlotForMethod(verificationRules, 'GPS');
 
   useEffect(() => {
     setActiveTab(availableTabs[0] ?? 'summary');
@@ -125,6 +131,28 @@ function StudyStatusSection({
           </View>
         ) : null}
       </View>
+      {activeTab === 'location' &&
+        (slotGps != null ? (
+          <StudyStatusLocation
+            groupId={groupId}
+            slot={slotGps}
+            currentUserId={currentUserId}
+            schedule={
+              verificationRules.find((r) => r.slot === slotGps)
+                ? {
+                    endTime:
+                      verificationRules.find((r) => r.slot === slotGps)?.endTime ?? '23:59',
+                    daysOfWeek:
+                      verificationRules.find((r) => r.slot === slotGps)?.daysOfWeek ?? [],
+                  }
+                : undefined
+            }
+          />
+        ) : (
+          <View style={styles.placeholder}>
+            <Text style={styles.placeholderText}>위치 인증 규칙을 불러오는 중이에요.</Text>
+          </View>
+        ))}
       {activeTab === 'github' && <StudyStatusGithub />}
     </View>
   );

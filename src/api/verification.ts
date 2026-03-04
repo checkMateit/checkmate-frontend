@@ -223,6 +223,33 @@ export const submitGpsVerification = (
     },
   );
 
+/** 위치 인증 현황 탭용 — 해당 날짜·슬롯 멤버별 기록 (submittedAt 포함) */
+export type GpsVerificationRecordRes = {
+  userId: string;
+  nickname: string | null;
+  verificationDate: string;
+  submittedAt: string | null;
+  submitted_at?: string | null;
+};
+
+/** 위치 인증 기록에서 제출 시각 추출 (submittedAt / submitted_at) */
+export function getGpsRecordSubmittedAt(record: GpsVerificationRecordRes): string | null {
+  if (!record) return null;
+  const at = (record as { submitted_at?: string | null }).submitted_at ?? record.submittedAt;
+  return at ?? null;
+}
+
+/** GET .../gps/records — 해당 날짜 위치 인증 기록 목록 */
+export const getGpsVerificationRecords = (
+  groupId: string | number,
+  slot: number,
+  verificationDate?: string,
+) =>
+  apiClient.get<ApiResponse<GpsVerificationRecordRes[]>>(
+    `${verificationPath(groupId, slot)}/gps/records`,
+    { params: verificationDate ? { verificationDate } : undefined },
+  );
+
 /** GET .../gps/locations */
 export const getGpsLocations = (groupId: string | number, slot: number) =>
   apiClient.get<ApiResponse<GpsLocationRes[]>>(
