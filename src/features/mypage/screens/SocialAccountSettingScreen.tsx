@@ -98,6 +98,7 @@ function SocialAccountSettingScreen({ onClose }: SocialAccountSettingScreenProps
         await Linking.openURL(url);
       } else {
         Alert.alert('오류', '인증 페이지를 열 수 없습니다.');
+        
       }
     } catch (error) {
       console.error('Linking Error:', error);

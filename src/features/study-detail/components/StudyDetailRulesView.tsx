@@ -13,7 +13,6 @@ import {
   View,
 } from 'react-native';
 import { type DateTimePickerEvent } from '@react-native-community/datetimepicker';
-import MapView, { Marker } from 'react-native-maps';
 import { colors } from '../../../styles/colors';
 import {
   fetchStudyGroupMembers,
@@ -39,6 +38,15 @@ import {
 import AuthTimeControls from '../../my-study/components/AuthTimeControls';
 import WeekdayPicker from '../../my-study/components/WeekdayPicker';
 import TimePickerModal from '../../my-study/components/TimePickerModal';
+
+type MapsModule = typeof import('react-native-maps');
+const getMapsModule = (): MapsModule | null => {
+  try {
+    return require('react-native-maps') as MapsModule;
+  } catch {
+    return null;
+  }
+};
 
 const backIcon = require('../../../assets/icon/left_arrow.png');
 const editIcon = require('../../../assets/icon/modify_icon.png');
@@ -121,7 +129,10 @@ function displayName(member: StudyGroupMemberRes): string {
 type LocationPoint = { name?: string; latitude?: number; longitude?: number };
 
 function VerificationLocationMap({ locations }: { locations: LocationPoint[] }) {
-  const mapRef = useRef<MapView>(null);
+  const mapRef = useRef<any>(null);
+  const mapsModule = getMapsModule();
+  const MapComponent = mapsModule?.default;
+  const MarkerComponent = mapsModule?.Marker;
   const points = locations.filter(
     (loc): loc is LocationPoint & { latitude: number; longitude: number } =>
       typeof loc.latitude === 'number' &&
@@ -130,6 +141,15 @@ function VerificationLocationMap({ locations }: { locations: LocationPoint[] }) 
       Number.isFinite(loc.longitude),
   );
   if (points.length === 0) return null;
+  if (!MapComponent || !MarkerComponent) {
+    return (
+      <View style={styles.mapWrap}>
+        <View style={styles.mapUnavailable}>
+          <Text style={styles.mapUnavailableText}>지도를 불러오지 못했어요.</Text>
+        </View>
+      </View>
+    );
+  }
 
   const lats = points.map((p) => p.latitude);
   const lngs = points.map((p) => p.longitude);
@@ -144,46 +164,57 @@ function VerificationLocationMap({ locations }: { locations: LocationPoint[] }) 
     latitudeDelta: Math.max(maxLat - minLat + padding * 2, 0.005),
     longitudeDelta: Math.max(maxLng - minLng + padding * 2, 0.005),
   };
+  const regionRef = useRef(region);
 
   const handleZoomIn = () => {
-    mapRef.current?.getCamera().then((camera: { zoom?: number; center?: { latitude: number; longitude: number } }) => {
-      const nextZoom = Math.min((camera.zoom ?? 15) + 1, 21);
-      mapRef.current?.animateCamera({
-        center: camera.center ?? { latitude: region.latitude, longitude: region.longitude },
-        zoom: nextZoom,
-      });
-    }).catch(() => {});
+    const current = regionRef.current;
+    const next = {
+      ...current,
+      latitudeDelta: Math.max(current.latitudeDelta * 0.5, 0.0005),
+      longitudeDelta: Math.max(current.longitudeDelta * 0.5, 0.0005),
+    };
+    regionRef.current = next;
+    mapRef.current?.animateToRegion?.(next, 150);
   };
 
   const handleZoomOut = () => {
-    mapRef.current?.getCamera().then((camera: { zoom?: number; center?: { latitude: number; longitude: number } }) => {
-      const nextZoom = Math.max((camera.zoom ?? 15) - 1, 3);
-      mapRef.current?.animateCamera({
-        center: camera.center ?? { latitude: region.latitude, longitude: region.longitude },
-        zoom: nextZoom,
-      });
-    }).catch(() => {});
+    const current = regionRef.current;
+    const next = {
+      ...current,
+      latitudeDelta: Math.min(current.latitudeDelta * 2, 60),
+      longitudeDelta: Math.min(current.longitudeDelta * 2, 60),
+    };
+    regionRef.current = next;
+    mapRef.current?.animateToRegion?.(next, 150);
   };
 
   return (
     <View style={styles.mapWrap}>
-      <MapView
+      <MapComponent
         ref={mapRef}
         style={styles.map}
         initialRegion={region}
+        onRegionChangeComplete={(r: {
+          latitude: number;
+          longitude: number;
+          latitudeDelta: number;
+          longitudeDelta: number;
+        }) => {
+          regionRef.current = r;
+        }}
         scrollEnabled
         zoomEnabled
         pitchEnabled={false}
         rotateEnabled={false}
       >
         {points.map((p, idx) => (
-          <Marker
+          <MarkerComponent
             key={`${p.latitude}-${p.longitude}-${idx}`}
             coordinate={{ latitude: p.latitude, longitude: p.longitude }}
             title={p.name ?? undefined}
           />
         ))}
-      </MapView>
+      </MapComponent>
       <View style={styles.zoomButtons} pointerEvents="box-none">
         <Pressable style={[styles.zoomButton, styles.zoomButtonFirst]} onPress={handleZoomIn}>
           <Text style={styles.zoomButtonText}>+</Text>
@@ -212,42 +243,66 @@ function AddLocationMap({
   longitude: number | null;
   onCoordsChange: (lat: number, lng: number) => void;
 }) {
-  const mapRef = useRef<MapView>(null);
+  const mapRef = useRef<any>(null);
+  const mapsModule = getMapsModule();
+  const MapComponent = mapsModule?.default;
+  const MarkerComponent = mapsModule?.Marker;
   const center =
     latitude != null && longitude != null
       ? { latitude, longitude }
       : { latitude: DEFAULT_REGION.latitude, longitude: DEFAULT_REGION.longitude };
+  const initialRegion =
+    latitude != null && longitude != null
+      ? { latitude, longitude, latitudeDelta: 0.005, longitudeDelta: 0.005 }
+      : DEFAULT_REGION;
+  const regionRef = useRef(initialRegion);
 
   const handleZoomIn = () => {
-    mapRef.current?.getCamera().then((camera: { zoom?: number; center?: { latitude: number; longitude: number } }) => {
-      const nextZoom = Math.min((camera.zoom ?? 15) + 1, 21);
-      mapRef.current?.animateCamera({
-        center: camera.center ?? center,
-        zoom: nextZoom,
-      });
-    }).catch(() => {});
+    const current = regionRef.current ?? { ...center, latitudeDelta: 0.01, longitudeDelta: 0.01 };
+    const next = {
+      ...current,
+      latitudeDelta: Math.max(current.latitudeDelta * 0.5, 0.0005),
+      longitudeDelta: Math.max(current.longitudeDelta * 0.5, 0.0005),
+    };
+    regionRef.current = next;
+    mapRef.current?.animateToRegion?.(next, 150);
   };
 
   const handleZoomOut = () => {
-    mapRef.current?.getCamera().then((camera: { zoom?: number; center?: { latitude: number; longitude: number } }) => {
-      const nextZoom = Math.max((camera.zoom ?? 15) - 1, 3);
-      mapRef.current?.animateCamera({
-        center: camera.center ?? center,
-        zoom: nextZoom,
-      });
-    }).catch(() => {});
+    const current = regionRef.current ?? { ...center, latitudeDelta: 0.01, longitudeDelta: 0.01 };
+    const next = {
+      ...current,
+      latitudeDelta: Math.min(current.latitudeDelta * 2, 60),
+      longitudeDelta: Math.min(current.longitudeDelta * 2, 60),
+    };
+    regionRef.current = next;
+    mapRef.current?.animateToRegion?.(next, 150);
   };
+
+  if (!MapComponent || !MarkerComponent) {
+    return (
+      <View style={styles.modalMapWrap}>
+        <View style={styles.mapUnavailable}>
+          <Text style={styles.mapUnavailableText}>지도를 불러오지 못했어요.</Text>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.modalMapWrap}>
-      <MapView
+      <MapComponent
         ref={mapRef}
         style={styles.modalMap}
-        initialRegion={
-          latitude != null && longitude != null
-            ? { latitude, longitude, latitudeDelta: 0.005, longitudeDelta: 0.005 }
-            : DEFAULT_REGION
-        }
+        initialRegion={initialRegion}
+        onRegionChangeComplete={(r: {
+          latitude: number;
+          longitude: number;
+          latitudeDelta: number;
+          longitudeDelta: number;
+        }) => {
+          regionRef.current = r;
+        }}
         onPress={(e) => {
           const { latitude: lat, longitude: lng } = e.nativeEvent.coordinate;
           onCoordsChange(lat, lng);
@@ -258,9 +313,9 @@ function AddLocationMap({
         rotateEnabled={false}
       >
         {latitude != null && longitude != null ? (
-          <Marker coordinate={{ latitude, longitude }} title="인증 위치" />
+          <MarkerComponent coordinate={{ latitude, longitude }} title="인증 위치" />
         ) : null}
-      </MapView>
+      </MapComponent>
       <View style={[styles.zoomButtons, { right: 10, bottom: 10 }]} pointerEvents="box-none">
         <Pressable style={[styles.zoomButton, styles.zoomButtonFirst]} onPress={handleZoomIn}>
           <Text style={styles.zoomButtonText}>+</Text>
@@ -1152,6 +1207,17 @@ const styles = StyleSheet.create({
   map: {
     width: '100%',
     height: '100%',
+  },
+  mapUnavailable: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#F7F7F7',
+  },
+  mapUnavailableText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.textSecondary,
   },
   zoomButtons: {
     position: 'absolute',

@@ -1,8 +1,16 @@
 import React, { useRef } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
-import MapView, { Marker } from 'react-native-maps';
 import { colors } from '../../../styles/colors';
 import { type MethodConfig } from './AuthMethodSection';
+
+type MapsModule = typeof import('react-native-maps');
+const getMapsModule = (): MapsModule | null => {
+  try {
+    return require('react-native-maps') as MapsModule;
+  } catch {
+    return null;
+  }
+};
 
 type TimeField = 'todoDeadline' | 'todoComplete' | 'rangeStart' | 'rangeEnd';
 type ConfigKey = 'primary' | 'secondary';
@@ -37,40 +45,45 @@ function AuthTimeControls({
   onGithubRepoUrlChange,
   onGithubBranchChange,
 }: AuthTimeControlsProps) {
-  const mapRef = useRef<MapView>(null);
+  const mapRef = useRef<any>(null);
+  const mapsModule = getMapsModule();
+  const MapComponent = mapsModule?.default;
+  const MarkerComponent = mapsModule?.Marker;
+  const initialRegion =
+    config.locationLatitude != null && config.locationLongitude != null
+      ? {
+          latitude: config.locationLatitude,
+          longitude: config.locationLongitude,
+          latitudeDelta: 0.005,
+          longitudeDelta: 0.005,
+        }
+      : DEFAULT_REGION;
+  const regionRef = useRef(initialRegion);
   const defaultCenter = {
     latitude: DEFAULT_REGION.latitude,
     longitude: DEFAULT_REGION.longitude,
   };
 
   const handleZoomIn = () => {
-    mapRef.current
-      ?.getCamera()
-      .then(
-        (camera: { zoom?: number; center?: { latitude: number; longitude: number } }) => {
-          const nextZoom = Math.min((camera.zoom ?? 15) + 1, 21);
-          mapRef.current?.animateCamera({
-            center: camera.center ?? defaultCenter,
-            zoom: nextZoom,
-          });
-        },
-      )
-      .catch(() => {});
+    const current = regionRef.current ?? { ...defaultCenter, latitudeDelta: 0.01, longitudeDelta: 0.01 };
+    const next = {
+      ...current,
+      latitudeDelta: Math.max(current.latitudeDelta * 0.5, 0.0005),
+      longitudeDelta: Math.max(current.longitudeDelta * 0.5, 0.0005),
+    };
+    regionRef.current = next;
+    mapRef.current?.animateToRegion?.(next, 150);
   };
 
   const handleZoomOut = () => {
-    mapRef.current
-      ?.getCamera()
-      .then(
-        (camera: { zoom?: number; center?: { latitude: number; longitude: number } }) => {
-          const nextZoom = Math.max((camera.zoom ?? 15) - 1, 3);
-          mapRef.current?.animateCamera({
-            center: camera.center ?? defaultCenter,
-            zoom: nextZoom,
-          });
-        },
-      )
-      .catch(() => {});
+    const current = regionRef.current ?? { ...defaultCenter, latitudeDelta: 0.01, longitudeDelta: 0.01 };
+    const next = {
+      ...current,
+      latitudeDelta: Math.min(current.latitudeDelta * 2, 60),
+      longitudeDelta: Math.min(current.longitudeDelta * 2, 60),
+    };
+    regionRef.current = next;
+    mapRef.current?.animateToRegion?.(next, 150);
   };
 
   if (config.method === 'TODO') {
@@ -132,49 +145,56 @@ function AuthTimeControls({
             </View>
             <View style={styles.mapWrap}>
               <Text style={styles.mapHint}>지도를 탭하여 인증 위치를 지정하세요</Text>
-              <MapView
-                ref={mapRef}
-                style={styles.map}
-                initialRegion={
-                  config.locationLatitude != null && config.locationLongitude != null
-                    ? {
-                        latitude: config.locationLatitude,
-                        longitude: config.locationLongitude,
-                        latitudeDelta: 0.005,
-                        longitudeDelta: 0.005,
-                      }
-                    : DEFAULT_REGION
-                }
-                onPress={(e) => {
-                  const { latitude, longitude } = e.nativeEvent.coordinate;
-                  onLocationCoordsChange(configKey, latitude, longitude);
-                }}
-                scrollEnabled
-                zoomEnabled
-                pitchEnabled={false}
-                rotateEnabled={false}
-              >
-                {config.locationLatitude != null && config.locationLongitude != null ? (
-                  <Marker
-                    coordinate={{
-                      latitude: config.locationLatitude,
-                      longitude: config.locationLongitude,
+              {MapComponent && MarkerComponent ? (
+                <>
+                  <MapComponent
+                    ref={mapRef}
+                    style={styles.map}
+                    initialRegion={initialRegion}
+                    onRegionChangeComplete={(r: {
+                      latitude: number;
+                      longitude: number;
+                      latitudeDelta: number;
+                      longitudeDelta: number;
+                    }) => {
+                      regionRef.current = r;
                     }}
-                    title={config.locationName || '인증 위치'}
-                  />
-                ) : null}
-              </MapView>
-              <View style={styles.zoomButtons} pointerEvents="box-none">
-                <Pressable style={[styles.zoomButton, styles.zoomButtonFirst]} onPress={handleZoomIn}>
-                  <Text style={styles.zoomButtonText}>+</Text>
-                </Pressable>
-                <Pressable
-                  style={[styles.zoomButton, styles.zoomButtonBottom]}
-                  onPress={handleZoomOut}
-                >
-                  <Text style={styles.zoomButtonText}>−</Text>
-                </Pressable>
-              </View>
+                    onPress={(e) => {
+                      const { latitude, longitude } = e.nativeEvent.coordinate;
+                      onLocationCoordsChange(configKey, latitude, longitude);
+                    }}
+                    scrollEnabled
+                    zoomEnabled
+                    pitchEnabled={false}
+                    rotateEnabled={false}
+                  >
+                    {config.locationLatitude != null && config.locationLongitude != null ? (
+                      <MarkerComponent
+                        coordinate={{
+                          latitude: config.locationLatitude,
+                          longitude: config.locationLongitude,
+                        }}
+                        title={config.locationName || '인증 위치'}
+                      />
+                    ) : null}
+                  </MapComponent>
+                  <View style={styles.zoomButtons} pointerEvents="box-none">
+                    <Pressable style={[styles.zoomButton, styles.zoomButtonFirst]} onPress={handleZoomIn}>
+                      <Text style={styles.zoomButtonText}>+</Text>
+                    </Pressable>
+                    <Pressable
+                      style={[styles.zoomButton, styles.zoomButtonBottom]}
+                      onPress={handleZoomOut}
+                    >
+                      <Text style={styles.zoomButtonText}>−</Text>
+                    </Pressable>
+                  </View>
+                </>
+              ) : (
+                <View style={styles.mapUnavailable}>
+                  <Text style={styles.mapUnavailableText}>지도를 불러오지 못했어요.</Text>
+                </View>
+              )}
             </View>
           </>
         ) : null}
@@ -341,6 +361,17 @@ const styles = StyleSheet.create({
   map: {
     width: '100%',
     height: '100%',
+  },
+  mapUnavailable: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#F7F7F7',
+  },
+  mapUnavailableText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.textSecondary,
   },
   zoomButtons: {
     position: 'absolute',
