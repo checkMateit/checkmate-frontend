@@ -1,6 +1,7 @@
 import React from 'react';
 import { Image, ImageBackground, ImageSourcePropType, StyleSheet, Text, View } from 'react-native';
 import { colors } from '../../../styles/colors';
+import AuthMethodRow from '../../../components/common/AuthMethodRow';
 
 type StudyOverviewCardProps = {
   tag: string;
@@ -18,6 +19,15 @@ type StudyOverviewCardProps = {
 const categoryIcon = require('../../../assets/icon/category_icon.png');
 const personIcon = require('../../../assets/icon/person_icon.png');
 const timeIcon = require('../../../assets/icon/time_icon.png');
+const pencilIcon = require('../../../assets/icon/modify_icon.png');
+
+/** 요일만 표시: "화/수/목 22:00" → "화/수/목", "화목" → "화/목" */
+function formatDaysOnly(authDays?: string): string {
+  if (!authDays || authDays === '-') return '';
+  const dayPart = (authDays.split(/\s+/)[0] ?? authDays).trim();
+  if (dayPart.includes('/')) return dayPart;
+  return dayPart.split('').join('/');
+}
 
 function StudyOverviewCard({
   tag,
@@ -35,9 +45,14 @@ function StudyOverviewCard({
     authTimes && authTimes.length > 0
       ? authTimes.map((item) => ({
           method: item.method,
-          time: item.method === 'TODO' ? item.time.replace('|', ' | ') : item.time,
+          time: item.time,
+          deadline: item.deadline,
+          complete: item.complete,
         }))
-      : methods.map((method) => ({ method, time: '-' }));
+      : methods.map((method) => ({ method, time: '-', deadline: undefined, complete: undefined }));
+
+  const periodDisplay = period && period !== '-' ? period : schedule;
+  const daysOnlyDisplay = formatDaysOnly(authDays);
 
   return (
     <View style={styles.card}>
@@ -63,23 +78,43 @@ function StudyOverviewCard({
       </View>
       <View style={styles.detailBox}>
         <View style={styles.detailRow}>
-          <Image source={timeIcon} style={styles.detailIcon} />
-          <Text style={styles.detailValue}>{period ?? schedule}</Text>
-          {authDays ? <Text style={styles.detailValue}>{authDays}</Text> : null}
+          <Text style={styles.detailLabel}>기간</Text>
+          <Text style={styles.detailValue}>{periodDisplay}</Text>
         </View>
+        {daysOnlyDisplay ? (
+          <View style={styles.detailRow}>
+            <Text style={styles.detailLabel}>요일</Text>
+            <Text style={styles.detailValue}>{daysOnlyDisplay}</Text>
+          </View>
+        ) : null}
         <View style={styles.methodRow}>
           <Text style={styles.detailLabel}>방식</Text>
           <View style={styles.methodColumn}>
             {authRows.length > 0 ? (
-              authRows.map((row) => (
-                <View key={`${row.method}-${row.time}`} style={styles.methodLine}>
-                  <View style={styles.methodChip}>
-                    <View style={styles.methodBar} />
-                    <Text style={styles.methodText}>{row.method}</Text>
-                  </View>
-                  <Text style={styles.methodTime}>{row.time}</Text>
+              <View style={styles.methodTwoCol}>
+                <View style={styles.methodChipsCol}>
+                  {authRows.map((row, idx) => (
+                    <AuthMethodRow key={`chip-${idx}`} methods={[row.method]} label="" showIcon={false} />
+                  ))}
                 </View>
-              ))
+                <View style={styles.methodTimesCol}>
+                  {authRows.map((row, idx) =>
+                    row.method === 'TODO' && (row.deadline != null || row.complete != null) ? (
+                      <View key={`time-${idx}`} style={styles.methodTimeRow}>
+                        <Image source={pencilIcon} style={styles.methodTimeIcon} resizeMode="contain" />
+                        <Text style={styles.methodTime}>{row.deadline ?? '-'}</Text>
+                        <Image source={timeIcon} style={styles.methodTimeIcon} resizeMode="contain" />
+                        <Text style={styles.methodTime}>{row.complete ?? row.time}</Text>
+                      </View>
+                    ) : (
+                      <View key={`time-${idx}`} style={styles.methodTimeRow}>
+                        <Image source={timeIcon} style={styles.methodTimeIcon} resizeMode="contain" />
+                        <Text style={styles.methodTime}>{row.time}</Text>
+                      </View>
+                    ),
+                  )}
+                </View>
+              </View>
             ) : (
               <Text style={styles.methodTime}>-</Text>
             )}
@@ -176,6 +211,12 @@ const styles = StyleSheet.create({
     gap: 8,
     flexWrap: 'wrap',
   },
+  detailLabel: {
+    width: 28,
+    fontSize: 12,
+    color: colors.textSecondary,
+    fontWeight: '700',
+  },
   detailIcon: {
     width: 12,
     height: 12,
@@ -187,52 +228,41 @@ const styles = StyleSheet.create({
     color: '#515151',
   },
   detailValue: {
+    flex: 1,
     fontSize: 13,
     color: colors.textSecondary,
     fontWeight: '500',
   },
-  detailLabel: {
-    fontSize: 12,
-    color: colors.textSecondary,
-    fontWeight: '700',
-  },
   methodRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    gap: 16,
+    gap: 8,
   },
   methodColumn: {
     flex: 1,
+  },
+  methodTwoCol: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 10,
+  },
+  methodChipsCol: {
+    gap: 8,
+    minWidth: 52,
+  },
+  methodTimesCol: {
+    flex: 1,
     gap: 8,
   },
-  methodLine: {
+  methodTimeRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    flexWrap: 'wrap',
+    gap: 6,
   },
-  methodChip: {
-    height: 18,
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 0.5,
-    borderColor: '#D9D9D9',
-    borderRadius: 2,
-    overflow: 'hidden',
-    paddingRight: 6,
-  },
-  methodBar: {
-    width: 4,
-    height: '100%',
-    backgroundColor: colors.primary,
-  },
-  methodText: {
-    fontSize: 10,
-    color: colors.textSecondary,
-    marginLeft: 5,
-    lineHeight: 18,
-    includeFontPadding: false,
-    textAlignVertical: 'center',
+  methodTimeIcon: {
+    width: 12,
+    height: 12,
+    tintColor: colors.textSecondary,
   },
   methodTime: {
     fontSize: 12,

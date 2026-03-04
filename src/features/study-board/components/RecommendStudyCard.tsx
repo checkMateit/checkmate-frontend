@@ -1,6 +1,7 @@
 import React from 'react';
 import { Image, ImageBackground, Pressable, StyleSheet, Text, View } from 'react-native';
 import { colors } from '../../../styles/colors';
+import AuthMethodRow from '../../../components/common/AuthMethodRow';
 
 type RecommendStudyCardProps = {
   tag: string;
@@ -8,7 +9,9 @@ type RecommendStudyCardProps = {
   title: string;
   time: string;
   method: string;
-  authTimes?: { method: string; time: string }[];
+  period?: string;
+  authDays?: string;
+  authTimes?: { method: string; time: string; deadline?: string; complete?: string }[];
   onPress?: () => void;
 };
 
@@ -16,21 +19,41 @@ const timeIcon = require('../../../assets/icon/time_icon.png');
 const personIcon = require('../../../assets/icon/person_icon.png');
 const rightIcon = require('../../../assets/icon/right_arrow.png');
 
+/** 요일만: "화/수/목 22:00" → "화/수/목", "화목" → "화/목" */
+function daysOnly(s?: string): string {
+  if (!s || s === '-') return '';
+  const part = (s.split(/\s+/)[0] ?? s).trim();
+  if (part.includes('/')) return part;
+  return part.split('').join('/');
+}
+
+/** 시계 옆에는 시간만 표시. 요일·영문 등 제거 후 HH:MM 형태만 반환 */
+function timeOnly(s?: string): string {
+  if (!s || s === '-') return s ?? '-';
+  const t = s.trim();
+  const parts = t.split(/\s+/);
+  const timeParts = parts.filter((p) => /\d{1,2}:\d{2}/.test(p));
+  return timeParts.length > 0 ? timeParts.join(' ') : t;
+}
+
 function RecommendStudyCard({
   tag,
   members,
   title,
   time,
   method,
+  period,
+  authDays,
   authTimes,
   onPress,
 }: RecommendStudyCardProps) {
-  const timeRows =
+  const periodDisplay = period && period !== '-' ? period : null;
+  const daysOnlyStr = daysOnly(authDays);
+  const authRows =
     authTimes && authTimes.length > 0
-      ? authTimes.map((item) =>
-          item.method === 'TODO' ? item.time.replace('|', ' | ') : item.time,
-        )
-      : [time];
+      ? authTimes
+      : [{ method, time }];
+
   return (
     <Pressable style={styles.card} onPress={onPress} disabled={!onPress}>
       <View style={styles.cardContent}>
@@ -48,17 +71,29 @@ function RecommendStudyCard({
           </View>
         </View>
         <Text style={styles.title}>{title}</Text>
-        <View style={styles.metaBlock}>
-          {timeRows.map((value, index) => (
-            <View key={`${value}-${index}`} style={styles.metaRow}>
-              <Image source={timeIcon} style={styles.timeIcon} />
-              <Text style={styles.metaText}>{value}</Text>
-            </View>
-          ))}
-        </View>
+        {periodDisplay ? (
+          <Text style={styles.metaText} numberOfLines={1}>{periodDisplay}</Text>
+        ) : null}
+        {daysOnlyStr ? (
+          <Text style={styles.metaText}>{daysOnlyStr}</Text>
+        ) : null}
         <View style={styles.methodBlock}>
           <Text style={styles.methodLabel}>인증방식</Text>
-          <Text style={styles.methodText}>{method}</Text>
+          <View style={styles.methodList}>
+            {authRows.map((item, index) => (
+              <View key={`${item.method}-${index}`} style={styles.methodLine}>
+                <View style={styles.methodChipWrap}>
+                  <AuthMethodRow methods={[item.method]} label="" showIcon={false} />
+                </View>
+                <View style={styles.methodTimeRow}>
+                  <Image source={timeIcon} style={styles.methodTimeIcon} />
+                  <Text style={styles.methodTimeText}>
+                    {timeOnly(item.method === 'TODO' ? (item.complete ?? item.time) : item.time)}
+                  </Text>
+                </View>
+              </View>
+            ))}
+          </View>
         </View>
       </View>
       <View style={styles.footer}>
@@ -112,25 +147,17 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: '800',
     color: colors.textPrimary,
-    marginBottom: 8,
+    marginBottom: 4,
   },
-  metaBlock: {
-    gap: 6,
-    marginBottom: 14,
-  },
-  metaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  metaText: {
+    fontSize: 11,
+    color: colors.textSecondary,
+    marginBottom: 2,
   },
   timeIcon: {
     width: 10,
     height: 10,
-    marginRight: 6,
     tintColor: colors.textSecondary,
-  },
-  metaText: {
-    fontSize: 12,
-    color: colors.textSecondary,
   },
   membersRow: {
     flexDirection: 'row',
@@ -151,15 +178,37 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   methodLabel: {
-    fontSize: 13,
-    color: '#515151',
-    marginBottom: 6,
+    fontSize: 12,
+    color: colors.textSecondary,
+    marginBottom: 4,
     fontWeight: '700',
   },
-  methodText: {
-    fontSize: 12,
-    color: '#515151',
-    fontWeight: '500',
+  methodList: {
+    gap: 4,
+  },
+  methodLine: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    flexWrap: 'wrap',
+  },
+  methodChipWrap: {
+    minWidth: 52,
+  },
+  methodTimeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  methodTimeIcon: {
+    width: 12,
+    height: 12,
+    tintColor: colors.textSecondary,
+  },
+  methodTimeText: {
+    fontSize: 11,
+    color: colors.textPrimary,
+    fontWeight: '600',
   },
   footer: {
 

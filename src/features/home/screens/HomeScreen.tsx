@@ -518,6 +518,8 @@ useEffect(() => {
                   title={study.title}
                   time={study.schedule}
                   method={study.methods.join(', ')}
+                  period={study.period}
+                  authDays={study.authDays}
                   authTimes={study.authTimes}
                   onPress={() => {
                     const parent = navigation.getParent<BottomTabNavigationProp<BottomTabParamList>>();
