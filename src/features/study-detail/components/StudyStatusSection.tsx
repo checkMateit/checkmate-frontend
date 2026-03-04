@@ -16,6 +16,7 @@ export type VerificationRule = {
   daysOfWeek?: string[];
   timezone?: string;
   frequency?: { unit: string; requiredCnt: number };
+  methodDetails?: { gps?: { radius_mode?: string } };
 };
 
 type StudyStatusSectionProps = {
@@ -24,6 +25,8 @@ type StudyStatusSectionProps = {
   currentUserId: string | null;
   verificationRules: VerificationRule[];
   methods: string[];
+  /** 개인위치 모드에서 내 위치 미등록 시 상세 규칙으로 이동할 때 호출 */
+  onNavigateToDetailRules?: () => void;
 };
 
 function getSlotForMethod(
@@ -59,6 +62,7 @@ function StudyStatusSection({
   currentUserId,
   verificationRules,
   methods,
+  onNavigateToDetailRules,
 }: StudyStatusSectionProps) {
   const [activeTab, setActiveTab] = useState<
     'summary' | 'todo' | 'photo' | 'location' | 'github'
@@ -147,6 +151,10 @@ function StudyStatusSection({
                   }
                 : undefined
             }
+            radiusMode={
+              verificationRules.find((r) => r.slot === slotGps)?.methodDetails?.gps?.radius_mode
+            }
+            onNavigateToDetailRules={onNavigateToDetailRules}
           />
         ) : (
           <View style={styles.placeholder}>

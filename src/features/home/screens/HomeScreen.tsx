@@ -152,16 +152,29 @@ useEffect(() => {
                     `${r.userId}-${r.slot}-${todayStr}`,
                 ),
             );
-            const todayCompleted =
-              requiredSlots.length === 0 ||
-              requiredSlots.every((slot: number) =>
-                recordSet.has(`${userId}-${slot}-${todayStr}`),
-              );
+            if (requiredSlots.length === 0) {
+              return {
+                ...base,
+                statusText: '인증 불필요',
+                statusVariant: 'neutral' as const,
+                statusIcons: [],
+              };
+            }
+            const slotsToShow = requiredSlots.slice(0, 2);
+            const statusIcons = slotsToShow.map(
+              (slot: number) =>
+                (recordSet.has(`${userId}-${slot}-${todayStr}`) ? 'success' : 'danger') as
+                  | 'success'
+                  | 'danger',
+            );
+            const todayCompleted = slotsToShow.every((slot: number) =>
+              recordSet.has(`${userId}-${slot}-${todayStr}`),
+            );
             return {
               ...base,
               statusText: todayCompleted ? '인증 완료' : '인증 미완료',
               statusVariant: todayCompleted ? ('success' as const) : ('neutral' as const),
-              statusIcons: todayCompleted ? ['success' as const] : [],
+              statusIcons,
             };
           } catch {
             return base;

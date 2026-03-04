@@ -16,6 +16,7 @@ import Geolocation from '@react-native-community/geolocation';
 import { colors } from '../../../styles/colors';
 import {
   getGpsVerificationRecords,
+  getGpsLocations,
   submitGpsVerification,
   getVerificationDateToday,
   getGpsRecordSubmittedAt,
@@ -29,10 +30,10 @@ import {
   getDayIndexFromDate,
   BACKEND_DAY_CODES_BY_INDEX,
 } from '../../../utils/timeKST';
+import StatusFailIcon from '../../../components/common/StatusFailIcon';
 
 const profileImage = require('../../../assets/icon/profile_1.png');
 const checkIcon = require('../../../assets/icon/check_icon.png');
-const cancelIcon = require('../../../assets/icon/cancel_icon.png');
 const locationIcon = require('../../../assets/icon/gps_icon.png');
 
 function displayName(member: StudyGroupMemberRes): string {
@@ -59,6 +60,9 @@ type StudyStatusLocationProps = {
   slot: number;
   currentUserId: string | null;
   schedule?: LocationSchedule;
+  /** COMMON | PER_LOCATION. 개인위치일 때 내 위치 미등록 시 상세 규칙으로 이동 */
+  radiusMode?: string;
+  onNavigateToDetailRules?: () => void;
 };
 
 function StudyStatusLocation({
@@ -66,6 +70,8 @@ function StudyStatusLocation({
   slot,
   currentUserId,
   schedule,
+  radiusMode,
+  onNavigateToDetailRules,
 }: StudyStatusLocationProps) {
   const [submitting, setSubmitting] = useState(false);
   const [members, setMembers] = useState<StudyGroupMemberRes[]>([]);
@@ -156,6 +162,23 @@ function StudyStatusLocation({
     );
   };
 
+  const isPerLocationMode =
+    (radiusMode ?? '').toUpperCase() === 'PER_LOCATION';
+
+  const showNavigateToDetailRulesAlert = () => {
+    Alert.alert(
+      '내 위치 등록 필요',
+      '개인위치 인증을 위해 먼저 상세 규칙에서 내 위치를 등록해 주세요.',
+      [
+        { text: '취소', style: 'cancel' },
+        {
+          text: '상세 규칙으로 이동',
+          onPress: () => onNavigateToDetailRules?.(),
+        },
+      ],
+    );
+  };
+
   const handleVerify = async () => {
     if (!isVerificationDayToday) {
       Alert.alert('안내', '오늘은 인증 요일이 아닙니다.', [{ text: '확인' }]);
@@ -166,6 +189,20 @@ function StudyStatusLocation({
       return;
     }
     if (submitting) return;
+
+    if (isPerLocationMode && onNavigateToDetailRules) {
+      try {
+        const { data } = await getGpsLocations(groupId, slot);
+        const myLocations = data?.data ?? [];
+        if (myLocations.length === 0) {
+          showNavigateToDetailRulesAlert();
+          return;
+        }
+      } catch {
+        showNavigateToDetailRulesAlert();
+        return;
+      }
+    }
 
     const hasPermission = await requestLocationPermission();
     if (!hasPermission) {
@@ -181,9 +218,21 @@ function StudyStatusLocation({
       .then(() => refresh())
       .catch((err) => {
         const code = err?.code;
+        const serverMsg =
+          err?.response?.status === 400
+            ? (err?.response?.data?.message as string | undefined) ?? ''
+            : '';
+        const isNoLocationError =
+          typeof serverMsg === 'string' &&
+          (serverMsg.includes('등록된 내 위치가 없습니다') ||
+            serverMsg.includes('위치를 등록해 주세요'));
+        if (isNoLocationError && onNavigateToDetailRules) {
+          showNavigateToDetailRulesAlert();
+          return;
+        }
         const msg =
           err?.response?.status === 400
-            ? err?.response?.data?.message ?? '제출 시간이 지났거나 지정된 범위 밖이에요.'
+            ? serverMsg || '제출 시간이 지났거나 지정된 범위 밖이에요.'
             : '위치 인증 제출에 실패했어요.';
         if (code === 1 || code === 2 || code === 3) {
           showLocationPermissionAlert();
@@ -249,10 +298,11 @@ function StudyStatusLocation({
                 >
                   {isDone ? '완료' : '미인증'}
                 </Text>
-                <Image
-                  source={isDone ? checkIcon : cancelIcon}
-                  style={[styles.statusIcon, !isDone && styles.statusIconFail]}
-                />
+                {isDone ? (
+                  <Image source={checkIcon} style={styles.statusIcon} />
+                ) : (
+                  <StatusFailIcon size={14} />
+                )}
               </View>
             </View>
           </View>
@@ -326,13 +376,11 @@ function StudyStatusLocation({
                       >
                         {done ? '완료' : '미인증'}
                       </Text>
-                      <Image
-                        source={done ? checkIcon : cancelIcon}
-                        style={[
-                          styles.statusIcon,
-                          !done && styles.statusIconFail,
-                        ]}
-                      />
+                      {done ? (
+                        <Image source={checkIcon} style={styles.statusIcon} />
+                      ) : (
+                        <StatusFailIcon size={14} />
+                      )}
                     </View>
                   </View>
                 </View>
@@ -416,14 +464,11 @@ const styles = StyleSheet.create({
     color: '#7D7D7D',
   },
   statusFail: {
-    color: '#E53935',
+    color: '#E57373',
   },
   statusIcon: {
     width: 14,
     height: 14,
-  },
-  statusIconFail: {
-    tintColor: '#E53935',
   },
   deadlineText: {
     fontSize: 12,

@@ -14,11 +14,11 @@ import {
   type VerificationRecordItemRes,
 } from '../../../api/studyGroups';
 import { getTodayDateString } from '../../../utils/timeKST';
+import StatusFailIcon from '../../../components/common/StatusFailIcon';
 
 const profileImage = require('../../../assets/icon/profile_1.png');
 const profileImage2 = require('../../../assets/icon/profile_2.png');
 const checkIcon = require('../../../assets/icon/check_icon.png');
-const cancelIcon = require('../../../assets/icon/cancel_icon.png');
 
 const DAY_LABELS = ['월', '화', '수', '목', '금', '토', '일'];
 /** JS getDay(): 일=0, 월=1, ... 토=6 → 백엔드 MON=월=1, TUE=2, ..., SUN=0. 우리 인덱스: 월=0, ..., 일=6 */
@@ -294,10 +294,11 @@ function StudyStatusSummary({
             >
               {row.status.label}
             </Text>
-            <Image
-              source={row.status.tone === 'fail' ? cancelIcon : checkIcon}
-              style={styles.statusIcon}
-            />
+            {row.status.tone === 'fail' ? (
+              <StatusFailIcon size={11} />
+            ) : (
+              <Image source={checkIcon} style={styles.statusIcon} />
+            )}
           </View>
         </View>
       ))}
@@ -436,7 +437,7 @@ const styles = StyleSheet.create({
   },
   statusFail: {
     fontSize: 12,
-    color: '#E53935',
+    color: '#E57373',
     fontWeight: '600',
   },
   statusIcon: {

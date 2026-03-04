@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { Image, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { colors } from '../../../styles/colors';
+import StatusFailIcon from '../../../components/common/StatusFailIcon';
 
 const profileImage = require('../../../assets/icon/profile_2.png');
 const linkIcon = require('../../../assets/icon/link_icon.png');
 const modifyIcon = require('../../../assets/icon/modify_icon.png');
 const checkIcon = require('../../../assets/icon/check_icon.png');
-const cancelIcon = require('../../../assets/icon/cancel_icon.png');
 
 const initialRows = [
   {
@@ -93,10 +93,11 @@ function StudyStatusGithub() {
                 <Text style={[styles.statusText, row.status.tone === 'fail' && styles.statusFail]}>
                   {row.status.label}
                 </Text>
-                <Image
-                  source={row.status.tone === 'fail' ? cancelIcon : checkIcon}
-                  style={styles.statusIcon}
-                />
+                {row.status.tone === 'fail' ? (
+                  <StatusFailIcon size={11} />
+                ) : (
+                  <Image source={checkIcon} style={styles.statusIcon} />
+                )}
               </View>
             </View>
           </View>

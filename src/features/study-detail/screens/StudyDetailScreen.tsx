@@ -167,6 +167,10 @@ function StudyDetailScreen({ study: studyProp, onClose }: StudyDetailScreenProps
               currentUserId={currentUserId}
               verificationRules={studyDetailForOwner?.verificationRules ?? []}
               methods={resolvedStudy.methods}
+              onNavigateToDetailRules={() => {
+                setActiveTab('info');
+                setInfoSubView('rules');
+              }}
             />
           )}
           {activeTab === 'report' && (

@@ -11,6 +11,7 @@ import {
 import { colors } from '../../../styles/colors';
 import MascotImage from '../../../components/common/CategoryImage';
 import AuthMethodRow from '../../../components/common/AuthMethodRow';
+import StatusFailIcon from '../../../components/common/StatusFailIcon';
 export type StatusVariant = 'success' | 'danger' | 'neutral';
 export type StatusIconType = 'success' | 'danger';
 
@@ -32,7 +33,6 @@ export type StudyCardProps = {
 
 
 const personIcon = require('../../../assets/icon/person_icon.png');
-const cancelIcon = require('../../../assets/icon/cancel_icon.png');
 const checkIcon = require('../../../assets/icon/check_icon.png');
 
 function StudyCard({
@@ -51,7 +51,7 @@ function StudyCard({
   onPress,
 }: StudyCardProps) {
   const statusIcon =
-    statusVariant === 'danger' ? cancelIcon : statusVariant === 'success' ? checkIcon : null;
+    statusVariant === 'danger' ? 'danger' : statusVariant === 'success' ? checkIcon : null;
   const statusIconList =
     statusIcons && statusIcons.length > 0
       ? statusIcons.slice(0, 2)
@@ -111,13 +111,17 @@ function StudyCard({
         <View style={styles.membersRow} />
         <View style={styles.statusRow}>
           <Text style={styles.statusText}>{statusText}</Text>
-          {statusIconList.map((iconType, index) => (
-            <Image
-              key={`${iconType}-${index}`}
-              source={iconType === 'danger' ? cancelIcon : checkIcon}
-              style={styles.statusIcon}
-            />
-          ))}
+          {statusIconList.map((iconType, index) =>
+            iconType === 'danger' ? (
+              <StatusFailIcon key={`${iconType}-${index}`} size={20} />
+            ) : (
+              <Image
+                key={`${iconType}-${index}`}
+                source={checkIcon}
+                style={styles.statusIcon}
+              />
+            ),
+          )}
         </View>
       </View>
     </Pressable>

@@ -26,10 +26,10 @@ import { getCurrentUserDisplayName, getCurrentUserId } from '../../../api/client
 import { fetchStudyGroupMembers } from '../../../api/studyGroups';
 import type { StudyGroupMemberRes } from '../../../api/studyGroups';
 import { isAfterTimeInKST } from '../../../utils/timeKST';
+import StatusFailIcon from '../../../components/common/StatusFailIcon';
 
 const profileImage = require('../../../assets/icon/profile_1.png');
 const checkIcon = require('../../../assets/icon/check_icon.png');
-const cancelIcon = require('../../../assets/icon/cancel_icon.png');
 const vectorIcon = require('../../../assets/icon/sizeup_icon.png');
 const closeIcon = require('../../../assets/icon/x_icon.png');
 
@@ -238,10 +238,11 @@ function StudyStatusPhoto({ groupId, slot, schedule }: StudyStatusPhotoProps) {
                 <Text style={[styles.statusText, isDone ? styles.statusPass : styles.statusFail]}>
                   {isDone ? '완료' : '미인증'}
                 </Text>
-                <Image
-                  source={isDone ? checkIcon : cancelIcon}
-                  style={[styles.statusIcon, !isDone && styles.statusIconFail]}
-                />
+                {isDone ? (
+                  <Image source={checkIcon} style={styles.statusIcon} />
+                ) : (
+                  <StatusFailIcon size={14} />
+                )}
               </View>
             </View>
             {mySituations.length > 0 && (
@@ -329,10 +330,11 @@ function StudyStatusPhoto({ groupId, slot, schedule }: StudyStatusPhotoProps) {
                       <Text style={[styles.statusText, done ? styles.statusPass : styles.statusFail]}>
                         {done ? '완료' : '미인증'}
                       </Text>
-                      <Image
-                        source={done ? checkIcon : cancelIcon}
-                        style={[styles.statusIcon, !done && styles.statusIconFail]}
-                      />
+                      {done ? (
+                        <Image source={checkIcon} style={styles.statusIcon} />
+                      ) : (
+                        <StatusFailIcon size={14} />
+                      )}
                     </View>
                   </View>
                   {situations.length > 0 && (
@@ -479,7 +481,7 @@ const styles = StyleSheet.create({
     height: 14,
   },
   statusFail: {
-    color: '#E53935',
+    color: '#E57373',
   },
   deadlineText: {
     fontSize: 12,
@@ -505,9 +507,6 @@ const styles = StyleSheet.create({
   statusIcon: {
     width: 11,
     height: 11,
-  },
-  statusIconFail: {
-    tintColor: '#E53935',
   },
   verifyButton: {
     paddingHorizontal: 12,
