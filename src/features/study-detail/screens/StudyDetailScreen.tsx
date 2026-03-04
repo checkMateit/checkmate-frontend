@@ -198,10 +198,10 @@ function StudyDetailScreen({ study: studyProp, onClose }: StudyDetailScreenProps
         <StudyOverviewCard
           tag={resolvedStudy.tag}
           title={resolvedStudy.title}
-          members={resolvedStudy.members}
-          description={resolvedStudy.description}
-          schedule={resolvedStudy.schedule}
-          methods={resolvedStudy.methods}
+          members={resolvedStudy.members ?? '0/0'}
+          description={resolvedStudy.description ?? ''}
+          schedule={resolvedStudy.schedule ?? ''}
+          methods={resolvedStudy.methods ?? []}
           image={overviewImage}
           authTimes={overviewAuthTimes}
           authDays={overviewAuthDays}
@@ -215,7 +215,7 @@ function StudyDetailScreen({ study: studyProp, onClose }: StudyDetailScreenProps
               groupId={String(resolvedStudy.id)}
               currentUserId={currentUserId}
               verificationRules={studyDetailForOwner?.verificationRules ?? []}
-              methods={resolvedStudy.methods}
+              methods={resolvedStudy.methods ?? []}
               onNavigateToDetailRules={() => {
                 setActiveTab('info');
                 setInfoSubView('rules');

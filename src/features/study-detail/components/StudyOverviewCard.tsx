@@ -9,8 +9,8 @@ type StudyOverviewCardProps = {
   members: string;
   description: string;
   schedule: string;
-  methods: string[];
-  image: ImageSourcePropType;
+  methods?: string[];
+  image?: ImageSourcePropType;
   authTimes?: { method: string; time: string; deadline?: string; complete?: string }[];
   authDays?: string;
   period?: string;
@@ -20,6 +20,7 @@ const categoryIcon = require('../../../assets/icon/category_icon.png');
 const personIcon = require('../../../assets/icon/person_icon.png');
 const timeIcon = require('../../../assets/icon/time_icon.png');
 const pencilIcon = require('../../../assets/icon/modify_icon.png');
+const defaultStudyImage = require('../../../assets/character/ch_3.png');
 
 /** 요일만 표시: "화/수/목 22:00" → "화/수/목", "화목" → "화/목" */
 function formatDaysOnly(authDays?: string): string {
@@ -41,6 +42,7 @@ function StudyOverviewCard({
   authDays,
   period,
 }: StudyOverviewCardProps) {
+  const methodsList = methods ?? [];
   const authRows =
     authTimes && authTimes.length > 0
       ? authTimes.map((item) => ({
@@ -49,10 +51,11 @@ function StudyOverviewCard({
           deadline: item.deadline,
           complete: item.complete,
         }))
-      : methods.map((method) => ({ method, time: '-', deadline: undefined, complete: undefined }));
+      : methodsList.map((method) => ({ method, time: '-', deadline: undefined, complete: undefined }));
 
   const periodDisplay = period && period !== '-' ? period : schedule;
   const daysOnlyDisplay = formatDaysOnly(authDays);
+  const imageSource = image ?? defaultStudyImage;
 
   return (
     <View style={styles.card}>
@@ -63,7 +66,7 @@ function StudyOverviewCard({
       </View>
       <View style={styles.infoRow}>
         <View style={styles.avatarWrap}>
-          <Image source={image} style={styles.avatar} resizeMode="cover" />
+          <Image source={imageSource} style={styles.avatar} resizeMode="cover" />
         </View>
         <View style={styles.infoText}>
           <View style={styles.titleRow}>
