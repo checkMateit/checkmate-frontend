@@ -32,7 +32,8 @@ import PeriodPicker from '../components/PeriodPicker';
 import PrimaryActionButton from '../components/PrimaryActionButton';
 import DatePickerModal from '../components/DatePickerModal';
 import CreateStudyGroupResultScreen from './CreateStudyGroupResultScreen';
-import { createStudyGroup, updateStudyGroup } from '../../../api/studyGroups';
+import { createStudyGroup, updateStudyGroup, verifyGithubRepo } from '../../../api/studyGroups';
+import { getSocialAccounts } from '../../../api/users';
 import type { StudyGroupDetailRes } from '../../../api/studyGroups';
 import { buildStudyGroupCreatePayload } from '../../../api/studyGroupCreate';
 import {
@@ -51,7 +52,9 @@ type CreateStudyGroupScreenProps = {
 };
 
 const categories = ['코딩 테스트', '자격증', '언어', '기상', '착석', '기타'];
-const authMethods: AuthMethod[] = ['사진', '위치', 'TODO', 'GitHub'];
+const authMethodsAll: AuthMethod[] = ['사진', '위치', 'TODO', 'GitHub'];
+/** 코테(코딩 테스트)일 때만 GitHub 선택 가능 */
+const COTE_LABEL = '코딩 테스트';
 
 const CATEGORY_REVERSE: Record<string, string> = {
   WAKE: '기상',
@@ -114,6 +117,7 @@ function detailToInitialState(d: StudyGroupDetailRes): {
       })()
     : new Date(2026, 2, 4);
 
+  const githubDetails = (r0?.methodDetails as { github?: { repo_url?: string; branch?: string } })?.github;
   return {
     name: d.title ?? '',
     description: d.description ?? '',
@@ -129,9 +133,21 @@ function detailToInitialState(d: StudyGroupDetailRes): {
           locationName: (r0.methodDetails as { gps?: { locations?: Array<{ name?: string; latitude?: number; longitude?: number }> } })?.gps?.locations?.[0]?.name ?? '',
           locationLatitude: (r0.methodDetails as { gps?: { locations?: Array<{ latitude?: number }> } })?.gps?.locations?.[0]?.latitude ?? null,
           locationLongitude: (r0.methodDetails as { gps?: { locations?: Array<{ longitude?: number }> } })?.gps?.locations?.[0]?.longitude ?? null,
+          githubRepoUrl: githubDetails?.repo_url ?? '',
+          githubBranch: githubDetails?.branch ?? 'main',
         }
       : createDefaultConfig('TODO'),
-    secondaryConfig: r1 ? createDefaultConfig(method1) : null,
+    secondaryConfig: r1
+      ? (() => {
+          const c = createDefaultConfig(method1);
+          const g1 = (r1.methodDetails as { github?: { repo_url?: string; branch?: string } })?.github;
+          if (method1 === 'GitHub' && g1) {
+            c.githubRepoUrl = g1.repo_url ?? '';
+            c.githubBranch = g1.branch ?? 'main';
+          }
+          return c;
+        })()
+      : null,
     members: d.maxMembers ?? 2,
     days: days.length > 0 ? days : ['화', '목'],
     startDate,
@@ -150,6 +166,8 @@ const createDefaultConfig = (method: AuthMethod): MethodConfig => ({
   locationName: '',
   locationLatitude: null,
   locationLongitude: null,
+  githubRepoUrl: '',
+  githubBranch: 'main',
 });
 
 function CreateStudyGroupScreen({
@@ -203,6 +221,18 @@ function CreateStudyGroupScreen({
     }
   }, [initialData]);
 
+  /** 카테고리를 코테가 아닌 것으로 바꾸면 GitHub 선택 해제 */
+  React.useEffect(() => {
+    if (activeCategory !== COTE_LABEL) {
+      if (primaryConfig?.method === 'GitHub') {
+        setPrimaryConfig(createDefaultConfig('TODO'));
+      }
+      if (secondaryConfig?.method === 'GitHub') {
+        setSecondaryConfig(null);
+      }
+    }
+  }, [activeCategory]);
+
   const nameCount = useMemo(() => name.length, [name]);
   const membersBelowCurrent = isEdit && members < currentMembers;
   const timeTitle =
@@ -213,6 +243,15 @@ function CreateStudyGroupScreen({
         : activeTimeField === 'rangeStart'
           ? '인증시간'
           : '종료시간';
+
+  /** 코테(코딩 테스트)일 때만 GitHub 인증 방식 표시 */
+  const authMethods = useMemo(
+    () =>
+      activeCategory === COTE_LABEL
+        ? authMethodsAll
+        : authMethodsAll.filter((m) => m !== 'GitHub'),
+    [activeCategory],
+  );
 
   const selectedConfig = activeConfigKey === 'primary' ? primaryConfig : secondaryConfig;
   const selectedTime =
@@ -293,6 +332,62 @@ function CreateStudyGroupScreen({
       Alert.alert('안내', '공통 위치를 사용할 때는 위치 이름을 입력한 뒤 지도에서 인증 위치를 지정해주세요.');
       return;
     }
+    const needGithubRepo = (c: MethodConfig | null) =>
+      c?.method === 'GitHub' &&
+      (c?.githubRepoUrl?.trim() ?? '') === '';
+    if (needGithubRepo(primaryConfig)) {
+      Alert.alert('안내', 'GitHub 인증을 사용할 때 저장소 URL을 입력해주세요.');
+      return;
+    }
+    if (needGithubRepo(secondaryConfig)) {
+      Alert.alert('안내', 'GitHub 인증을 사용할 때 저장소 URL을 입력해주세요.');
+      return;
+    }
+    const hasGitHubRule = primaryConfig?.method === 'GitHub' || secondaryConfig?.method === 'GitHub';
+    if (!isEdit && hasGitHubRule) {
+      try {
+        const { data: socialRes } = await getSocialAccounts();
+        const accounts = socialRes?.data ?? [];
+        const hasGitHub = accounts.some(
+          (a) => (a.provider ?? '').toUpperCase() === 'GITHUB',
+        );
+        if (!hasGitHub) {
+          Alert.alert(
+            'GitHub 연동 필요',
+            '깃허브 인증 스터디 그룹은 GitHub 연동이 필요합니다. 마이페이지에서 GitHub를 연동한 뒤 다시 시도해 주세요.',
+          );
+          return;
+        }
+      } catch {
+        Alert.alert('안내', '소셜 연동 정보를 확인할 수 없습니다. 다시 시도해 주세요.');
+        return;
+      }
+      // 생성 전 저장소/브랜치 존재 여부 검증
+      try {
+        if (primaryConfig?.method === 'GitHub') {
+          await verifyGithubRepo(
+            primaryConfig.githubRepoUrl?.trim() ?? '',
+            primaryConfig.githubBranch?.trim() ?? 'main',
+          );
+        }
+        if (secondaryConfig?.method === 'GitHub') {
+          await verifyGithubRepo(
+            secondaryConfig.githubRepoUrl?.trim() ?? '',
+            secondaryConfig.githubBranch?.trim() ?? 'main',
+          );
+        }
+      } catch (err: unknown) {
+        const res = err && typeof err === 'object' && 'response' in err
+          ? (err as { response?: { data?: { message?: string } } }).response
+          : undefined;
+        const message = res?.data?.message ?? null;
+        Alert.alert(
+          '저장소 확인',
+          message && message.includes('저장소') ? message : '저장소가 없습니다. URL과 브랜치를 확인한 뒤 다시 입력해 주세요.',
+        );
+        return;
+      }
+    }
     if (isEdit && members < currentMembers) {
       Alert.alert('안내', '현재 스터디 그룹 인원보다 작게 설정할 수 없습니다.');
       return;
@@ -345,14 +440,32 @@ function CreateStudyGroupScreen({
         }
       }
     } catch (err: unknown) {
-      const message =
-        err && typeof err === 'object' && 'response' in err
-          ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
-          : null;
-      Alert.alert(
-        '오류',
-        message ?? '서버에 연결할 수 없습니다. X-User-Id 설정 및 네트워크를 확인해주세요.',
-      );
+      const res = err && typeof err === 'object' && 'response' in err
+        ? (err as { response?: { status?: number; data?: { message?: string; code?: number } } }).response
+        : undefined;
+      const status = res?.status;
+      const message = res?.data?.message ?? null;
+      const code = res?.data?.code;
+      if (status === 400 && message) {
+        if (message.includes('GitHub 연동') || message.includes('깃허브') || code === 4000) {
+          Alert.alert(
+            'GitHub 연동 필요',
+            message,
+          );
+        } else if (message.includes('저장소') || message.includes('repo') || message.includes('브랜치') || message.includes('branch')) {
+          Alert.alert(
+            '저장소 확인',
+            message + '\n\n저장소 URL과 브랜치를 확인한 뒤 다시 입력해 주세요.',
+          );
+        } else {
+          Alert.alert('안내', message);
+        }
+      } else {
+        Alert.alert(
+          '오류',
+          message ?? '서버에 연결할 수 없습니다. X-User-Id 설정 및 네트워크를 확인해주세요.',
+        );
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -418,7 +531,7 @@ function CreateStudyGroupScreen({
     if (secondaryConfig || !primaryConfig) {
       return;
     }
-    const fallback = authMethods.find((method) => method !== primaryConfig.method) ?? '사진';
+    const fallback = authMethods.find((m) => m !== primaryConfig.method) ?? '사진';
     setSecondaryConfig(createDefaultConfig(fallback));
   };
 
@@ -442,6 +555,16 @@ function CreateStudyGroupScreen({
         key === 'primary'
           ? setPrimaryConfig((prev) => (prev ? { ...prev, locationLatitude: latitude, locationLongitude: longitude } : prev))
           : setSecondaryConfig((prev) => (prev ? { ...prev, locationLatitude: latitude, locationLongitude: longitude } : prev))
+      }
+      onGithubRepoUrlChange={(key, value) =>
+        key === 'primary'
+          ? setPrimaryConfig((prev) => (prev ? { ...prev, githubRepoUrl: value } : prev))
+          : setSecondaryConfig((prev) => (prev ? { ...prev, githubRepoUrl: value } : prev))
+      }
+      onGithubBranchChange={(key, value) =>
+        key === 'primary'
+          ? setPrimaryConfig((prev) => (prev ? { ...prev, githubBranch: value } : prev))
+          : setSecondaryConfig((prev) => (prev ? { ...prev, githubBranch: value } : prev))
       }
     />
   );

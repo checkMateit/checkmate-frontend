@@ -71,6 +71,7 @@ function StudyStatusSection({
   const slotChecklist = getSlotForMethod(verificationRules, 'CHECKLIST');
   const slotPhoto = getSlotForMethod(verificationRules, 'PHOTO');
   const slotGps = getSlotForMethod(verificationRules, 'GPS');
+  const slotGithub = getSlotForMethod(verificationRules, 'GITHUB');
 
   useEffect(() => {
     setActiveTab(availableTabs[0] ?? 'summary');
@@ -161,7 +162,28 @@ function StudyStatusSection({
             <Text style={styles.placeholderText}>위치 인증 규칙을 불러오는 중이에요.</Text>
           </View>
         ))}
-      {activeTab === 'github' && <StudyStatusGithub />}
+      {activeTab === 'github' &&
+        (slotGithub != null ? (
+          <StudyStatusGithub
+            groupId={groupId}
+            slot={slotGithub}
+            schedule={
+              verificationRules.find((r) => r.slot === slotGithub)
+                ? {
+                    endTime:
+                      verificationRules.find((r) => r.slot === slotGithub)
+                        ?.endTime ?? '23:59',
+                  }
+                : undefined
+            }
+          />
+        ) : (
+          <View style={styles.placeholder}>
+            <Text style={styles.placeholderText}>
+              GitHub 인증 규칙을 불러오는 중이에요.
+            </Text>
+          </View>
+        ))}
     </View>
   );
 }

@@ -146,6 +146,16 @@ export const deleteVerificationRule = (groupId: string | number, slot: number) =
     `${ENDPOINTS.studyGroups}/${groupId}/verification-rules/${slot}`,
   );
 
+/**
+ * GET /study-groups/verification/github/verify-repo — 스터디 그룹 생성 전 저장소/브랜치 존재 여부 검증.
+ * X-User-Id 필수. 실패 시 400 (저장소 없음 또는 GitHub 미연동).
+ */
+export const verifyGithubRepo = (repoUrl: string, branch: string) =>
+  apiClient.get<ApiResponse<null>>(
+    `${ENDPOINTS.studyGroups}/verification/github/verify-repo`,
+    { params: { repoUrl: repoUrl.trim(), branch: (branch ?? '').trim() || 'main' } },
+  );
+
 /** POST /study-groups. 응답은 ApiResponse<StudyGroupCreateRes> (data.groupId, data.createdAt) */
 export const createStudyGroup = (payload: Record<string, unknown>) =>
   apiClient.post<ApiResponse<StudyGroupCreateRes>>(ENDPOINTS.studyGroups, payload);

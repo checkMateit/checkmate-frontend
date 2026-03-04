@@ -17,6 +17,7 @@ import { colors } from '../../../styles/colors';
 import { type SearchStackParamList, type HomeStackParamList } from '../../../navigation/types';
 import { type StudyDetail } from '../../study-detail/screens/StudyDetailScreen';
 import { joinStudyGroup, fetchStudyGroupDetail } from '../../../api/studyGroups';
+import { getSocialAccounts } from '../../../api/users';
 import AuthMethodRow from '../../../components/common/AuthMethodRow';
 
 const backIcon = require('../../../assets/icon/left_arrow.png');
@@ -64,6 +65,27 @@ function StudyJoinScreen() {
       Alert.alert('알림', '스터디 그룹이 마감되었습니다.');
       return;
     }
+    const methodsStr = (study.methods ?? '').toLowerCase();
+    const needsGitHub = methodsStr.includes('github');
+    if (needsGitHub) {
+      try {
+        const { data: socialRes } = await getSocialAccounts();
+        const accounts = socialRes?.data ?? [];
+        const hasGitHub = accounts.some(
+          (a) => (a.provider ?? '').toUpperCase() === 'GITHUB',
+        );
+        if (!hasGitHub) {
+          Alert.alert(
+            'GitHub 연동 필요',
+            '이 스터디 그룹은 GitHub 연동이 필요합니다. 마이페이지에서 GitHub를 연동한 뒤 가입할 수 있습니다.',
+          );
+          return;
+        }
+      } catch {
+        Alert.alert('안내', '소셜 연동 정보를 확인할 수 없습니다. 다시 시도해 주세요.');
+        return;
+      }
+    }
     setJoining(true);
     try {
       const { data: res } = await joinStudyGroup(study.id);
@@ -98,17 +120,28 @@ function StudyJoinScreen() {
         }
       }
     } catch (err: unknown) {
-      const msg =
-        err && typeof err === 'object' && 'response' in err
-          ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
-          : null;
+      const res = err && typeof err === 'object' && 'response' in err
+        ? (err as { response?: { data?: { message?: string; code?: number } } }).response
+        : undefined;
+      const msg = res?.data?.message ?? null;
+      const code = res?.data?.code;
+      const isGitHubRequired =
+        typeof msg === 'string' &&
+        (msg.includes('GitHub 연동') || msg.includes('깃허브') || code === 4000);
       const isAlreadyMember =
         typeof msg === 'string' &&
         (msg.includes('이미 가입') || msg.includes('이미 참여') || msg.includes('이미 소속'));
-      Alert.alert(
-        '알림',
-        isAlreadyMember ? '이미 참여하고 있는 스터디 그룹입니다.' : (msg ?? '가입에 실패했어요. 스터디가 마감되었을 수 있어요.'),
-      );
+      if (isGitHubRequired) {
+        Alert.alert(
+          'GitHub 연동 필요',
+          '이 스터디 그룹은 GitHub 연동이 필요합니다. 마이페이지에서 GitHub를 연동한 뒤 가입할 수 있습니다.',
+        );
+      } else {
+        Alert.alert(
+          '알림',
+          isAlreadyMember ? '이미 참여하고 있는 스터디 그룹입니다.' : (msg ?? '가입에 실패했어요. 스터디가 마감되었을 수 있어요.'),
+        );
+      }
     } finally {
       setJoining(false);
     }

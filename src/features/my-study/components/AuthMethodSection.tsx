@@ -16,9 +16,14 @@ export type MethodConfig = {
   locationLatitude: number | null;
   /** 공통 위치일 때 그룹장이 지정한 인증 위치 경도 */
   locationLongitude: number | null;
+  /** GitHub 인증일 때 저장소 URL (https://github.com/owner/repo 또는 owner/repo) */
+  githubRepoUrl: string;
+  /** GitHub 인증일 때 브랜치 이름 */
+  githubBranch: string;
 };
 
 type AuthMethodSectionProps = {
+  /** 표시할 인증 방식 목록 (카테고리에 따라 GitHub 제외 가능) */
   methods: AuthMethod[];
   primaryConfig: MethodConfig | null;
   secondaryConfig: MethodConfig | null;
